@@ -1,0 +1,103 @@
+version: '3.9'
+
+services:
+  # Gemini visual testing service
+  gemini:
+    build:
+      context: .
+      dockerfile: Dockerfile.gemini
+    image: local/gemini-node18:latest
+    container_name: playground-gemini
+    volumes:
+      - .:/app
+      - /app/node_modules  # Prevent overwriting container's node_modules
+    working_dir: /app
+    command: test
+    environment:
+      - NODE_ENV=${NODE_ENV:-test}
+      - DEBUG=${DEBUG:-}
+    networks:
+      - testing
+
+  # Optional: Selenium Grid Hub for distributed testing
+  selenium-hub:
+    image: selenium/hub:latest
+    container_name: playground-selenium-hub
+    ports:
+      - "4444:4444"
+      - "4442:4442"
+      - "4443:4443"
+    environment:
+      - SE_SESSION_REQUEST_TIMEOUT=300
+      - SE_NODE_SESSION_TIMEOUT=300
+    networks:
+      - testing
+    profiles:
+      - grid  # Only start with --profile grid
+
+  # Optional: Chrome node for Selenium Grid
+  chrome:
+    image: selenium/node-chrome:latest
+    container_name: playground-chrome-node
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=5
+      - SE_NODE_SESSION_TIMEOUT=300
+    shm_size: 2gb
+    networks:
+      - testing
+    profiles:
+      - grid
+
+  # Optional: Firefox node for Selenium Grid
+  firefox:
+    image: selenium/node-firefox:latest
+    container_name: playground-firefox-node
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=5
+      - SE_NODE_SESSION_TIMEOUT=300
+    shm_size: 2gb
+    networks:
+      - testing
+    profiles:
+      - grid
+
+networks:
+  testing:
+    driver: bridge
+
+volumes:
+  node_modules:
+    driver: local
+
+# Usage:
+#
+# Basic testing:
+#   docker-compose up gemini
+#
+# With Selenium Grid:
+#   docker-compose --profile grid up
+#
+# Run specific command:
+#   docker-compose run --rm gemini test --grep "Homepage"
+#
+# Update reference screenshots:
+#   docker-compose run --rm gemini update
+#
+# GUI mode:
+#   docker-compose run --rm -p 8000:8000 gemini gui
+#
+# Build image:
+#   docker-compose build gemini
+#
+# Clean up:
+#   docker-compose down -v

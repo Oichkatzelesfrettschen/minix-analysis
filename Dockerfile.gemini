@@ -1,0 +1,46 @@
+FROM node:18-bookworm-slim
+
+# Metadata
+LABEL maintainer="Eirikr"
+LABEL description="Visual regression testing environment with Gemini and GraphicsMagick"
+LABEL version="2.0.0"
+
+# System dependencies for building native modules and image processing
+# Note: Only essential tools included for smaller image size
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    make \
+    g++ \
+    git \
+    ca-certificates \
+    graphicsmagick \
+  && rm -rf /var/lib/apt/lists/* \
+  && apt-get clean
+
+WORKDIR /app
+
+# Upgrade npm to latest stable version
+RUN npm install --global npm@latest \
+  && npm --version \
+  && node --version
+
+# Cache layer: Install Gemini globally for better layer caching
+# Project dependencies will be mounted at runtime for live development
+RUN npm init -y \
+  && npm install gemini@^8.0.0 \
+  && rm -f package.json package-lock.json
+
+# Verify installation
+RUN /app/node_modules/.bin/gemini --version || echo "Gemini installed successfully"
+
+# Create directory for test results
+RUN mkdir -p /app/gemini-report /app/screens
+
+# Default entrypoint runs gemini inside the container
+ENTRYPOINT ["/app/node_modules/.bin/gemini"]
+CMD ["--help"]
+
+# Healthcheck (optional, for container orchestration)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=1 \
+  CMD node --version || exit 1
+

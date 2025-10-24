@@ -1,0 +1,68 @@
+{
+  "name": "visual-testing-playground",
+  "version": "1.0.0",
+  "description": "Docker-based visual regression testing environment using Gemini framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "gemini test",
+    "test:update": "gemini update",
+    "test:report": "gemini test --html-reporter gemini-report",
+    "test:gui": "gemini gui",
+    "docker:build": "./scripts/gemini-docker.sh build",
+    "docker:test": "./scripts/gemini-docker.sh test",
+    "docker:update": "./scripts/gemini-docker.sh update",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{js,json,md,yml}\"",
+    "format:check": "prettier --check \"**/*.{js,json,md,yml}\"",
+    "prepare": "husky install || true"
+  },
+  "keywords": [
+    "visual-testing",
+    "regression-testing",
+    "gemini",
+    "docker",
+    "testing",
+    "automation",
+    "e2e"
+  ],
+  "author": "Eirikr",
+  "license": "ISC",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "gemini": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-node": "^11.1.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1"
+  },
+  "overrides": {
+    "png-img": "5.0.1"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml}": [
+      "prettier --write"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eirikr/playground.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eirikr/playground/issues"
+  },
+  "homepage": "https://github.com/eirikr/playground#readme"
+}

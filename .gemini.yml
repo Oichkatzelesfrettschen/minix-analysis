@@ -1,0 +1,71 @@
+---
+# Gemini Visual Regression Testing Configuration
+# https://github.com/gemini-testing/gemini
+
+# System configuration
+system:
+  projectRoot: .
+  sourceRoot: gemini
+  debug: false
+  parallelLimit: 5
+  diffColor: '#ff00ff'
+  referenceImageAbsence: 'error'
+  screenshotsDir: screens
+
+  # Plugins
+  plugins:
+    html-reporter:
+      enabled: true
+      path: gemini-report
+      defaultView: failed
+      baseHost: http://localhost
+
+# Browser configuration
+browsers:
+  chrome:
+    desiredCapabilities:
+      browserName: chrome
+      version: latest
+      chromeOptions:
+        args:
+          - '--headless'
+          - '--no-sandbox'
+          - '--disable-dev-shm-usage'
+          - '--disable-gpu'
+          - '--window-size=1920,1080'
+
+    # Screenshot settings
+    tolerance: 2.5
+    antialiasingTolerance: 4
+    compareOpts:
+      stopOnFirstFail: false
+
+    # Window size
+    windowSize: '1920x1080'
+
+    # Retry settings
+    retry: 2
+
+    # Session configuration
+    sessionRequestTimeout: 60000
+    sessionQuitTimeout: 5000
+    httpTimeout: 30000
+
+    # Browser pool
+    testsPerSession: 10
+    suitesPerSession: 10
+
+# Grid configuration (uncomment if using Selenium Grid)
+# gridUrl: http://selenium-hub:4444/wd/hub
+
+# Coverage (if applicable)
+# coverage:
+#   enabled: false
+
+# Sets configuration
+sets:
+  desktop:
+    files:
+      - gemini/tests/**/*.test.js
+    browsers:
+      - chrome
