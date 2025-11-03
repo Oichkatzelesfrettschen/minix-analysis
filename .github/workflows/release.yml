@@ -1,0 +1,142 @@
+name: Release & Tag Management
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a new release'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  validate-ctags-release:
+    name: Validate Ctags for Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Universal Ctags
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y universal-ctags
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate and validate tags
+        run: |
+          npm run tags
+          
+          tag_count=$(wc -l < tags)
+          echo "Generated $tag_count tags"
+          
+          if [ "$tag_count" -lt 500 ]; then
+            echo "❌ Tag count lower than expected for release"
+            exit 1
+          fi
+          
+          echo "✓ Tag validation passed for release"
+
+      - name: Create ctags package
+        run: |
+          mkdir -p release-artifacts/ctags
+          cp tags release-artifacts/ctags/
+          cp .ctags.d/config.ctags release-artifacts/ctags/
+          cp scripts/generate-tags.sh release-artifacts/ctags/
+          cp -r docs/CTAGS*.md release-artifacts/ctags/ 2>/dev/null || true
+          
+          cd release-artifacts
+          tar -czf ctags-integration.tar.gz ctags/
+          
+          echo "Created ctags integration package"
+          ls -lh ctags-integration.tar.gz
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctags-integration-package
+          path: release-artifacts/ctags-integration.tar.gz
+          retention-days: 90
+
+  generate-release-notes:
+    name: Generate Release Notes
+    runs-on: ubuntu-latest
+    needs: validate-ctags-release
+    if: github.event_name == 'release'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        run: |
+          cat > RELEASE_NOTES.md << 'EOF'
+          # Release Notes
+          
+          ## What's New
+          
+          This release includes comprehensive ctags integration for efficient code navigation.
+          
+          ### Ctags Integration Features
+          
+          - Universal Ctags configuration for 5 languages
+          - Automated tag generation scripts
+          - NPM and Make integration
+          - Git hooks for auto-updates
+          - Comprehensive documentation
+          
+          ### Tag Statistics
+          EOF
+          
+          if [ -f tags ]; then
+            echo "" >> RELEASE_NOTES.md
+            echo "- Total tags: $(wc -l < tags)" >> RELEASE_NOTES.md
+            echo "- Function tags: $(grep -c $'\t''f'$'\t' tags || echo 0)" >> RELEASE_NOTES.md
+            echo "- Class tags: $(grep -c $'\t''c'$'\t' tags || echo 0)" >> RELEASE_NOTES.md
+            echo "- Method tags: $(grep -c $'\t''m'$'\t' tags || echo 0)" >> RELEASE_NOTES.md
+          fi
+          
+          cat >> RELEASE_NOTES.md << 'EOF'
+          
+          ### Documentation
+          
+          - [Ctags Integration Guide](docs/CTAGS.md)
+          - [Editor Setup](docs/EDITOR_CTAGS.md)
+          - [Quick Reference](docs/CTAGS_QUICKREF.md)
+          
+          ### Installation
+          
+          ```bash
+          # Clone the repository
+          git clone <repository-url>
+          cd <repository>
+          
+          # Full development setup (includes ctags)
+          make dev-setup
+          ```
+          
+          For more details, see the [complete documentation](docs/CTAGS.md).
+          EOF
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: RELEASE_NOTES.md
+          retention-days: 90

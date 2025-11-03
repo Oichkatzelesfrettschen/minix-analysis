@@ -32,6 +32,9 @@ cd Playground
 
 # Ensure dependencies are up to date
 npm install
+
+# Or use make for full setup
+make dev-setup
 ```
 
 ### 2. Run Tests with Docker
@@ -60,14 +63,27 @@ npm test
 
 # Update reference images
 npm run test:update
+
+# Or use make commands
+make test
+make tags
+make lint
 ```
+
+For all available commands, run `make help`.
 
 ## Project Structure
 
 ```
 Playground/
 ├── .claude/              # Claude Code configuration
+├── .ctags.d/             # Ctags configuration
+│   └── config.ctags      # Tag generation patterns
 ├── .github/              # CI/CD workflows
+├── docs/                 # Documentation
+│   ├── ARCHITECTURE.md   # Architecture overview
+│   ├── CTAGS.md         # Ctags integration guide
+│   └── ...
 ├── drivers/              # Driver implementations
 │   └── logs/             # Runtime logs
 ├── gemini/               # Gemini test suites
@@ -75,10 +91,13 @@ Playground/
 │   └── tests/            # Test specifications
 ├── logs/                 # Application logs
 ├── scripts/              # Build and automation scripts
-│   └── gemini-docker.sh  # Docker wrapper for Gemini
+│   ├── gemini-docker.sh  # Docker wrapper for Gemini
+│   ├── generate-tags.sh  # Ctags generation script
+│   └── hooks/            # Git hook examples
 ├── .gitignore            # Git exclusions
 ├── .nvmrc                # Node version specification
 ├── Dockerfile.gemini     # Docker configuration
+├── Makefile              # Build automation
 ├── package.json          # Node.js dependencies
 └── README.md             # This file
 ```
@@ -174,11 +193,27 @@ npm run test:report
 
 ### CI/CD Integration
 
-GitHub Actions workflow is configured in `.github/workflows/test.yml`:
+GitHub Actions workflows are configured in `.github/workflows/`:
 
-- Runs on every push and pull request
-- Uses the same Docker image as local development
-- Uploads test reports as artifacts
+**Main Pipeline** (`test.yml`):
+- Lint, format checking, and code quality
+- **Ctags validation** - Validates tag generation and content
+- Visual regression tests with Docker
+- Security audits (npm audit, Snyk)
+- **Build validation** - Tests Makefile targets
+- **Integration summary** - Aggregates all results
+
+**Ctags Documentation** (`ctags-docs.yml`):
+- Validates ctags configuration and documentation
+- Checks documentation links and completeness
+- Generates documentation artifacts
+
+**Release Management** (`release.yml`):
+- Validates ctags for releases
+- Packages ctags integration
+- Auto-generates release notes
+
+See [CI/CD Audit Report](docs/CICD_AUDIT.md) for complete details.
 - Fails build on visual regression
 
 ## Development
@@ -195,6 +230,20 @@ npm install
 # Start development server (if applicable)
 npm run dev
 ```
+
+### Code Navigation
+
+This project uses Universal Ctags for efficient code navigation:
+
+```bash
+# Generate tags file
+npm run tags
+
+# Update incrementally (faster)
+npm run tags:incremental
+```
+
+See [docs/CTAGS.md](docs/CTAGS.md) for editor integration and advanced usage.
 
 ### Adding New Tests
 

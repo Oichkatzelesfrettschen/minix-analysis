@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# Git post-commit hook for automatic ctags regeneration
+#
+# Installation:
+#   cp scripts/hooks/post-commit .git/hooks/post-commit
+#   chmod +x .git/hooks/post-commit
+#
+# This hook regenerates ctags incrementally after each commit
+# for fast code navigation in editors like Vim, Emacs, etc.
+#
+
+# Get to repository root
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+# Only regenerate if tags file exists or ctags is configured
+if [ -f "tags" ] || [ -d ".ctags.d" ]; then
+  # Run tag generation in background to not slow down commits
+  # Use incremental mode for speed
+  npm run tags:incremental > /dev/null 2>&1 &
+fi

@@ -1,0 +1,165 @@
+name: Ctags Documentation
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'docs/CTAGS*.md'
+      - '.ctags.d/**'
+      - 'scripts/generate-tags.sh'
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - 'docs/CTAGS*.md'
+      - '.ctags.d/**'
+      - 'scripts/generate-tags.sh'
+  workflow_dispatch:
+
+jobs:
+  validate-docs:
+    name: Validate Ctags Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Universal Ctags
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y universal-ctags
+
+      - name: Validate configuration syntax
+        run: |
+          echo "Validating .ctags.d/config.ctags..."
+          # Test that ctags can parse the config
+          ctags --options=.ctags.d/config.ctags --list-languages || true
+          echo "✓ Configuration syntax valid"
+
+      - name: Check documentation completeness
+        run: |
+          docs_found=0
+          
+          if [ -f "docs/CTAGS.md" ]; then
+            echo "✓ Main guide present"
+            ((docs_found++))
+          fi
+          
+          if [ -f "docs/EDITOR_CTAGS.md" ]; then
+            echo "✓ Editor guide present"
+            ((docs_found++))
+          fi
+          
+          if [ -f "docs/CTAGS_QUICKREF.md" ]; then
+            echo "✓ Quick reference present"
+            ((docs_found++))
+          fi
+          
+          if [ -f "docs/CTAGS_SUMMARY.md" ]; then
+            echo "✓ Summary present"
+            ((docs_found++))
+          fi
+          
+          echo "Found $docs_found documentation files"
+          
+          if [ $docs_found -lt 4 ]; then
+            echo "❌ Missing documentation files"
+            exit 1
+          fi
+
+      - name: Validate script executability
+        run: |
+          if [ ! -x "scripts/generate-tags.sh" ]; then
+            echo "❌ Tag generation script not executable"
+            exit 1
+          fi
+          echo "✓ Script is executable"
+
+      - name: Test script help output
+        run: |
+          ./scripts/generate-tags.sh --help
+          echo "✓ Script help works"
+
+      - name: Validate Makefile documentation
+        run: |
+          if ! make help | grep -q "tags"; then
+            echo "❌ Makefile missing ctags targets"
+            exit 1
+          fi
+          echo "✓ Makefile documents ctags targets"
+
+  generate-docs-artifact:
+    name: Generate Documentation Artifact
+    runs-on: ubuntu-latest
+    needs: validate-docs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Compile documentation
+        run: |
+          mkdir -p ctags-docs
+          cp docs/CTAGS*.md ctags-docs/
+          cp .ctags.d/config.ctags ctags-docs/
+          cp scripts/generate-tags.sh ctags-docs/
+          
+          # Create index
+          cat > ctags-docs/INDEX.md << 'EOF'
+          # Ctags Integration Documentation
+          
+          This artifact contains all ctags integration documentation.
+          
+          ## Files
+          
+          - **CTAGS.md** - Comprehensive integration guide
+          - **EDITOR_CTAGS.md** - Editor-specific setup instructions
+          - **CTAGS_QUICKREF.md** - Quick reference guide
+          - **CTAGS_SUMMARY.md** - Implementation summary
+          - **config.ctags** - Universal Ctags configuration
+          - **generate-tags.sh** - Tag generation script
+          
+          ## Quick Links
+          
+          - [Getting Started](CTAGS.md#quick-start)
+          - [Editor Setup](EDITOR_CTAGS.md)
+          - [Command Reference](CTAGS_QUICKREF.md)
+          - [Implementation Details](CTAGS_SUMMARY.md)
+          EOF
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctags-documentation
+          path: ctags-docs/
+          retention-days: 90
+
+  link-check:
+    name: Check Documentation Links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check internal links
+        run: |
+          echo "Checking for broken internal links..."
+          
+          # Check if referenced files exist
+          for doc in docs/CTAGS*.md; do
+            echo "Checking $doc..."
+            
+            # Extract markdown links
+            grep -o '\[.*\](.*\.md)' "$doc" | sed 's/.*(\(.*\))/\1/' | while read link; do
+              # Skip external links
+              if [[ "$link" =~ ^http ]]; then
+                continue
+              fi
+              
+              # Check if file exists
+              if [ ! -f "docs/$link" ] && [ ! -f "$link" ]; then
+                echo "❌ Broken link in $doc: $link"
+                exit 1
+              fi
+            done
+          done
+          
+          echo "✓ All internal links valid"

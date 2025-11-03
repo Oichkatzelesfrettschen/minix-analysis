@@ -245,6 +245,7 @@ Trigger GitHub Actions
 | Prettier | Code formatting |
 | Husky | Git hooks |
 | lint-staged | Pre-commit checks |
+| Universal Ctags | Code navigation and indexing |
 
 ### CI/CD Tools
 
@@ -261,6 +262,7 @@ Trigger GitHub Actions
 | File | Purpose |
 |------|---------|
 | `.gemini.yml` | Gemini test configuration |
+| `.ctags.d/config.ctags` | Universal Ctags configuration |
 | `Dockerfile.gemini` | Docker image definition |
 | `package.json` | Node.js project metadata |
 | `.eslintrc.json` | Linting rules |
