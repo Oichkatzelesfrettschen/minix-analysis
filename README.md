@@ -193,11 +193,27 @@ npm run test:report
 
 ### CI/CD Integration
 
-GitHub Actions workflow is configured in `.github/workflows/test.yml`:
+GitHub Actions workflows are configured in `.github/workflows/`:
 
-- Runs on every push and pull request
-- Uses the same Docker image as local development
-- Uploads test reports as artifacts
+**Main Pipeline** (`test.yml`):
+- Lint, format checking, and code quality
+- **Ctags validation** - Validates tag generation and content
+- Visual regression tests with Docker
+- Security audits (npm audit, Snyk)
+- **Build validation** - Tests Makefile targets
+- **Integration summary** - Aggregates all results
+
+**Ctags Documentation** (`ctags-docs.yml`):
+- Validates ctags configuration and documentation
+- Checks documentation links and completeness
+- Generates documentation artifacts
+
+**Release Management** (`release.yml`):
+- Validates ctags for releases
+- Packages ctags integration
+- Auto-generates release notes
+
+See [CI/CD Audit Report](docs/CICD_AUDIT.md) for complete details.
 - Fails build on visual regression
 
 ## Development
