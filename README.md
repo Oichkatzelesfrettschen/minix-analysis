@@ -67,7 +67,13 @@ npm run test:update
 ```
 Playground/
 ├── .claude/              # Claude Code configuration
+├── .ctags.d/             # Ctags configuration
+│   └── config.ctags      # Tag generation patterns
 ├── .github/              # CI/CD workflows
+├── docs/                 # Documentation
+│   ├── ARCHITECTURE.md   # Architecture overview
+│   ├── CTAGS.md         # Ctags integration guide
+│   └── ...
 ├── drivers/              # Driver implementations
 │   └── logs/             # Runtime logs
 ├── gemini/               # Gemini test suites
@@ -75,7 +81,8 @@ Playground/
 │   └── tests/            # Test specifications
 ├── logs/                 # Application logs
 ├── scripts/              # Build and automation scripts
-│   └── gemini-docker.sh  # Docker wrapper for Gemini
+│   ├── gemini-docker.sh  # Docker wrapper for Gemini
+│   └── generate-tags.sh  # Ctags generation script
 ├── .gitignore            # Git exclusions
 ├── .nvmrc                # Node version specification
 ├── Dockerfile.gemini     # Docker configuration
@@ -195,6 +202,20 @@ npm install
 # Start development server (if applicable)
 npm run dev
 ```
+
+### Code Navigation
+
+This project uses Universal Ctags for efficient code navigation:
+
+```bash
+# Generate tags file
+npm run tags
+
+# Update incrementally (faster)
+npm run tags:incremental
+```
+
+See [docs/CTAGS.md](docs/CTAGS.md) for editor integration and advanced usage.
 
 ### Adding New Tests
 

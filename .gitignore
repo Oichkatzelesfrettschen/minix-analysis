@@ -50,3 +50,11 @@ temp/
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Ctags
+tags
+tags.*
+.tags
+.tags.*
+TAGS
+TAGS.*

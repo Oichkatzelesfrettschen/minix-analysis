@@ -15,7 +15,11 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,json,md,yml}\"",
     "format:check": "prettier --check \"**/*.{js,json,md,yml}\"",
-    "prepare": "husky install || true"
+    "tags": "./scripts/generate-tags.sh",
+    "tags:verbose": "./scripts/generate-tags.sh --verbose",
+    "tags:incremental": "./scripts/generate-tags.sh --incremental",
+    "prepare": "husky install || true",
+    "postinstall": "npm run tags || true"
   },
   "keywords": [
     "visual-testing",

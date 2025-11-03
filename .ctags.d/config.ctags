@@ -1,0 +1,94 @@
+#
+# Universal Ctags Configuration
+# Comprehensive tag generation for JavaScript, Shell, and Documentation
+#
+
+# ==============================================================================
+# General Settings
+# ==============================================================================
+
+# Recurse into directories by default
+--recurse=yes
+
+# Follow symbolic links
+--links=yes
+
+# Include line numbers in the tags file
+--fields=+l
+
+# Include extra tag information for better IDE support
+--fields=+iaS
+
+# Include signatures for functions (parameter lists)
+--fields=+S
+
+# Tag file format - use extended format
+--format=2
+
+# Sort tags for faster lookups
+--sort=yes
+
+# Exclude common directories and files
+--exclude=node_modules
+--exclude=.git
+--exclude=.github
+--exclude=dist
+--exclude=build
+--exclude=coverage
+--exclude=.nyc_output
+--exclude=gemini-report
+--exclude=.gemini-report
+--exclude=screens
+--exclude=logs
+--exclude=*.log
+--exclude=*.min.js
+--exclude=*.map
+--exclude=package-lock.json
+--exclude=yarn.lock
+
+# ==============================================================================
+# JavaScript Language Configuration
+# ==============================================================================
+
+# Use built-in JavaScript language, just add custom patterns
+
+# Gemini test suites (specific to this project)
+--regex-JavaScript=/gemini\.suite\([ \t]*['"]([^'"]+)['"]/\1/t,testsuite/
+
+# Arrow functions
+--regex-JavaScript=/^[ \t]*const[ \t]+([A-Za-z0-9_]+)[ \t]*=[ \t]*\([^)]*\)[ \t]*=>/\1/f,function/
+--regex-JavaScript=/^[ \t]*let[ \t]+([A-Za-z0-9_]+)[ \t]*=[ \t]*\([^)]*\)[ \t]*=>/\1/f,function/
+--regex-JavaScript=/^[ \t]*var[ \t]+([A-Za-z0-9_]+)[ \t]*=[ \t]*\([^)]*\)[ \t]*=>/\1/f,function/
+
+# ==============================================================================
+# Shell Script Language Configuration
+# ==============================================================================
+
+# Use built-in Sh language, add custom patterns if needed
+
+# ==============================================================================
+# Markdown Documentation
+# ==============================================================================
+
+# Use built-in Markdown language
+
+# ==============================================================================
+# JSON Configuration
+# ==============================================================================
+
+# Use built-in JSON language
+
+# ==============================================================================
+# YAML Configuration  
+# ==============================================================================
+
+# Use built-in YAML language
+
+# ==============================================================================
+# Dockerfile
+# ==============================================================================
+
+# Dockerfile support - ctags has built-in support, but we can map file patterns
+# Note: Some versions may not have Dockerfile support, in which case these will be warnings
+
+
