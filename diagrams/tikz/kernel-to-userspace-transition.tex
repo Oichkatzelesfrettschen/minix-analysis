@@ -1,0 +1,260 @@
+\documentclass[tikz,border=10pt]{standalone}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,backgrounds,fit,decorations.pathreplacing}
+
+% MINIX TikZ style guide color palette
+\definecolor{primaryblue}{RGB}{41,128,185}
+\definecolor{secondarygreen}{RGB}{39,174,96}
+\definecolor{accentorange}{RGB}{230,126,34}
+\definecolor{warningred}{RGB}{192,57,43}
+\definecolor{lightgray}{RGB}{236,240,241}
+\definecolor{darkgray}{RGB}{52,73,94}
+
+\begin{document}
+\begin{tikzpicture}[
+    % Node styles
+    step/.style={rectangle, draw=accentorange, fill=accentorange!15, thick, minimum width=6cm, minimum height=0.8cm, font=\small, align=left},
+    regbox/.style={rectangle, draw=secondarygreen, fill=secondarygreen!10, thick, minimum width=4.5cm, minimum height=0.6cm, font=\footnotesize\ttfamily, align=left},
+    stackbox/.style={rectangle, draw=primaryblue, fill=primaryblue!10, thick, minimum width=3cm, minimum height=0.5cm, font=\footnotesize, align=center},
+    codeblock/.style={rectangle, draw=darkgray, fill=lightgray!50, thick, font=\tiny\ttfamily, align=left, minimum width=5.5cm},
+    label/.style={font=\small\bfseries, align=center},
+    arrow/.style={->, >=stealth, thick},
+    widearrow/.style={->, >=stealth, very thick, line width=1.5pt},
+    note/.style={font=\footnotesize\itshape, align=left, text=darkgray},
+]
+
+% Title
+\node[font=\LARGE\bfseries] at (10, 21) {Kernel to Userspace Transition};
+\node[font=\large] at (10, 20.2) {Ring 0 → Ring 3 Privilege Level Change (switch\_to\_user)};
+
+% Source reference
+\node[font=\footnotesize] at (10, 19.5) {\textbf{Source:} arch-specific code (i386: arch/i386/mpx.S, switch\_to\_user)};
+
+% ============================================================================
+% LEFT COLUMN: Kernel State (Ring 0)
+% ============================================================================
+
+\node[label] at (5, 18.5) {\textbf{Kernel State (Ring 0)}};
+
+% Current CPU state
+\node[step] (kernel_state) at (5, 17.5) {
+\textbf{Before switch\_to\_user()}\\
+CPL = 0 (Ring 0 - kernel mode)
+};
+
+% Segment registers (kernel)
+\node[label, font=\footnotesize] at (5, 16.5) {Segment Registers};
+
+\node[regbox] (cs_kernel) at (5, 15.9) {CS = KERNEL\_CS (0x08)\\DPL = 0, RPL = 0};
+\node[regbox] (ds_kernel) at (5, 15.1) {DS = KERNEL\_DS (0x10)\\DPL = 0, RPL = 0};
+\node[regbox] (ss_kernel) at (5, 14.3) {SS = KERNEL\_DS (0x10)\\Stack in kernel space};
+
+% Process to switch to
+\node[step] (select_proc) at (5, 13.2) {
+Select first ready process:\\
+proc\_ptr = get\_next\_ready\_process()
+};
+
+\draw[arrow] (ss_kernel) -- (select_proc);
+
+% Setup user context
+\node[step] (setup_context) at (5, 12.1) {
+Prepare user process context:\\
+• Load p\_reg (saved registers)\\
+• Get user stack pointer\\
+• Get user code entry point
+};
+
+\draw[arrow] (select_proc) -- (setup_context);
+
+% Build user stack frame
+\node[step] (build_frame) at (5, 10.8) {
+Build stack frame for IRET:\\
+Push to kernel stack:
+};
+
+\draw[arrow] (setup_context) -- (build_frame);
+
+% Stack frame components
+\node[stackbox] (stack_ss) at (5, 10) {SS (User stack segment)};
+\node[stackbox] (stack_esp) at (5, 9.4) {ESP (User stack pointer)};
+\node[stackbox] (stack_eflags) at (5, 8.8) {EFLAGS (with IF=1)};
+\node[stackbox] (stack_cs) at (5, 8.2) {CS (User code segment)};
+\node[stackbox] (stack_eip) at (5, 7.6) {EIP (User entry point)};
+
+\draw[arrow] (build_frame) -- (stack_ss);
+\draw[arrow] (stack_ss) -- (stack_esp);
+\draw[arrow] (stack_esp) -- (stack_eflags);
+\draw[arrow] (stack_eflags) -- (stack_cs);
+\draw[arrow] (stack_cs) -- (stack_eip);
+
+% Load data segments
+\node[step] (load_segments) at (5, 6.7) {
+Load user data segments:\\
+mov ax, USER\_DS\_SELECTOR\\
+mov ds, ax; mov es, ax
+};
+
+\draw[arrow] (stack_eip) -- (load_segments);
+
+% IRET instruction
+\node[step, fill=warningred!20] (iret) at (5, 5.5) {
+\textbf{IRET} (Interrupt Return)\\
+Pop CS, EIP, EFLAGS, SS, ESP\\
+\textbf{CPL changes: 0 → 3}
+};
+
+\draw[widearrow, warningred] (load_segments) -- (iret);
+
+% ============================================================================
+% RIGHT COLUMN: User State (Ring 3)
+% ============================================================================
+
+\node[label] at (15, 18.5) {\textbf{User State (Ring 3)}};
+
+% Current CPU state
+\node[step, fill=secondarygreen!20] (user_state) at (15, 17.5) {
+\textbf{After IRET}\\
+CPL = 3 (Ring 3 - user mode)
+};
+
+\draw[widearrow, secondarygreen] (iret) -- ++(4,0) |- (user_state)
+    node[pos=0.5, above, font=\tiny] {Privilege transition};
+
+% Segment registers (user)
+\node[label, font=\footnotesize] at (15, 16.5) {Segment Registers};
+
+\node[regbox] (cs_user) at (15, 15.9) {CS = USER\_CS (0x1B)\\DPL = 3, RPL = 3};
+\node[regbox] (ds_user) at (15, 15.1) {DS = USER\_DS (0x23)\\DPL = 3, RPL = 3};
+\node[regbox] (ss_user) at (15, 14.3) {SS = USER\_DS (0x23)\\Stack in user space};
+
+\draw[arrow] (user_state) -- (cs_user);
+
+% Instruction pointer
+\node[step] (user_eip) at (15, 13.2) {
+EIP = process entry point\\
+(usually \_start in user program)
+};
+
+\draw[arrow] (ss_user) -- (user_eip);
+
+% Process begins execution
+\node[step, fill=primaryblue!20] (user_exec) at (15, 12.1) {
+\textbf{Process begins execution}\\
+First instruction in user code
+};
+
+\draw[arrow] (user_eip) -- (user_exec);
+
+% System call mechanism
+\node[step] (syscall_entry) at (15, 10.8) {
+When process needs kernel:\\
+• INT 0x33 (legacy)\\
+• SYSENTER (Intel)\\
+• SYSCALL (AMD)
+};
+
+\draw[arrow] (user_exec) -- (syscall_entry);
+
+% ============================================================================
+% CENTER: Code examples
+% ============================================================================
+
+\node[label] at (10, 4.5) {\textbf{Assembly Code: switch\_to\_user()}};
+
+\node[codeblock] (asm_code) at (10, 2.5) {
+; arch/i386/mpx.S - switch\_to\_user\\
+\\
+switch\_to\_user:\\
+\ \ ; Get current process pointer\\
+\ \ mov eax, [proc\_ptr]\\
+\\
+\ \ ; Load user segment selectors\\
+\ \ mov cx, USER\_DS\_SELECTOR | 3  ; RPL=3\\
+\ \ mov ds, cx\\
+\ \ mov es, cx\\
+\ \ mov fs, cx\\
+\ \ mov gs, cx\\
+\\
+\ \ ; Build IRET stack frame\\
+\ \ push USER\_DS\_SELECTOR | 3    ; SS\\
+\ \ push [eax + P\_STACKTOP]      ; ESP\\
+\ \ pushf                          ; EFLAGS\\
+\ \ push USER\_CS\_SELECTOR | 3    ; CS\\
+\ \ push [eax + P\_PC]             ; EIP\\
+\\
+\ \ ; Atomic privilege transition\\
+\ \ iret                           ; Ring 0 -> Ring 3\\
+\\
+\ \ ; \textbf{Never returns - now in Ring 3}
+};
+
+% ============================================================================
+% BOTTOM: GDT Entry details
+% ============================================================================
+
+\node[label] at (5, 0.5) {\textbf{GDT Entries}};
+
+\node[codeblock, minimum width=7cm] (gdt_entries) at (5, -1.3) {
+Kernel Code (0x08):  Base=0, Limit=4GB, DPL=0, Type=Code\\
+Kernel Data (0x10):  Base=0, Limit=4GB, DPL=0, Type=Data\\
+User Code   (0x18):  Base=0, Limit=4GB, DPL=3, Type=Code\\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (Selector = 0x18 | 3 = 0x1B)\\
+User Data   (0x20):  Base=0, Limit=4GB, DPL=3, Type=Data\\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (Selector = 0x20 | 3 = 0x23)\\
+\\
+RPL (Requestor Privilege Level) = bottom 2 bits\\
+DPL (Descriptor Privilege Level) = segment descriptor\\
+CPL (Current Privilege Level) = CS.RPL
+};
+
+\node[label] at (15, 0.5) {\textbf{Privilege Checks}};
+
+\node[note, text width=7cm] (priv_checks) at (15, -1.3) {
+IRET privilege check:\\
+1. New CS.DPL must be $>=$ current CPL\\
+2. New SS.DPL must equal new CS.DPL\\
+3. New SS.RPL must equal new CS.RPL\\
+4. Stack switch occurs if CPL changes\\
+5. Interrupts re-enabled if EFLAGS.IF=1\\
+\\
+After IRET to Ring 3:\\
+• Cannot execute privileged instructions\\
+• Cannot access I/O ports (unless IOPL=3)\\
+• Cannot modify CR0, CR3, etc.\\
+• Must use syscall to re-enter kernel
+};
+
+% Process memory space note
+\node[step, minimum width=8cm] at (10, -3.5) {
+\textbf{Note:} Each process has its own CR3 (page directory)\\
+loaded before switch\_to\_user(). All processes share kernel\\
+code mapped at high addresses (kernel space).
+};
+
+% Background zones
+\begin{pgfonlayer}{background}
+    % Kernel side
+    \node[fill=accentorange!5, rounded corners, fit=(kernel_state) (iret)] {};
+
+    % User side
+    \node[fill=secondarygreen!5, rounded corners, fit=(user_state) (syscall_entry)] {};
+
+    % Code example
+    \node[fill=lightgray, rounded corners, fit=(asm_code)] {};
+\end{pgfonlayer}
+
+% Ring transition annotation
+\draw[decorate, decoration={brace, amplitude=10pt, mirror}]
+    (1, 17.5) -- (1, 5.5) node[midway, left=12pt, align=center, font=\small\bfseries] {Ring 0};
+
+\draw[decorate, decoration={brace, amplitude=10pt}]
+    (19, 17.5) -- (19, 10.8) node[midway, right=12pt, align=center, font=\small\bfseries] {Ring 3};
+
+% Critical instruction marker
+\draw[warningred, very thick, dashed] (3, 5.9) rectangle (7, 5.1);
+\node[font=\footnotesize\bfseries, text=warningred] at (5, 6.3) {Critical: CPL 0 $\rightarrow$ 3};
+
+\end{tikzpicture}
+\end{document}

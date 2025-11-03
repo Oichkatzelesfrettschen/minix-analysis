@@ -1,0 +1,515 @@
+% ===============================================================================
+% CHAPTER 6: SYSTEM ARCHITECTURE AND MICROKERNEL DESIGN
+% CPU interfaces, memory management, and component relationships
+% ===============================================================================
+
+\chapter{System Architecture and Microkernel Design}
+\label{ch:architecture}
+
+\begin{quote}
+\textit{\minix{} 3.4 architecture reflects decades of microkernel research and x86 systems design. This chapter explores the processor interfaces, memory management, system call mechanisms, and component relationships that enable microkernel operation.}
+\end{quote}
+
+\section{Overview}
+
+\minix{} 3.4 is built on principles of modularity, fault isolation, and privilege separation. Understanding the architectural foundation is essential for comprehending performance characteristics, error modes, and design trade-offs.
+
+\keyinsight{
+The \minix{} architecture balances simplicity (95 KB minimal kernel) with functionality (300+ POSIX syscalls) through careful component separation, efficient inter-process communication, and strategic CPU feature utilization.
+}
+
+\subsection{Detailed Architecture Comparison}
+
+\input{chapters/14-architecture-comparison.tex}
+
+\section{Supported Architectures}
+
+\minix{} 3.4.0-RC6 supports two primary architectures:
+
+\begin{description}
+\item[i386:] 32-bit x86 processors (primary architecture for desktop/server)
+\item[earm:] 32-bit ARM processors (embedded systems)
+\end{description}
+
+\note{64-bit x86-64 (long mode) is NOT supported in MINIX 3.4. The focus remains on 32-bit architectures with proven microkernel implementations.}
+
+\section{Processor Interfaces}
+
+\subsection{i386 Register Architecture}
+
+The i386 (32-bit x86) provides 8 general-purpose 32-bit registers essential for \minix{} operation:
+
+\begin{description}
+\item[EAX:] Accumulator (return values, system call parameters)
+\item[EBX:] Base register (system call parameters, saved across calls)
+\item[ECX:] Counter (system call parameters, often clobbered by instructions)
+\item[EDX:] Data (system call parameters, return values)
+\item[ESI:] Source index (saved stack pointer in syscall context)
+\item[EDI:] Destination index (call type in IPC: \code{IPCVEC}, \code{KERVEC})
+\item[EBP:] Base pointer (process structure pointer in kernel context)
+\item[ESP:] Stack pointer (kernel/user stack management)
+\end{description}
+
+Control and segment registers extend processor functionality:
+
+\begin{description}
+\item[CR0:] Protection Enable (PE), Paging Enable (PG)
+\item[CR3:] Page Directory Base Register (PDBR) - physical address
+\item[CR4:] Extensions (PSE, PAE, PGE, MCE)
+\item[EFLAGS:] Condition codes, Interrupt Enable (IF), and privilege information
+\item[CS/DS/SS:] Code, data, and stack segment selectors
+\end{description}
+
+\subsection{CPU Feature Utilization Matrix}
+
+\input{chapters/15-cpu-feature-utilization-matrix.tex}
+
+\subsection{System Call Mechanisms}
+
+\minix{} supports three system call entry mechanisms, each with distinct performance and compatibility characteristics:
+
+\subsubsection{Mechanism 1: INT (Software Interrupt)}
+
+\textbf{Entry Vector}: INT 0x21 (IPC vector, user mode)
+
+\textbf{Hardware Actions} (automatic):
+\begin{enumerate}
+\item Push SS, ESP, EFLAGS, CS, EIP (5 values) onto kernel stack
+\item Load CS:EIP from IDT entry 0x21
+\item Set CPL (Current Privilege Level) to 0
+\item Clear IF (interrupt flag) for atomicity
+\end{enumerate}
+
+\textbf{Kernel Actions} (assembly save, then C dispatch):
+\begin{enumerate}
+\item Save all general registers to process table
+\item Call \code{do_ipc()} C function
+\item Return via IRET (all state restored automatically)
+\end{enumerate}
+
+\textbf{Performance}: ~1772 CPU cycles (benchmark dependent)
+
+\textbf{Compatibility}: Works on all x86 processors (supported since 8086)
+
+\subsubsection{Detailed INT 0x21 System Call Analysis}
+
+\input{chapters/05-syscall-int80h.tex}
+
+\subsubsection{Mechanism 2: SYSENTER (Intel Fast Path)}
+
+\textbf{Prerequisites}: Pentium II or later, MSRs configured
+
+\textbf{MSR Configuration}:
+\begin{enumerate}
+\item SYSENTER\_CS: Kernel code segment selector
+\item SYSENTER\_ESP: Kernel stack pointer (from TSS)
+\item SYSENTER\_EIP: Kernel entry point (\code{ipc\_entry\_sysenter})
+\end{enumerate}
+
+\textbf{Hardware Actions}:
+\begin{enumerate}
+\item Load CS from SYSENTER\_CS MSR
+\item Load ESP from SYSENTER\_ESP MSR
+\item Load EIP from SYSENTER\_EIP MSR
+\item Set CPL to 0, disable interrupts
+\item \textbf{NO automatic state save}
+\end{enumerate}
+
+\textbf{User Responsibility}: Save return address and stack pointer before SYSENTER
+
+\textbf{Performance}: ~1305 CPU cycles (faster than INT)
+
+\textbf{Compatibility}: Pentium II+; not available on AMD without SYSCALL
+
+\subsubsection{Detailed SYSENTER Fast Syscall Analysis}
+
+\input{chapters/06-syscall-sysenter.tex}
+
+\subsubsection{Mechanism 3: SYSCALL (AMD/Intel Fast Path)}
+
+\textbf{Prerequisites}: AMD K6+ or modern Intel, EFER.SCE MSR enabled
+
+\textbf{MSR Configuration}:
+\begin{enumerate}
+\item EFER: Enable SYSCALL support (bit 0: SCE)
+\item STAR: Kernel/user code segment selectors, kernel EIP
+\end{enumerate}
+
+\textbf{Hardware Actions}:
+\begin{enumerate}
+\item \textbf{ECX ← EIP} (return address, clobbers ECX!)
+\item Save EFLAGS internally (hardware-managed)
+\item Load EIP from STAR MSR bits [47:32]
+\item Load CS/SS from STAR MSR bits [63:48]
+\item Set CPL to 0, mask EFLAGS
+\end{enumerate}
+
+\textbf{Kernel Recovery} (assembly handler):
+\begin{enumerate}
+\item Exchange ECX ↔ EDX (restore clobbered parameters)
+\item Load per-CPU kernel stack
+\item Swap user stack ↔ kernel stack (ESP ↔ ESI)
+\item Call common syscall dispatcher
+\end{enumerate}
+
+\textbf{Performance}: ~1439 CPU cycles (comparable to INT)
+
+\textbf{Compatibility}: AMD K6+; modern Intel; not universally available
+
+\subsubsection{Detailed SYSCALL Mechanism Analysis}
+
+\input{chapters/07-syscall-syscall.tex}
+
+\subsection{Mechanism Selection Strategy}
+
+\minix{} selects the fastest available mechanism:
+
+\begin{table}[h]
+\centering
+\caption{System Call Mechanism Selection}
+\label{tbl:syscall-selection}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Processor} & \textbf{INT} & \textbf{SYSENTER} & \textbf{SYSCALL} & \textbf{Choice} \\
+\hline
+Intel 386/486 & \checkmark & & & INT \\
+Pentium I & \checkmark & & & INT \\
+Pentium II+ & \checkmark & \checkmark & & SYSENTER \\
+AMD K6+ & \checkmark & & \checkmark & SYSCALL \\
+Modern Intel & \checkmark & \checkmark & \checkmark & SYSENTER \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Detailed Syscall Cycle Analysis}
+
+% ===============================================================================
+% Syscall Latency Comparison Chart (Pilot 2)
+% ===============================================================================
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    title=Syscall Entry Mechanism Latency Comparison,
+    xlabel=Syscall Mechanism,
+    ylabel=Latency (CPU Cycles),
+    ymin=0,
+    ymax=2000,
+    width=0.8\textwidth,
+    height=6cm,
+    xtick={1,2,3},
+    xticklabels={INT 0x80h, SYSENTER, SYSCALL},
+    grid=major,
+    grid style={gray!30},
+    bar width=0.6cm,
+    ymajorgrids=true,
+    legend pos=north east,
+    nodes near coords,
+    nodes near coords align={vertical},
+    every node near coord/.append style={font=\small},
+]
+
+\addplot[fill=minixred, draw=minixred] coordinates {
+    (1, 1772)
+};
+
+\addplot[fill=minixblue, draw=minixblue] coordinates {
+    (2, 1305)
+};
+
+\addplot[fill=minixgreen, draw=minixgreen] coordinates {
+    (3, 1439)
+};
+
+\legend{Universal (x86-32+), Intel Optimized (Pentium II+), AMD/Intel (Modern)}
+
+\end{axis}
+\end{tikzpicture}
+\caption{System call latency measured in CPU cycles (x86-i386, MINIX 3.4). INT 0x80h is universal but slowest (1772 cycles); SYSENTER optimized for Intel Pentium II and later (1305 cycles, -26\% speedup); SYSCALL supports AMD and modern Intel (1439 cycles, -19\% vs INT). Measurement environment: QEMU emulation, dedicated CPU, deterministic execution, no competing processes. Latency includes user→kernel→user transition, context setup/teardown, and return value delivery. Actual latency varies with CPU frequency (example: 1305 cycles / 3.4 GHz = 0.38 microseconds).}
+\label{fig:syscall-latency-comparison}
+\end{figure}
+
+\begin{commentary}
+\subsection*{Commentary: Understanding Syscall Latency and Mechanism Trade-offs}
+
+\subsubsection{Measurement Definition and Interpretation}
+
+Figure \ref{fig:syscall-latency-comparison} shows syscall entry latency in CPU cycles. But what does ``latency'' mean here? Each value represents the complete user-to-kernel-to-user round-trip: user process executes INT (or SYSENTER or SYSCALL), the processor transitions to kernel mode, the kernel dispatcher identifies which syscall to invoke, the kernel executes the syscall handler code, and control returns to user space.
+
+The 1305-cycle latency for SYSENTER does \textit{not} include the actual syscall handler work (writing a file, reading network data, etc.). It measures only the entry/exit machinery. In a real MINIX system where a syscall might do meaningful work (examining file system state, managing process memory), the handler typically requires 100-1000+ additional cycles. The 1305 cycles is overhead: necessary but not user-visible as computational work.
+
+The measurement environment is crucial: QEMU emulation with a dedicated CPU, no competing processes, deterministic hardware behavior. Real systems show 10-30\% variance due to cache state, thermal effects, and frequency scaling.
+
+\subsubsection{Performance Context: Significance of Cycle Counts}
+
+To interpret these numbers, consider: 1305 cycles at 3.4 GHz (typical for MINIX test environment) equals 0.38 microseconds. This seems tiny, but consider system load: a compute-intensive process making 10,000 syscalls per second would spend 3.8 milliseconds in syscall overhead alone.
+
+Compare to memory latency: L1 cache access = 4 cycles; L2 cache = 12 cycles; main RAM = 100+ cycles. A syscall (1305 cycles) costs as much as 13 L1 cache accesses or 130 main memory reads. This explains why minimizing syscalls is critical for performance-sensitive code (databases, web servers, video codecs).
+
+The differences between mechanisms matter: SYSENTER's 26\% speedup over INT translates to 0.1 microseconds saved per syscall. For a process making 100,000 syscalls per second, that's 10 milliseconds saved---significant for real-time or interactive applications.
+
+\subsubsection{Design Trade-offs: Three Mechanisms, Different Philosophies}
+
+The existence of three mechanisms reveals distinct design choices:
+
+\textbf{INT 0x80h (1772 cycles):} Universal mechanism available since x86-32. The CPU automatically saves user context (CS, EIP, EFLAGS on the stack), ensuring user code cannot corrupt the transition. Cost: the automatic save operation requires 100+ cycles of CPU work. Advantage: simple, unbreakable. Disadvantage: slow, inflexible.
+
+\textbf{SYSENTER (1305 cycles):} Intel optimization for Pentium II and later. Delegates responsibility: user code must manually save its own context before entering the kernel. The CPU does minimal work, just switching privilege level and jumping to kernel entry point. Advantage: 26\% faster than INT. Disadvantage: user code must be correct; bugs in user-space context save lead to unrecoverable faults. Availability: Intel only (not AMD K6-K8 era).
+
+\textbf{SYSCALL (1439 cycles):} AMD's competitive feature, available on all modern CPUs. A middle ground: the CPU saves some context (automatically handling privilege transition), but user code must manage return state. Advantage: 19\% faster than INT, available on both Intel and AMD. Disadvantage: more complex than INT, less optimized than SYSENTER on Intel platforms.
+
+MINIX's approach: support all three mechanisms, auto-detect and select the fastest available. This design reflects the real-world challenge: operating systems must run on diverse hardware.
+
+\subsubsection{Implications: CPU Instruction Set Evolution}
+
+These three mechanisms reveal CPU history:
+
+\begin{itemize}
+\item \textbf{1974-1997:} Only INT available (slow, universal, reliable)
+\item \textbf{1997:} Intel adds SYSENTER (Pentium Pro), AMD adds SYSCALL (competitive response)
+\item \textbf{2000-2025:} Both available on modern CPUs; INT retained for compatibility
+\end{itemize}
+
+Critical insight: CPU instruction sets never truly replace older mechanisms. They only grow. Old INT 0x80h syscalls still work today, 50 years after x86 began. This backward compatibility is why MINIX's ``support all three'' strategy succeeds: the kernel detects available hardware and chooses optimally, but all code continues to work everywhere.
+
+The three mechanisms also reveal different philosophical approaches to system design: Intel's SYSENTER philosophy emphasizes speed through responsibility delegation; AMD's SYSCALL philosophy emphasizes balance. Neither is ``correct''---both are trade-offs. MINIX's multipath design accepts the complexity of supporting both, gaining portability without sacrificing performance.
+
+\end{commentary}
+
+\input{chapters/12-syscall-cycle-analysis.tex}
+
+\section{Memory Architecture}
+
+\subsection{Virtual Address Space Layout}
+
+Each process has isolated 4 GB (0x00000000 - 0xFFFFFFFF) virtual address space:
+
+\begin{description}
+\item[0x00000000 - 0x08048000:] Reserved (unmapped)
+\item[0x08048000 - 0x0Axxxxxx:] User program (code, data, heap)
+\item[0x0Axxxxxx - 0x1Fxxxxxx:] Free space (gap)
+\item[0x1Fxxxxxx - 0xFFFFFFFF:] Stack (grows downward from 0x20000000)
+\end{description}
+
+\subsection{Kernel Virtual Space}
+
+Kernel occupies high virtual addresses (above 0x80000000):
+
+\begin{description}
+\item[0x80000000 - 0x8Dxxxxxx:] Kernel code and data (95 KB typical)
+\item[0x8Dxxxxxx - 0xFExxxxxx:] Kernel heap and page tables
+\item[0xFF000000 - 0xFFFFFFFF:] Kernel stack and temporary structures
+\end{description}
+
+\subsection{Physical-to-Virtual Mapping}
+
+\minix{} uses page-based virtual memory (x86 paging mechanism):
+
+\begin{enumerate}
+\item Page Directory (1024 PDEs) at CR3 (physical address)
+\item Page Tables (1024 PTEs per PDE) provide 4 KB page mapping
+\item Each process has separate page directory (context isolation)
+\item Kernel page tables shared across all processes
+\end{enumerate}
+
+\textbf{Memory Protection}: Page permissions (read, write, execute) enforced by MMU
+
+\subsection{Memory Access Patterns During Boot}
+
+\input{chapters/13-memory-access-patterns.tex}
+
+\section{Component Architecture}
+
+\minix{} microkernel architecture organizes functionality into discrete, independently-managed components:
+
+\subsection{Core Microkernel}
+
+\textbf{Size}: ~95 KB (compiled i386 binary)
+
+\textbf{Responsibilities}:
+\begin{enumerate}
+\item Process and thread management
+\item Virtual memory and paging
+\item Low-level message passing (IPC primitive)
+\item Interrupt and exception dispatch
+\item CPU scheduling
+\item Clock and timer management
+\end{enumerate}
+
+\textbf{Isolation}: Kernel code runs in Ring 0 (privileged mode); all other code in Ring 3
+
+\subsection{System Servers (User-Space)}
+
+\begin{description}
+\item[VFS (Virtual File System):] File operation dispatch, mount management
+\item[MFS (MINIX File System):] Inode management, disk I/O, file storage
+\item[RS (Restart Server):] Service management, automatic recovery
+\item[TTY Driver:] Terminal I/O, line buffering, signal delivery
+\item[Device Drivers:] Disk, network, keyboard, mouse, etc.
+\item[System Services:] Logging, time, random number generation
+\end{description}
+
+\textbf{Key Property}: Each server is independent process, can crash without affecting others
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.0]
+    % Hardware layer
+    \node[draw=minixdark, fill=accentgray!20, thick, minimum width=10cm, minimum height=1cm] (hardware) at (5,0.5) {Hardware: QEMU Emulated x86-64 System};
+
+    % Bootloader
+    \node[kernel, minimum width=2.5cm] (bootloader) at (1.5,2) {Bootloader};
+
+    % Kernel core
+    \node[kernel, minimum width=2.5cm] (kernel) at (4,3.5) {Kernel Core\\(95 KB)};
+
+    % Key kernel subsystems
+    \node[component, minimum width=1.8cm, minimum height=0.6cm] (mm) at (1,4.5) {Memory Mgmt};
+    \node[component, minimum width=1.8cm, minimum height=0.6cm] (ipc) at (2.8,4.5) {IPC};
+    \node[component, minimum width=1.8cm, minimum height=0.6cm] (pm) at (4.6,4.5) {Process Mgmt};
+    \node[component, minimum width=1.8cm, minimum height=0.6cm] (intr) at (6.4,4.5) {Interrupts};
+
+    % User-space services
+    \node[userspace, minimum width=1.8cm] (fs) at (0.5,6.5) {File System};
+    \node[userspace, minimum width=1.8cm] (network) at (2.3,6.5) {Network};
+    \node[userspace, minimum width=1.8cm] (audio) at (4.1,6.5) {Audio};
+    \node[userspace, minimum width=1.8cm] (drivers) at (5.9,6.5) {Drivers};
+    \node[userspace, minimum width=1.8cm] (services) at (7.7,6.5) {Services};
+
+    % User applications
+    \node[process, minimum width=1.2cm] (apps) at (4,8) {Applications};
+
+    % Connections
+    \draw[arrow] (hardware) -- (bootloader);
+    \draw[arrow] (bootloader) -- (kernel);
+
+    % Kernel subsystems
+    \draw[arrow] (kernel) -- (mm);
+    \draw[arrow] (kernel) -- (ipc);
+    \draw[arrow] (kernel) -- (pm);
+    \draw[arrow] (kernel) -- (intr);
+
+    % User-space
+    \draw[arrow] (mm) -- (fs);
+    \draw[arrow] (ipc) -- (network);
+    \draw[arrow] (pm) -- (audio);
+    \draw[arrow] (intr) -- (drivers);
+    \draw[arrow, dashed] (mm) -- (services);
+
+    % Applications
+    \draw[dashedarrow] (fs) -- (apps);
+    \draw[dashedarrow] (network) -- (apps);
+    \draw[dashedarrow] (drivers) -- (apps);
+
+    % Labels for layers
+    \node[anchor=east] at (-0.2, 0.5) {\small Hardware};
+    \node[anchor=east] at (-0.2, 2) {\small Boot};
+    \node[anchor=east] at (-0.2, 3.5) {\small Kernel};
+    \node[anchor=east] at (-0.2, 6.5) {\small Services};
+    \node[anchor=east] at (-0.2, 8) {\small Apps};
+
+\end{tikzpicture}
+\caption{Complete MINIX 3.4 system architecture showing kernel core (95 KB), kernel subsystems (memory, IPC, scheduling, interrupts), user-space services, and application layer.}
+\label{fig:minix-architecture}
+\end{figure}
+
+\section{Scheduling and Process Management}
+
+\subsection{Process Table Structure}
+
+Kernel maintains process table with ~256 slots:
+
+\begin{description}
+\item[PID:] Process identifier (1-256)
+\item[Priority:] Scheduling priority (0-15 range)
+\item[State:] Running, blocked, ready, stopped
+\item[Registers:] Saved CPU state when not running
+\item[Memory:] Virtual address space configuration
+\item[Permissions:] Access control and capability bits
+\item[Signals:] Signal handlers and pending signals
+\end{description}
+
+\subsection{Scheduling Algorithm}
+
+\minix{} uses priority-based round-robin scheduling:
+
+\begin{enumerate}
+\item Maintain ready queues per priority level (0=lowest, 15=highest)
+\item Select highest-priority ready process
+\item Execute for time quantum (typically 10-50 ms)
+\item Time quantum expires → context switch to next process at same/lower priority
+\item Interrupts and system calls may reschedule
+\end{enumerate}
+
+\section{Inter-Process Communication (IPC)}
+
+\minix{} implements synchronous message-based communication:
+
+\begin{enumerate}
+\item Sender sends message, blocks until reply
+\item Message contains sender PID, receiver PID, and up to 56 bytes of data
+\item Receiver receives message, processes, sends reply
+\item Sender resumes with reply data
+\end{enumerate}
+
+\textbf{Properties}:
+\begin{itemize}
+\item Atomic: No partial message delivery
+\item Synchronous: Sender waits for receiver
+\item Reliable: No message loss in kernel
+\item Location-transparent: Work across local network (planned)
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9]
+    % Kernel
+    \node[kernel, minimum width=3cm, minimum height=1.5cm] (kernel) at (5,6) {Kernel\\IPC Router};
+
+    % Processes
+    \node[userspace, minimum width=1.5cm] (fs) at (1,8) {Filesystem};
+    \node[userspace, minimum width=1.5cm] (net) at (3,8) {Network};
+    \node[userspace, minimum width=1.5cm] (audio) at (5,8) {Audio};
+    \node[userspace, minimum width=1.5cm] (app) at (7,8) {App};
+
+    % IPC messages
+    \draw[arrow] (fs) -- node[above] {send msg} (net);
+    \draw[arrow] (fs) -- (kernel);
+    \draw[arrow] (net) -- (kernel);
+    \draw[arrow] (audio) -- (kernel);
+    \draw[arrow] (app) -- (kernel);
+
+    \draw[arrow] (kernel) -- node[below] {route msg} (fs);
+    \draw[arrow] (kernel) -- (net);
+    \draw[arrow] (kernel) -- (audio);
+    \draw[arrow] (kernel) -- (app);
+
+    % Message queue
+    \node[data, minimum width=2cm] (queue) at (5,3.5) {Message\\Queues};
+    \draw[dashedarrow] (kernel) -- (queue);
+    \draw[dashedarrow] (queue) -- (kernel);
+
+\end{tikzpicture}
+\caption{Process and IPC architecture showing kernel message routing between independent user-space services (filesystem, network, audio, applications) with message queues for buffering.}
+\label{fig:ipc-architecture}
+\end{figure}
+
+\section{Chapter Summary}
+
+\minix{} 3.4 architecture combines processor-level efficiency (multiple syscall mechanisms) with component-level modularity (isolated servers, fault isolation). The careful use of x86 features, combined with privilege separation and message-based communication, enables a reliable microkernel system.
+
+Key architectural principles:
+\begin{itemize}
+\item Minimal kernel (95 KB) provides core services only
+\item User-space servers handle all non-critical functions
+\item Multi-tier privilege separation (Ring 0 kernel, Ring 3 servers/apps)
+\item Synchronous IPC ensures predictable message delivery
+\item Processor feature selection optimizes syscall performance
+\item Page-based virtual memory isolates processes
+\item Priority scheduling provides responsive system
+\end{itemize}
+
+The following chapters examine the complete system integration, including educational materials, implementation details, and comprehensive reference documentation.
+
+\clearpage

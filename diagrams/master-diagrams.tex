@@ -1,0 +1,93 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in,landscape]{geometry}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage{standalone}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,patterns,calc,matrix}
+
+\title{MINIX 3 CPU Interface Architecture\\Visual Reference}
+\author{Comprehensive Analysis of Microkernel-CPU Interaction}
+\date{2025-10-30}
+
+\begin{document}
+
+\maketitle
+
+\newpage
+\section{System Call Flow}
+This diagram shows the complete path of a system call from user space through the CPU hardware
+transitions, kernel processing, scheduling, and return to user space (possibly a different process).
+
+\vspace{1cm}
+\includepdf[pages=-,fitpaper]{01-system-call-flow.pdf}
+
+\newpage
+\section{Context Switch Architecture}
+This diagram illustrates the three phases of a context switch: the state before switching (Process A),
+the kernel's switching operation including the critical CR3 modification that changes address spaces,
+and the state after switching (Process B).
+
+\vspace{1cm}
+\includepdf[pages=-,fitpaper]{02-context-switch.pdf}
+
+\newpage
+\section{Privilege Ring Architecture}
+This diagram shows MINIX 3's use of x86 protection rings, highlighting that only Ring 0 (kernel)
+and Ring 3 (user/servers/drivers) are utilized. It illustrates the various gates between privilege
+levels and the IPC message flow that goes through the kernel.
+
+\vspace{1cm}
+\includepdf[pages=-,fitpaper]{03-privilege-rings.pdf}
+
+\newpage
+\section{Summary}
+
+These diagrams visualize the key CPU interface mechanisms in MINIX 3:
+
+\begin{itemize}
+    \item \textbf{System Call Flow}: Shows all three entry mechanisms (INT, SYSENTER, SYSCALL) and the
+complete path through the kernel including context saving, C handlers, scheduling, and context restoration.
+
+    \item \textbf{Context Switch}: Details the register and memory state changes that occur when the kernel
+switches between processes, with emphasis on the CR3 write that causes a TLB flush and address space change.
+
+    \item \textbf{Privilege Rings}: Illustrates the protection model with Ring 0 (microkernel) and Ring 3
+(everything else), showing the gates that allow controlled transitions between privilege levels.
+\end{itemize}
+
+\subsection{Key Files Referenced}
+
+\begin{description}
+    \item[\texttt{mpx.S}] (652 lines) - All entry/exit points, interrupt/exception handlers, context restoration
+    \item[\texttt{klib.S}] (798 lines) - Privileged instructions, CR3 manipulation, context switching
+    \item[\texttt{protect.c}] (361 lines) - GDT/IDT/TSS initialization and management
+    \item[\texttt{proc.c}] (1900+ lines) - Process management, scheduling, IPC
+    \item[\texttt{exception.c}] (240 lines) - Exception handling and CR2 access
+\end{description}
+
+\subsection{Critical CPU Operations}
+
+\begin{itemize}
+    \item \textbf{LGDT/LIDT/LTR}: Initialize CPU descriptor tables (once at boot, or per-CPU for SMP)
+    \item \textbf{MOV to/from CR3}: Switch page directories (every context switch between different address spaces)
+    \item \textbf{INVLPG}: Selective TLB invalidation (faster than full CR3 reload)
+    \item \textbf{IRET/SYSEXIT/SYSRET}: Return from kernel to user space with privilege level change
+    \item \textbf{CLI/STI}: Disable/enable interrupts for critical sections
+\end{itemize}
+
+\subsection{Compilation}
+
+These diagrams were created with TikZ/PGFPlots for publication-quality rendering. To regenerate:
+
+\begin{verbatim}
+cd /home/eirikr/Playground/minix-cpu-analysis/diagrams
+pdflatex 01-system-call-flow.tex
+pdflatex 02-context-switch.tex
+pdflatex 03-privilege-rings.tex
+pdflatex master-diagrams.tex
+\end{verbatim}
+
+\end{document}

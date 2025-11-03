@@ -1,0 +1,192 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathmorphing,backgrounds,shadows}
+
+% Define colors
+\definecolor{primaryblue}{RGB}{0,102,204}
+\definecolor{secondarygreen}{RGB}{46,204,113}
+\definecolor{accentorange}{RGB}{255,127,0}
+\definecolor{warningred}{RGB}{231,76,60}
+\definecolor{lightgray}{RGB}{236,240,241}
+\definecolor{darkgray}{RGB}{52,73,94}
+
+\begin{document}
+\begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=2pt, draw=primaryblue, fill=primaryblue!15, minimum width=5cm, minimum height=0.7cm, font=\small, align=center},
+    hw/.style={rectangle, rounded corners=2pt, draw=warningred, fill=warningred!20, minimum width=5cm, minimum height=0.7cm, font=\small, align=center},
+    kernelbox/.style={rectangle, rounded corners=2pt, draw=secondarygreen, fill=secondarygreen!15, minimum width=5cm, minimum height=0.7cm, font=\small, align=center},
+    device/.style={rectangle, rounded corners=5pt, draw=accentorange!80!black, fill=accentorange!30, minimum width=4cm, minimum height=0.8cm, font=\small, align=center, drop shadow},
+    arrow/.style={->, >=stealth, thick},
+    flow/.style={arrow, primaryblue},
+    hwflow/.style={arrow, warningred},
+    irqflow/.style={arrow, accentorange, line width=1.5pt},
+    timeline/.style={dashed, darkgray},
+    label/.style={font=\footnotesize}
+]
+
+% Title
+\node[font=\Large\bfseries] at (8, 16) {MINIX Hardware Interrupt Flow};
+\node[font=\normalsize] at (8, 15.5) {From Device IRQ to Kernel Handler (IRQ 0 Clock Tick Example)};
+
+%% LEFT PATH: Legacy PIC (8259)
+\node[font=\bfseries\large] at (4, 14.5) {Legacy PIC Path};
+
+% Hardware device
+\node[device] (dev1) at (4, 13.5) {Device: Timer (IRQ 0)};
+\node[label] at (8, 13.5) {Fires every 10ms};
+
+% PIC processing
+\node[hw] (pic1) at (4, 12.5) {PIC: Receive IRQ 0 signal};
+\node[hw] (pic2) at (4, 11.7) {PIC: Check interrupt mask};
+\node[hw] (pic3) at (4, 10.9) {PIC: Map to vector 0x20};
+\node[hw] (pic4) at (4, 10.1) {PIC: Signal CPU INTR pin};
+
+% CPU processing
+\node[hw] (cpu1) at (4, 9.2) {CPU: Finish current instruction};
+\node[hw] (cpu2) at (4, 8.4) {CPU: Check IF flag (enabled?)};
+\node[hw] (cpu3) at (4, 7.6) {CPU: INTA cycle → get vector};
+\node[hw] (cpu4) at (4, 6.8) {CPU: Lookup IDT[0x20]};
+\node[hw] (cpu5) at (4, 6.0) {CPU: Push EFLAGS, CS, EIP};
+\node[hw] (cpu6) at (4, 5.2) {CPU: Load kernel CS:EIP};
+\node[hw] (cpu7) at (4, 4.4) {CPU: Switch to TSS.ESP0};
+\node[hw] (cpu8) at (4, 3.6) {CPU: Clear IF (mask irq)};
+
+% Kernel handling
+\node[kernelbox] (kern1) at (4, 2.7) {Kernel: hwint00 (mpx.S:98)};
+\node[kernelbox] (kern2) at (4, 1.9) {Kernel: TEST\_INT\_IN\_KERNEL};
+\node[kernelbox] (kern3) at (4, 1.1) {Kernel: SAVE\_PROCESS\_CTX};
+\node[kernelbox] (kern4) at (4, 0.3) {Kernel: irq\_handle(0)};
+\node[kernelbox] (kern5) at (4, -0.5) {Kernel: Send IPC to driver};
+\node[kernelbox] (kern6) at (4, -1.3) {Kernel: OUT EOI to port 0x20};
+\node[kernelbox] (kern7) at (4, -2.1) {Kernel: switch\_to\_user()};
+\node[kernelbox] (kern8) at (4, -2.9) {Kernel: IRET};
+
+% Return
+\node[hw] (ret1) at (4, -3.7) {CPU: Pop EIP, CS, EFLAGS};
+\node[hw] (ret2) at (4, -4.5) {CPU: Resume interrupted code};
+
+% Arrows
+\draw[irqflow] (dev1) -- (pic1);
+\draw[hwflow] (pic1) -- (pic2);
+\draw[hwflow] (pic2) -- (pic3);
+\draw[hwflow] (pic3) -- (pic4);
+\draw[hwflow] (pic4) -- (cpu1);
+\draw[hwflow] (cpu1) -- (cpu2);
+\draw[hwflow] (cpu2) -- (cpu3);
+\draw[hwflow] (cpu3) -- (cpu4);
+\draw[hwflow] (cpu4) -- (cpu5);
+\draw[hwflow] (cpu5) -- (cpu6);
+\draw[hwflow] (cpu6) -- (cpu7);
+\draw[hwflow] (cpu7) -- (cpu8);
+\draw[hwflow] (cpu8) -- (kern1);
+\draw[flow] (kern1) -- (kern2);
+\draw[flow] (kern2) -- (kern3);
+\draw[flow] (kern3) -- (kern4);
+\draw[flow] (kern4) -- (kern5);
+\draw[flow] (kern5) -- (kern6);
+\draw[flow] (kern6) -- (kern7);
+\draw[flow] (kern7) -- (kern8);
+\draw[hwflow] (kern8) -- (ret1);
+\draw[hwflow] (ret1) -- (ret2);
+
+% Timing annotations
+\node[label, warningred, font=\bfseries] at (0.5, 12.5) {<1 μs};
+\node[label, warningred, font=\bfseries] at (0.5, 7.6) {~2 μs};
+\node[label, secondarygreen, font=\bfseries] at (0.5, 1.1) {~5 μs};
+\node[label, warningred, font=\bfseries] at (0.5, -3.7) {~1 μs};
+
+%% RIGHT PATH: Modern APIC
+\node[font=\bfseries\large] at (12, 14.5) {Modern APIC Path};
+
+% Device
+\node[device] (apic_dev) at (12, 13.5) {Device: NIC (IRQ 11)};
+
+% IOAPIC
+\node[hw] (ioapic1) at (12, 12.5) {IOAPIC: Receive IRQ signal};
+\node[hw] (ioapic2) at (12, 11.7) {IOAPIC: Read redirection table};
+\node[hw] (ioapic3) at (12, 10.9) {IOAPIC: Map to vector (0x40+)};
+\node[hw] (ioapic4) at (12, 10.1) {IOAPIC: Route to target LAPIC};
+
+% LAPIC
+\node[hw] (lapic1) at (12, 9.2) {LAPIC: Receive interrupt msg};
+\node[hw] (lapic2) at (12, 8.4) {LAPIC: Check priority vs current};
+\node[hw] (lapic3) at (12, 7.6) {LAPIC: Queue in IRR};
+\node[hw] (lapic4) at (12, 6.8) {LAPIC: Signal CPU if priority OK};
+
+% CPU
+\node[hw] (apic_cpu1) at (12, 5.9) {CPU: Check IF flag};
+\node[hw] (apic_cpu2) at (12, 5.1) {CPU: Lookup IDT[vector]};
+\node[hw] (apic_cpu3) at (12, 4.3) {CPU: Standard interrupt entry};
+
+% Kernel
+\node[kernelbox] (apic_kern1) at (12, 3.4) {Kernel: hwintXX (generic)};
+\node[kernelbox] (apic_kern2) at (12, 2.6) {Kernel: SAVE\_PROCESS\_CTX};
+\node[kernelbox] (apic_kern3) at (12, 1.8) {Kernel: irq\_handle(irq)};
+\node[kernelbox] (apic_kern4) at (12, 1.0) {Kernel: Send IPC};
+\node[kernelbox] (apic_kern5) at (12, 0.2) {Kernel: LAPIC EOI (MMIO)};
+\node[label, text width=5cm, align=left] at (15.5, 0.2) {
+    MMIO write to\\
+    LAPIC base + 0xB0
+};
+\node[kernelbox] (apic_kern6) at (12, -0.6) {Kernel: switch\_to\_user()};
+\node[kernelbox] (apic_kern7) at (12, -1.4) {Kernel: IRET};
+
+% Return
+\node[hw] (apic_ret1) at (12, -2.2) {CPU: Resume};
+
+% Arrows
+\draw[irqflow] (apic_dev) -- (ioapic1);
+\draw[hwflow] (ioapic1) -- (ioapic2);
+\draw[hwflow] (ioapic2) -- (ioapic3);
+\draw[hwflow] (ioapic3) -- (ioapic4);
+\draw[hwflow] (ioapic4) -- (lapic1);
+\draw[hwflow] (lapic1) -- (lapic2);
+\draw[hwflow] (lapic2) -- (lapic3);
+\draw[hwflow] (lapic3) -- (lapic4);
+\draw[hwflow] (lapic4) -- (apic_cpu1);
+\draw[hwflow] (apic_cpu1) -- (apic_cpu2);
+\draw[hwflow] (apic_cpu2) -- (apic_cpu3);
+\draw[hwflow] (apic_cpu3) -- (apic_kern1);
+\draw[flow] (apic_kern1) -- (apic_kern2);
+\draw[flow] (apic_kern2) -- (apic_kern3);
+\draw[flow] (apic_kern3) -- (apic_kern4);
+\draw[flow] (apic_kern4) -- (apic_kern5);
+\draw[flow] (apic_kern5) -- (apic_kern6);
+\draw[flow] (apic_kern6) -- (apic_kern7);
+\draw[hwflow] (apic_kern7) -- (apic_ret1);
+
+% Timing
+\node[label, warningred, font=\bfseries] at (8.5, 12.5) {<1 μs};
+\node[label, warningred, font=\bfseries] at (8.5, 8.4) {~1 μs};
+\node[label, secondarygreen, font=\bfseries] at (8.5, 2.6) {~4 μs};
+
+% Background
+\begin{scope}[on background layer]
+    \fill[lightgray!30] (0, 15) rectangle (16, -5.5);
+\end{scope}
+
+% Key differences box
+\node[rectangle, draw=accentorange, fill=accentorange!10, text width=14cm, align=left, font=\footnotesize] at (8, -5.8) {
+\textbf{PIC vs APIC:}\\
+• PIC: Two cascaded 8259 chips, 15 IRQs total, fixed mapping to vectors 0x20-0x2F\\
+• APIC: Local APIC per CPU + I/O APIC, 24+ IRQs, programmable routing, message-based\\
+• PIC EOI: OUT instruction to port 0x20 or 0xA0 (slow I/O port)\\
+• APIC EOI: MMIO write to LAPIC (faster, memory-mapped)\\
+• APIC supports inter-processor interrupts (IPI) for SMP
+};
+
+% File references
+\node[font=\footnotesize, text=darkgray, align=left] at (4, -6.8) {
+\texttt{mpx.S:74-95} hwint\_master\\
+\texttt{mpx.S:134-157} hwint\_slave\\
+\texttt{mpx.S:84,92} EOI to PIC
+};
+
+\node[font=\footnotesize, text=darkgray, align=left] at (12, -6.8) {
+\texttt{apic.c:1068} apic\_send\_ipi\\
+\texttt{apic\_asm.S} APIC handlers\\
+\texttt{apic.c} LAPIC/IOAPIC init
+};
+
+\end{tikzpicture}
+\end{document}

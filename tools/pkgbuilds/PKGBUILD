@@ -1,0 +1,162 @@
+# Maintainer: Oaich <eirikr@local>
+# MINIX Analysis Tool Suite
+
+pkgname=minix-analysis-tools
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Integrated tool suite for MINIX boot/kernel CPU interface analysis"
+arch=('x86_64')
+url="https://github.com/eirikr/minix-analysis"
+license=('MIT')
+
+# Core analysis dependencies (available in Arch repos)
+depends=(
+  'base'
+  'binutils'           # objdump, nm, readelf, addr2line
+  'gdb'               # GNU debugger with x86 support
+  'graphviz'          # graph visualization (dot, circo, etc)
+  'gnu-cflow'         # call flow analyzer
+  'cscope'            # source code indexer and search tool
+  'ctags'             # generate tag files for source code
+  'python'            # Python 3.12+ for analysis scripts
+  'python-pip'        # package installer
+  'python-pandas'     # data analysis
+  'python-matplotlib' # plotting
+  'python-networkx'   # graph analysis
+  'llvm-tools'        # llvm-objdump, llvm-nm, etc
+)
+
+# Optional enhanced analysis
+optdepends=(
+  'radare2: Advanced binary analysis and reverse engineering'
+  'capstone: Lightweight disassembly engine'
+  'unicorn: Emulation framework for CPU state tracing'
+  'valgrind: Dynamic binary instrumentation'
+  'ltrace: Library call tracer'
+)
+
+# Build-time dependencies
+makedepends=(
+  'make'
+  'git'
+  'shellcheck'        # shell script validation
+)
+
+# Test dependencies
+checkdepends=(
+  'python-pytest'
+)
+
+backup=()
+source=()
+sha256sums=()
+noextract=()
+
+prepare() {
+  # No source to prepare; this is a meta-package
+  :
+}
+
+build() {
+  # No build necessary; this is a meta-package
+  :
+}
+
+check() {
+  # Verify all dependent tools are available
+  echo "Verifying tool suite installation..."
+  
+  local tools=(
+    'objdump'
+    'gdb'
+    'dot'
+    'cflow'
+    'cscope'
+    'ctags'
+    'python'
+    'nm'
+    'readelf'
+    'addr2line'
+  )
+  
+  local missing=0
+  for tool in "${tools[@]}"; do
+    if ! command -v "$tool" &>/dev/null; then
+      echo "WARNING: $tool not found in PATH"
+      missing=$((missing+1))
+    else
+      echo "OK: $tool"
+    fi
+  done
+  
+  if [ $missing -gt 0 ]; then
+    echo "ERROR: $missing tools missing from PATH"
+    return 1
+  fi
+  
+  echo "All core tools verified successfully"
+  return 0
+}
+
+package() {
+  # Create documentation directory
+  install -dm755 "${pkgdir}/usr/share/doc/${pkgname}"
+  
+  # Install analysis helper scripts
+  install -dm755 "${pkgdir}/usr/local/bin"
+  
+  # Create symlinks to common analysis commands
+  ln -sf /usr/bin/objdump "${pkgdir}/usr/local/bin/minix-objdump"
+  ln -sf /usr/bin/gdb "${pkgdir}/usr/local/bin/minix-gdb"
+  ln -sf /usr/bin/cflow "${pkgdir}/usr/local/bin/minix-cflow"
+  
+  # Install tool inventory
+  cat > "${pkgdir}/usr/share/doc/${pkgname}/TOOLS.txt" << 'EOF'
+MINIX ANALYSIS TOOL SUITE - INSTALLED TOOLS
+============================================
+
+Core Disassembly & Binary Analysis:
+  objdump         - GNU binutils: disassembly, symbol tables
+  readelf         - ELF binary parser
+  nm              - symbol listing
+  addr2line       - address-to-source-line mapping
+  strings         - extract printable strings
+  strip           - remove symbols
+
+Debugging & Dynamic Analysis:
+  gdb             - GNU debugger (x86 target support)
+  llvm-objdump    - LLVM disassembler (alternative)
+  
+Code Analysis & Visualization:
+  cflow           - call flow/graph analyzer
+  cscope          - source code navigator
+  ctags           - source code indexer
+  graphviz        - graph visualization (dot, circo, neato)
+
+Data Analysis & Processing:
+  python          - Python 3.12+ with analysis libraries
+  python-pandas   - tabular data manipulation
+  python-networkx - graph algorithms
+  python-matplotlib - plotting and visualization
+
+Optional (install separately):
+  radare2         - advanced reverse engineering
+  capstone        - disassembly engine library
+  unicorn         - CPU emulation
+  valgrind        - dynamic instrumentation
+  ltrace          - library call tracing
+
+Configuration:
+  Location: /usr/local/bin/minix-* (wrapper commands)
+  Docs:     /usr/share/doc/minix-analysis-tools/
+  
+For MINIX boot analysis workflow:
+  1. Extract kernel: objdump -d minix.elf > kernel.asm
+  2. Generate call graph: cflow kernel.c > call_flow.txt
+  3. Visualize: cflow -b kernel.c | dot -Tpng > call_graph.png
+  4. Debug: gdb ./minix.elf (requires gdb MINIX support)
+  5. Analyze: python analysis_scripts/trace_boot.py
+EOF
+  
+  chmod 644 "${pkgdir}/usr/share/doc/${pkgname}/TOOLS.txt"
+}

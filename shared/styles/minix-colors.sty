@@ -1,0 +1,132 @@
+% minix-colors.sty
+% Unified Color Palette for MINIX Analysis Project
+% Harmonizes CPU and Boot analysis color schemes
+% Version: 1.0.0
+% Date: 2025-10-30
+%
+% Usage: \usepackage{minix-colors}
+
+\ProvidesPackage{minix-colors}[2025/10/30 v1.0.0 MINIX Analysis Unified Colors]
+
+% Required package
+\RequirePackage{xcolor}
+
+% =============================================================================
+% PRIMARY PALETTE (Unified Across All Modules)
+% =============================================================================
+%
+% This palette is used across ALL MINIX analysis modules for consistency.
+% Colors are chosen for:
+% - Professional appearance (Figma/Canva inspired)
+% - Print and screen readability
+% - Color-blind accessibility
+% - ArXiv PDF compatibility
+
+\definecolor{primaryblue}{RGB}{0,102,204}       % Professional blue
+\definecolor{secondarygreen}{RGB}{46,204,113}   % Success/completion green
+\definecolor{accentorange}{RGB}{255,127,0}      % Warning/highlight orange
+\definecolor{warningred}{RGB}{231,76,60}        % Error/critical red
+
+% =============================================================================
+% SUPPORTING COLORS (Backgrounds, Text, Borders)
+% =============================================================================
+
+\definecolor{lightgray}{RGB}{236,240,241}       % Background light
+\definecolor{darkgray}{RGB}{52,73,94}           % Text dark
+\definecolor{mediumgray}{RGB}{149,165,166}      % Muted elements
+
+% =============================================================================
+% BOOT PHASE COLORS (5-Phase Boot Sequence)
+% =============================================================================
+%
+% These colors are used specifically for boot sequence diagrams.
+% They are harmonized with the primary palette:
+% - phase1: Similar to primaryblue (early initialization)
+% - phase2: Matches secondarygreen (process setup)
+% - phase3: Unique purple (memory management)
+% - phase4: Warm orange (system services)
+% - phase5: Matches warningred (critical transition to userspace)
+
+\definecolor{phase1}{RGB}{52,152,219}           % Early C Init (light blue)
+\definecolor{phase2}{RGB}{46,204,113}           % Process Init (green) - SAME as secondarygreen
+\definecolor{phase3}{RGB}{155,89,182}           % Memory Init (purple)
+\definecolor{phase4}{RGB}{230,126,34}           % System Init (orange)
+\definecolor{phase5}{RGB}{231,76,60}            % Usermode Transition (red) - SAME as warningred
+
+% Additional boot-specific color
+\definecolor{criticalpath}{RGB}{192,57,43}      % Dark red for critical path emphasis
+
+% =============================================================================
+% CPU ANALYSIS COLORS (Legacy Compatibility)
+% =============================================================================
+%
+% These colors maintain backward compatibility with existing CPU diagrams.
+% They are light tints of primary colors for diagram backgrounds.
+
+\definecolor{cpubox}{RGB}{204,229,255}          % blue!10 equivalent (CPU flow boxes)
+\definecolor{hwbox}{RGB}{255,204,204}           % red!20 equivalent (hardware ops)
+\definecolor{annotationbg}{RGB}{255,255,204}    % yellow!30 equivalent (annotations)
+
+% =============================================================================
+% SEMANTIC COLOR ALIASES
+% =============================================================================
+%
+% Use these semantic names in diagrams instead of raw colors.
+% This allows easy theme changes by redefining aliases.
+
+% Flow diagram elements
+\colorlet{flowbox}{primaryblue!15}              % Software flow boxes
+\colorlet{hardware}{warningred!20}              % Hardware operations
+\colorlet{kernel}{secondarygreen!15}            % Kernel operations
+\colorlet{critical}{accentorange!25}            % Critical path highlights
+\colorlet{background}{lightgray!50}             % Diagram backgrounds
+
+% Code listing colors
+\colorlet{keyword}{primaryblue}                 % C keywords (if, while, etc.)
+\colorlet{comment}{secondarygreen!70!black}     % Code comments
+\colorlet{string}{warningred!80}                % String literals
+\colorlet{number}{accentorange}                 % Numeric constants
+
+% =============================================================================
+% BACKWARD COMPATIBILITY LAYER
+% =============================================================================
+%
+% Provide legacy color names for existing diagrams.
+% These can be removed after full migration to semantic names.
+
+\colorlet{blue10}{cpubox}                       % Old CPU diagram name
+\colorlet{red20}{hwbox}                         % Old hardware box name
+\colorlet{yellow30}{annotationbg}               % Old annotation name
+
+% =============================================================================
+% COLOR USAGE GUIDELINES
+% =============================================================================
+%
+% BOOT SEQUENCE DIAGRAMS:
+%   - Use phase1-phase5 for boot phase boxes
+%   - Use criticalpath for critical path emphasis
+%   - Use primaryblue for general process nodes
+%
+% CPU INTERFACE DIAGRAMS:
+%   - Use flowbox for software boxes
+%   - Use hardware for CPU/hardware operations
+%   - Use kernel for kernel-specific operations
+%   - Use critical for performance-critical paths
+%
+% CHARTS AND GRAPHS:
+%   - Use primaryblue for primary data series
+%   - Use secondarygreen for comparison/success metrics
+%   - Use accentorange for warnings/highlights
+%   - Use warningred for errors/critical data
+%
+% CODE LISTINGS:
+%   - Use keyword, comment, string, number semantic colors
+%
+% GENERAL PRINCIPLES:
+%   1. Prefer semantic names (flowbox) over raw colors (primaryblue!15)
+%   2. Use primary palette for consistency across modules
+%   3. Reserve phase1-phase5 for boot-specific diagrams
+%   4. Test colors in both print and screen media
+
+\endinput
+% End of minix-colors.sty

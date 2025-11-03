@@ -1,0 +1,30 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/eirikr/Playground/minix-analysis/logs/.84eba6a622691037cfb589e9fa0f2bd5a84a593a-audit.json",
+    "files": [
+        {
+            "date": 1761884564688,
+            "name": "/home/eirikr/Playground/minix-analysis/logs/mcp-puppeteer-2025-10-30.log",
+            "hash": "4d72037c0cd9d1c0b7747a3a027960aa0cd64ed48ab45ea579bcb030074d6a09"
+        },
+        {
+            "date": 1761928606360,
+            "name": "/home/eirikr/Playground/minix-analysis/logs/mcp-puppeteer-2025-10-31.log",
+            "hash": "2fa566a4bc5a5a1b8032f29a23525eb0d7837cdcd3c28402d81ae20552957f75"
+        },
+        {
+            "date": 1761984246224,
+            "name": "/home/eirikr/Playground/minix-analysis/logs/mcp-puppeteer-2025-11-01.log",
+            "hash": "a89aba00bd27a13b8965656533feeacc1fcfa18ee9d311973bf654e3cac3e70c"
+        },
+        {
+            "date": 1762080619431,
+            "name": "/home/eirikr/Playground/minix-analysis/logs/mcp-puppeteer-2025-11-02.log",
+            "hash": "9382683bbecd27441f2730d05f5001a46856474844e56d013e5d1f0206640471"
+        }
+    ],
+    "hashType": "sha256"
+}

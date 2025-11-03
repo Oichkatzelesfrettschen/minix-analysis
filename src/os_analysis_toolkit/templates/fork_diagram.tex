@@ -1,0 +1,49 @@
+\documentclass[tikz,border=5pt]{standalone}
+\usepackage{tikz}
+\usepackage{times}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+
+% Define colors
+\definecolor{usercolor}{RGB}{149,165,166}
+\definecolor{kernelcolor}{RGB}{52,152,219}
+\definecolor{processcolor}{RGB}{46,204,113}
+
+\begin{document}
+\begin{tikzpicture}[
+    box/.style={rectangle, minimum width=2.5cm, minimum height=0.8cm, draw=black},
+    arrow/.style={->, thick},
+    label/.style={font=\scriptsize}
+]
+
+% Title
+\node[font=\large\bfseries] at (5,-0.5) {Process Creation via fork() + exec()};
+
+% Nodes
+{{nodes}}
+
+% Arrows
+{{arrows}}
+
+% Annotations
+{{annotations}}
+
+% Process table annotation
+\node[label, above] at (proctab.north) {Copy context};
+
+% Child process creation annotation
+\node[label, above] at (child.north) {Duplicate};
+
+% Child exec annotation
+\node[label, right] at (exec.east) {Replace};
+
+% Memory state table
+\node[rectangle, draw=black, minimum width=7cm, minimum height=2cm,
+       anchor=north west] at (-0.5,-6) {};
+
+\node[label, anchor=north west, font=\small] at (-0.3,-6.25)
+     {CPU Context Transition:};
+
+{{cpu_context}}
+
+\end{tikzpicture}
+\end{document}

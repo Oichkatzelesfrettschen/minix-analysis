@@ -1,0 +1,349 @@
+% ===============================================================================
+% CHAPTER 3: METHODOLOGY
+% Experimental Framework, Data Collection, and Analysis Procedures
+% ===============================================================================
+
+\chapter{Experimental Methodology and Setup}
+\label{ch:methodology}
+
+\section{Overview}
+
+This chapter describes the comprehensive methodology, experimental setup, data collection procedures, and validation approach used to analyze \minix{} 3.4 boot sequences, system errors, and performance characteristics. Our approach combines static analysis, dynamic profiling, and empirical measurement to provide deep system insights.
+
+\section{Research Objectives}
+
+Our research objectives include:
+
+\begin{enumerate}
+\item \textbf{Boot Sequence Analysis:} Characterize timing and state transitions during system startup
+\item \textbf{Error Pattern Identification:} Catalog system errors and failure modes
+\item \textbf{Performance Profiling:} Measure boot time, context switch overhead, IPC latency
+\item \textbf{Architecture Documentation:} Explain microkernel design principles and implementation
+\item \textbf{Educational Framework:} Provide resources for OS education and research
+\item \textbf{Tool Integration:} Demonstrate Model Context Protocol for OS analysis
+\end{enumerate}
+
+\section{Hardware and Environment}
+
+\subsection{Host System}
+
+Our analysis was performed on:
+
+\begin{description}
+\item[CPU:] AMD Ryzen 5 5600X3D (6 cores, 12 threads, 3.4-4.6 GHz)
+\item[RAM:] 32 GB DDR4-3200
+\item[Storage:] NVMe SSD (Samsung 970 EVO)
+\item[GPU:] NVIDIA RTX 4070 Ti (optional, for visualization)
+\item[OS:] CachyOS (Arch-based, rolling release)
+\item[Kernel:] linux-cachyos (BORE scheduler)
+\end{description}
+
+\subsection{MINIX 3.4 Environment}
+
+\minix{} 3.4 was executed in:
+
+\begin{itemize}
+\item \textbf{Emulation:} QEMU system emulator (version 8.x)
+\item \textbf{Machine Type:} i386 PC-compatible (32-bit emulation)
+\item \textbf{Memory:} 512 MB allocated to \minix{} guest
+\item \textbf{Disk:} 2 GB virtual disk image
+\item \textbf{Network:} User-mode networking enabled
+\end{itemize}
+
+\subsection{Development Tools}
+
+\begin{itemize}
+\item \textbf{Compilers:} GCC 13.x, Clang 17.x
+\item \textbf{Build System:} Make, CMake
+\item \textbf{Version Control:} Git 2.x
+\item \textbf{Analysis Tools:} Python 3.11, custom analysis scripts
+\item \textbf{Visualization:} TikZ/PGFPlots, \minix{} system tools
+\item \textbf{Documentation:} \LaTeX{} (texlive-full), Markdown
+\end{itemize}
+
+\section{Data Collection Procedures}
+
+\subsection{Boot Sequence Logging}
+
+Boot sequence data was collected through:
+
+\begin{enumerate}
+\item \textbf{Serial Console Capture:} Output from \code{/dev/ttyS0} redirected to file
+\item \textbf{Kernel Ring Buffer:} Boot messages logged by kernel
+\item \textbf{Init Script Output:} Service startup messages captured
+\item \textbf{System Call Tracing:} \code{strace}-like output (where available)
+\item \textbf{Memory Snapshots:} Process table dump at boot milestones
+\end{enumerate}
+
+\subsection{Error Detection}
+
+Errors were identified through:
+
+\begin{itemize}
+\item \textbf{Log Analysis:} Parsing boot logs for error messages
+\item \textbf{Regex Pattern Matching:} Identifying error signatures
+\item \textbf{System Call Returns:} Detecting negative return values
+\item \textbf{Manual Testing:} Deliberate error injection and observation
+\item \textbf{Kernel Panic Messages:} Fatal error conditions
+\end{itemize}
+
+\subsection{Performance Measurement}
+
+Performance data was collected via:
+
+\begin{itemize}
+\item \textbf{Wall Clock Timing:} Boot-to-shell time measurement
+\item \textbf{Timestamp Extraction:} Boot log timestamp analysis
+\item \textbf{Process Profiling:} Individual process startup times
+\item \textbf{Context Switches:} Number of context switches during boot
+\item \textbf{IPC Message Counts:} Message passing frequency
+\end{itemize}
+
+Data collection proceeds through a structured pipeline from boot execution through analysis and reporting:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9]
+    % Boot execution
+    \node[component] (boot) at (1,5) {MINIX Boot};
+
+    % Log generation
+    \node[data] (log) at (1,3.5) {Boot Log};
+
+    % Analysis
+    \node[component] (triage) at (3,3.5) {Error\\Triage};
+    \node[component] (metrics) at (5,3.5) {Metrics\\Extract};
+
+    % Database
+    \node[data] (db) at (4,1.5) {SQLite DB};
+
+    % Reports
+    \node[component] (report) at (2,0) {Daily\\Report};
+    \node[component] (dashboard) at (4,0) {Dashboard};
+    \node[component] (analyze) at (6,0) {Analysis};
+
+    % Connections
+    \draw[arrow] (boot) -- (log);
+    \draw[arrow] (log) -- (triage);
+    \draw[arrow] (log) -- (metrics);
+    \draw[arrow] (triage) -- (db);
+    \draw[arrow] (metrics) -- (db);
+
+    \draw[arrow] (db) -- (report);
+    \draw[arrow] (db) -- (dashboard);
+    \draw[arrow] (db) -- (analyze);
+
+\end{tikzpicture}
+\caption{Data pipeline architecture showing progression from MINIX boot execution through log capture, error triage, metrics extraction, database storage, and final reporting/analysis outputs.}
+\label{fig:data-pipeline}
+\end{figure}
+
+\section{Analysis Procedures}
+
+\subsection{Boot Sequence Analysis}
+
+Boot sequence analysis followed these steps:
+
+\begin{enumerate}
+\item \textbf{Log Parsing:} Extract timestamps, process IDs, messages
+\item \textbf{Timeline Construction:} Order events chronologically
+\item \textbf{Phase Identification:} Identify major boot phases (BIOS, kernel, init, services, login)
+\item \textbf{Bottleneck Analysis:} Identify slowest components
+\item \textbf{Visualization:} Create timeline and flow diagrams
+\end{enumerate}
+
+The experimental workflow iterates through boot, analysis, and validation cycles until consistent valid results are obtained:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.85]
+    \node[component] (setup) at (1,8) {Setup QEMU};
+    \node[component] (config) at (3,8) {Configure};
+    \node[process] (boot) at (5,8) {Boot};
+
+    \node[data] (log) at (5,6) {Capture Log};
+
+    \node[component] (analyze) at (3,4) {Analyze};
+    \node[component] (triage) at (5,4) {Triage};
+    \node[component] (metrics) at (7,4) {Metrics};
+
+    \node[data] (results) at (5,2) {Results};
+
+    \node[decision] (valid) at (5,0.5) {Valid?};
+    \node[component] (aggregate) at (7,-1) {Aggregate};
+    \node[process] (complete) at (5,-2) {Complete};
+
+    % Connections
+    \draw[arrow] (setup) -- (config);
+    \draw[arrow] (config) -- (boot);
+    \draw[arrow] (boot) -- (log);
+    \draw[arrow] (log) -- (analyze);
+    \draw[arrow] (analyze) -- (triage);
+    \draw[arrow] (analyze) -- (metrics);
+    \draw[arrow] (triage) -- (results);
+    \draw[arrow] (metrics) -- (results);
+    \draw[arrow] (results) -- (valid);
+    \draw[arrow] (valid) -- node[right] {Yes} (aggregate);
+    \draw[arrow] (valid) -- node[left] {No} (setup);
+    \draw[arrow] (aggregate) -- (complete);
+
+\end{tikzpicture}
+\caption{Experimental workflow showing iteration through setup, boot, analysis, and validation cycles until consistent valid results are obtained.}
+\label{fig:experimental-workflow}
+\end{figure}
+
+\subsection{Error Catalog Development}
+
+Error catalog was developed through:
+
+\begin{enumerate}
+\item \textbf{Error Collection:} Gather all observed errors
+\item \textbf{Classification:} Categorize by type, severity, component
+\item \textbf{Pattern Recognition:} Identify error causal relationships
+\item \textbf{Frequency Analysis:} Determine error prevalence
+\item \textbf{Documentation:} Document each error with reproduction steps
+\end{enumerate}
+
+\subsection{Architecture Analysis}
+
+Architecture analysis involved:
+
+\begin{enumerate}
+\item \textbf{Source Code Review:} Examine \minix{} kernel and server code
+\item \textbf{Component Mapping:} Identify system components and relationships
+\item \textbf{Data Flow Analysis:} Trace data movement through system
+\item \textbf{IPC Analysis:} Map message passing patterns
+\item \textbf{Diagram Creation:} Visualize architecture with TikZ
+\end{enumerate}
+
+\section{Data Validation and Verification}
+
+\subsection{Validation Procedures}
+
+Results were validated through:
+
+\begin{itemize}
+\item \textbf{Reproducibility:} Multiple boot runs, consistent results
+\item \textbf{Cross-Correlation:} Compare different measurement methods
+\item \textbf{Source Verification:} Check against official documentation
+\item \textbf{Expert Review:} Validate against published research
+\item \textbf{Error Verification:} Test error reproduction procedures
+\end{itemize}
+
+\subsection{Quality Assurance}
+
+Quality assurance included:
+
+\begin{itemize}
+\item \textbf{Log Completeness:} Verify all boot output captured
+\item \textbf{Timestamp Accuracy:} Validate timing measurements
+\item \textbf{Error Classification:} Verify error categorization
+\item \textbf{Documentation Accuracy:} Check chapter content against source data
+\item \textbf{Diagram Accuracy:} Verify diagrams match implementation
+\end{itemize}
+
+\section{Analysis Framework}
+
+\subsection{Boot Sequence Metrics}
+
+Key metrics for boot analysis:
+
+\begin{description}
+\item[Total Boot Time:] Time from BIOS start to login shell
+\item[Phase Durations:] Time for each major boot phase
+\item[Process Startup Time:] Individual process initialization time
+\item[Context Switches:] Number of CPU context switches
+\item[IPC Message Count:] Number of message passing operations
+\item[Memory Usage:] Peak and steady-state memory consumption
+\end{description}
+
+\subsection{Error Metrics}
+
+Error classification dimensions:
+
+\begin{description}
+\item[Severity:] Critical (system failure), Warning (degraded function), Info (normal operation)
+\item[Component:] Kernel, file system, driver, shell, application
+\item[Type:] Permission denied, file not found, I/O error, memory error, protocol error
+\item[Frequency:] Rare (< 1 occurrence), Occasional (1-10), Common (> 10 per boot)
+\item[Recovery:] Automatic, Manual intervention, Unrecoverable
+\end{description}
+
+\section{Model Context Protocol Integration}
+
+This research integrated the Model Context Protocol to demonstrate:
+
+\begin{itemize}
+\item \textbf{Automated Data Collection:} MCP servers for log analysis
+\item \textbf{Database Integration:} SQLite for error catalog storage
+\item \textbf{External Tool Integration:} Docker support for isolated testing
+\item \textbf{Dynamic Querying:} On-demand analysis of boot data
+\item \textbf{Extensibility:} Framework for adding new analysis tools
+\end{itemize}
+
+\section{Tool Implementation}
+
+\subsection{Python Analysis Tools}
+
+Custom tools developed:
+
+\begin{itemize}
+\item \code{minix\_source\_analyzer.py:} Extracts architecture from source code
+\item \code{boot\_log\_parser.py:} Parses boot sequence logs
+\item \code{error\_classifier.py:} Categorizes and analyzes errors
+\item \code{tikz\_generator.py:} Generates TikZ diagrams from data
+\end{itemize}
+
+\subsection{Data Storage}
+
+Analysis data stored in:
+
+\begin{itemize}
+\item \code{diagrams/data/} - JSON files with extracted metrics
+\item \code{database.db} - SQLite database of errors and patterns
+\item \code{analysis-logs/} - Raw and processed boot logs
+\item \code{reports/} - Generated analysis reports
+\end{itemize}
+
+\section{Limitations and Assumptions}
+
+\subsection{Limitations}
+
+Our analysis has these limitations:
+
+\begin{enumerate}
+\item \textbf{Emulation:} QEMU emulation may not reflect real hardware timing
+\item \textbf{Memory Constraints:} 512 MB allocation may not match production systems
+\item \textbf{Single-boot Analysis:} Limited multiprocessor interaction analysis
+\item \textbf{Source Code Access:} Some proprietary drivers not analyzed
+\item \textbf{Time Window:} Analysis snapshot of MINIX 3.4, not continuous updates
+\end{enumerate}
+
+\subsection{Assumptions}
+
+We assumed:
+
+\begin{enumerate}
+\item \textbf{Default Configuration:} Standard MINIX 3.4 configuration, no custom modifications
+\item \textbf{Clean Environment:} No preexisting errors or corrupted state
+\item \textbf{Cooperative Processes:} No intentionally adversarial processes
+\item \textbf{Accurate Timestamps:} Boot logs contain accurate timing information
+\end{enumerate}
+
+\section{Reproducibility}
+
+All analysis procedures are documented for reproducibility:
+
+\begin{itemize}
+\item \textbf{Source Code:} Published in GitHub repository
+\item \textbf{Data:} Boot logs and error catalogs included
+\item \textbf{Scripts:} Analysis tools available for download
+\item \textbf{Documentation:} Step-by-step guides for replication
+\item \textbf{Version Information:} Specific tool and library versions documented
+\end{itemize}
+
+\section{Chapter Summary}
+
+This chapter established the experimental framework and methodology for deep system analysis of \minix{} 3.4. The combination of static analysis, dynamic profiling, and empirical measurement provides comprehensive understanding of OS behavior. The following chapters present the results of this analysis.
+
+\clearpage

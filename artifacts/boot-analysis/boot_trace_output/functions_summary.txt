@@ -1,0 +1,43 @@
+MINIX KERNEL BOOT SEQUENCE ANALYSIS
+===================================
+
+Entry Point: kmain
+Source File: /home/eirikr/Playground/minix/minix/kernel/main.c
+
+Total unique functions discovered: 34
+
+Call Graph:
+kmain -> add_memmap [/home/eirikr/Playground/minix/minix/kernel/arch/earm/include/arch_proto.h]
+kmain -> arch_boot_proc [/home/eirikr/Playground/minix/minix/kernel/arch/earm/protect.c]
+kmain -> arch_post_init [/home/eirikr/Playground/minix/minix/kernel/arch/earm/protect.c]
+kmain -> arch_ser_init [/home/eirikr/Playground/minix/minix/kernel/arch/earm/include/arch_proto.h]
+kmain -> BKL_LOCK [EXTERNAL]
+kmain -> bsp_finish_booting [/home/eirikr/Playground/minix/minix/kernel/proto.h]
+kmain -> cstart [/home/eirikr/Playground/minix/minix/kernel/proto.h]
+kmain -> DEBUGBASIC [EXTERNAL]
+kmain -> DEBUGEXTRA [EXTERNAL]
+kmain -> env_get [EXTERNAL]
+kmain -> fill_sendto_mask [/home/eirikr/Playground/minix/minix/kernel/proto.h]
+kmain -> get_board_id_by_name [EXTERNAL]
+kmain -> get_cpulocal_var [EXTERNAL]
+kmain -> get_priv [/home/eirikr/Playground/minix/minix/kernel/proto.h]
+kmain -> IPCF_POOL_INIT [EXTERNAL]
+kmain -> IPCNAME [EXTERNAL]
+kmain -> iskerneln [EXTERNAL]
+kmain -> isrootsysn [EXTERNAL]
+kmain -> main [/home/eirikr/Playground/minix/minix/drivers/iommu/amddev/amddev.c]
+kmain -> memory_init [/home/eirikr/Playground/minix/minix/kernel/arch/earm/memory.c]
+kmain -> name [EXTERNAL]
+kmain -> panic [/home/eirikr/Playground/minix/minix/include/minix/sysutil.h]
+kmain -> priv [EXTERNAL]
+kmain -> proc_addr [EXTERNAL]
+kmain -> proc_init [/home/eirikr/Playground/minix/minix/kernel/proc.c]
+kmain -> proc_nr [EXTERNAL]
+kmain -> reset_proc_accounting [/home/eirikr/Playground/minix/minix/kernel/proc.c]
+kmain -> RTS_SET [EXTERNAL]
+kmain -> set_sys_bit [EXTERNAL]
+kmain -> smp_init [/home/eirikr/Playground/minix/minix/kernel/arch/i386/arch_smp.c]
+kmain -> smp_single_cpu_fallback [EXTERNAL]
+kmain -> static_priv_id [EXTERNAL]
+kmain -> strlcpy [EXTERNAL]
+kmain -> system_init [/home/eirikr/Playground/minix/minix/kernel/proto.h]

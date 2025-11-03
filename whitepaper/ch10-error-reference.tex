@@ -1,0 +1,339 @@
+% ===============================================================================
+% CHAPTER 10: ERROR REFERENCE AND TROUBLESHOOTING GUIDE
+% ===============================================================================
+
+\chapter{Error Reference and Troubleshooting}
+\label{ch:errorreference}
+
+This chapter provides comprehensive reference for the 15-error detection framework, quick lookup guides, troubleshooting procedures, and recovery mechanisms.
+
+The general error detection and recovery workflow is illustrated in Figure~\ref{fig:error-recovery-flowchart}, which shows how the system detects errors, classifies them, and executes appropriate recovery procedures.
+
+\begin{figure}[!htbp]
+\centering
+\begin{tikzpicture}[scale=0.95]
+    % Start
+    \node[decision] (detect) at (4, 9) {Error\\Detected?};
+
+    % Detection methods
+    \node[action] (method1) at (1.5, 7.5) {Return Value\\Check};
+    \node[action] (method2) at (4, 7.5) {State\\Assertion};
+    \node[action] (method3) at (6.5, 7.5) {Memory\\Boundary};
+
+    \draw[arrow] (detect) -- (method1);
+    \draw[arrow] (detect) -- (method2);
+    \draw[arrow] (detect) -- (method3);
+    \draw[arrow] (method1) -- (4, 6.5);
+    \draw[arrow] (method2) -- (4, 6.5);
+    \draw[arrow] (method3) -- (4, 6.5);
+
+    % Classification
+    \node[decision] (classify) at (4, 6) {Classify Using\\15-Error Taxonomy};
+
+    \draw[arrow] (detect) -- (classify);
+
+    % Recovery path decision
+    \node[decision] (recovery) at (4, 4.5) {Recovery\\Type?};
+
+    \draw[arrow] (classify) -- (recovery);
+
+    % Recovery types
+    \node[active] (auto) at (0.5, 2.5) {Automatic\\Recovery};
+    \node[action] (guided) at (2.5, 2.5) {Guided\\Recovery};
+    \node[warning] (manual) at (4.5, 2.5) {Manual\\Recovery};
+    \node[error] (critical) at (6.5, 2.5) {Critical\\Halt};
+
+    \draw[arrow] (recovery) -- (auto);
+    \draw[arrow] (recovery) -- (guided);
+    \draw[arrow] (recovery) -- (manual);
+    \draw[arrow] (recovery) -- (critical);
+
+    % Recovery actions
+    \node[action] (autoact) at (0.5, 1) {Retry\\Restart\\Reclaim};
+
+    \node[action] (guideact) at (2.5, 1) {Diagnose\\Propose\\Confirm};
+
+    \node[action] (manualact) at (4.5, 1) {Log State\\Notify Admn\\Wait};
+
+    \node[error] (halt) at (6.5, 1) {System\\Halt};
+
+    \draw[arrow] (auto) -- (autoact);
+    \draw[arrow] (guided) -- (guideact);
+    \draw[arrow] (manual) -- (manualact);
+    \draw[arrow] (critical) -- (halt);
+
+    % Recovery verification
+    \node[decision] (verify) at (2.5, -0.5) {Recovery\\Success?};
+
+    \draw[arrow] (autoact) -- (verify);
+    \draw[arrow] (guideact) -- (verify);
+    \draw[arrow] (manualact) -- (verify);
+
+    % Success/Failure outcomes
+    \node[active] (success) at (1, -2) {System\\Continues};
+
+    \node[error] (failure) at (4, -2) {Escalate\\to Critical};
+
+    \draw[arrow] (verify) -- node[anchor=south] {Yes} (success);
+    \draw[arrow] (verify) -- node[anchor=north] {No} (failure);
+
+    % Logging
+    \node[data] (log) at (1, -3.5) {Log Event};
+    \draw[arrow] (success) -- (log);
+    \draw[arrow] (failure) -- (log);
+
+\end{tikzpicture}
+\caption{Error Detection and Recovery Flowchart. When an error is detected, the system classifies it using the 15-error taxonomy, selects an appropriate recovery strategy (automatic, guided, manual, or critical halt), executes recovery actions, verifies success, and logs the event. Escalation occurs if recovery fails.}
+\label{fig:error-recovery-flowchart}
+\end{figure}
+
+% ===============================================================================
+\section{Error Classification Framework}
+% ===============================================================================
+
+\subsection{15-Error Taxonomy}
+
+The error detection framework classifies system errors into 15 categories:
+
+\begin{enumerate}
+\item \textbf{Boot-Time Initialization Errors}
+  \begin{itemize}
+  \item Detection during kernel startup phases
+  \item Causes: Hardware missing, firmware incompatible, memory errors
+  \item Recovery: Diagnostic output, alternate boot paths
+  \end{itemize}
+
+\item \textbf{Memory Management Errors}
+  \begin{itemize}
+  \item Allocation failures, page table corruption, segmentation
+  \item Causes: Insufficient memory, fragmentation, protection violations
+  \item Recovery: Memory reclamation, service restart
+  \end{itemize}
+
+\item \textbf{Inter-Process Communication (IPC) Errors}
+  \begin{itemize}
+  \item Message delivery failure, protocol violations, queue overflow
+  \item Causes: Dead service, message buffer full, invalid destination
+  \item Recovery: Service restart, message queue flush
+  \end{itemize}
+
+\item \textbf{Interrupt and Exception Handling Errors}
+  \begin{itemize}
+  \item Invalid interrupt vectors, unhandled exceptions
+  \item Causes: Hardware fault, invalid IDT, privilege violations
+  \item Recovery: Interrupt masking, handler reload
+  \end{itemize}
+
+\item \textbf{System Call Parameter Validation Errors}
+  \begin{itemize}
+  \item Invalid parameters, out-of-range values, malformed requests
+  \item Causes: Application bug, malicious input, protocol mismatch
+  \item Recovery: Parameter rejection with EINVAL, audit log
+  \end{itemize}
+
+\item \textbf{Driver and Service Process Errors}
+  \begin{itemize}
+  \item Device driver failures, service init errors
+  \item Causes: Hardware not ready, missing firmware, startup failure
+  \item Recovery: Driver restart, fallback to alternate
+  \end{itemize}
+
+\item \textbf{Privilege Level Violation Errors}
+  \begin{itemize}
+  \item Unauthorized kernel access, ring violations
+  \item Causes: Application bug, security violation, transition error
+  \item Recovery: Process termination, audit log
+  \end{itemize}
+
+\item \textbf{Context Switch and Register Corruption Errors}
+  \begin{itemize}
+  \item Corrupted process state, invalid register values
+  \item Causes: Stack overflow, buffer overrun, memory write error
+  \item Recovery: Process abort, register restoration
+  \end{itemize}
+
+\item \textbf{State Machine Invalid Transition Errors}
+  \begin{itemize}
+  \item Kernel state machine enters invalid state
+  \item Causes: Race condition, protocol violation, state corruption
+  \item Recovery: State reset to known-good value
+  \end{itemize}
+
+\item \textbf{Resource Exhaustion Errors}
+  \begin{itemize}
+  \item Process table full, file descriptor limits, memory limits
+  \item Causes: Too many processes, resource leak, DOS condition
+  \item Recovery: Process cleanup, resource adjustment
+  \end{itemize}
+
+\item \textbf{Configuration Inconsistency Errors}
+  \begin{itemize}
+  \item Invalid kernel configuration, incompatible settings
+  \item Causes: Manual config editing, version mismatch, corruption
+  \item Recovery: Configuration validation, defaults restoration
+  \end{itemize}
+
+\item \textbf{Data Structure Corruption Errors}
+  \begin{itemize}
+  \item Corrupted kernel structures (process table, file table)
+  \item Causes: Memory corruption, out-of-bounds write, hardware error
+  \item Recovery: Structure rebuild from backup, system halt
+  \end{itemize}
+
+\item \textbf{Timeout and Deadlock Condition Errors}
+  \begin{itemize}
+  \item System calls hanging, circular wait conditions
+  \item Causes: Deadlock between processes, unresponsive hardware
+  \item Recovery: Timeout interrupt, process force termination
+  \end{itemize}
+
+\item \textbf{Recovery Mechanism Failure Errors}
+  \begin{itemize}
+  \item Recovery procedure itself fails
+  \item Causes: Recovery dependencies missing, cascading failures
+  \item Recovery: Escalate to manual intervention
+  \end{itemize}
+
+\item \textbf{Synchronization and Race Condition Errors}
+  \begin{itemize}
+  \item Improper mutual exclusion, race conditions
+  \item Causes: Missing locks, lock ordering violations, timing windows
+  \item Recovery: Retry with synchronization, abort operation
+  \end{itemize}
+\end{enumerate}
+
+% ===============================================================================
+\section{Quick Reference Guide}
+% ===============================================================================
+
+\subsection{Symptom-Based Error Lookup}
+
+\begin{description}
+\item[System won't boot] See Boot-Time Initialization Errors (Error \#1)
+\item[Out of memory] See Memory Management Errors (Error \#2)
+\item[Service crashes] See IPC Errors (\#3) or Service Errors (\#6)
+\item[Permission denied] See Privilege Violation Errors (Error \#7)
+\item[Segmentation fault] See Memory Errors (\#2) or Context Switch Errors (\#8)
+\item[System call fails] See Parameter Validation Errors (Error \#5)
+\item[System hangs] See Timeout Errors (\#13) or Race Conditions (\#15)
+\item[System unstable] See Data Corruption (\#12) or State Machine Errors (\#9)
+\end{description}
+
+\subsection{Error Severity Levels}
+
+Errors classified by severity:
+
+\begin{description}
+\item[CRITICAL] System must halt immediately (data corruption, privilege violation)
+\item[HIGH] Service or process must restart (IPC failure, resource exhaustion)
+\item[MEDIUM] Operation fails but system continues (parameter error, timeout)
+\item[LOW] Warning condition, operation retries (transient failure, retriable)
+\end{description}
+
+% ===============================================================================
+\section{Troubleshooting Procedures}
+% ===============================================================================
+
+\subsection{Boot Failure Troubleshooting}
+
+If system fails to boot:
+
+\begin{enumerate}
+\item Check console output for error messages
+\item Note exact error message and location in boot sequence
+\item Refer to Error Taxonomy above to identify error type
+\item Follow recovery procedure for that error
+\item If recovery fails, gather system state for analysis
+\end{enumerate}
+
+\TODO{Provide actual boot failure logs and diagnosis examples}
+
+\subsection{Runtime Error Troubleshooting}
+
+If error occurs during normal operation:
+
+\begin{enumerate}
+\item Identify affected service or process
+\item Check system logs (kernel ring buffer or system log file)
+\item Determine if automatic recovery occurred
+\item If automatic recovery failed, perform manual recovery
+\item Report issue if problem persists
+\end{enumerate}
+
+\TODO{Document log file locations and analysis techniques}
+
+\subsection{Performance Troubleshooting}
+
+If system performs poorly:
+
+\begin{enumerate}
+\item Check CPU utilization and load
+\item Monitor memory usage (free memory, swap)
+\item Verify disk I/O performance
+\item Check IPC message queue depths
+\item Identify CPU hotspots via profiling
+\end{enumerate}
+
+\TODO{Provide performance diagnostic tools}
+
+% ===============================================================================
+\section{Recovery Procedures}
+% ===============================================================================
+
+\subsection{Automatic Recovery}
+
+Many errors trigger automatic recovery:
+
+\begin{enumerate}
+\item \textbf{Detection:} Error condition detected by kernel
+\item \textbf{Classification:} Error mapped to recovery category
+\item \textbf{Action:} Recovery procedure executed:
+  \begin{itemize}
+  \item Service restart
+  \item Memory reclamation
+  \item Queue flush
+  \item State reset
+  \end{itemize}
+\item \textbf{Verification:} Confirm recovery succeeded
+\item \textbf{Logging:} Record action for diagnostics
+\end{enumerate}
+
+\TODO{Document all automatic recovery procedures}
+
+\subsection{Guided Recovery}
+
+Some errors require user confirmation:
+
+\begin{enumerate}
+\item System detects error and proposes recovery
+\item User is informed of proposed action
+\item User confirms or rejects recovery
+\item If accepted: Execute recovery procedure
+\item If rejected: Log decision and escalate
+\end{enumerate}
+
+\TODO{Provide recovery proposal examples}
+
+\subsection{Manual Recovery}
+
+Critical errors require manual intervention:
+
+\begin{enumerate}
+\item System halts to prevent damage
+\item Error state written to console and log
+\item Administrator reviews error and state
+\item Administrator executes manual recovery:
+  \begin{itemize}
+  \item Service restart from command line
+  \item Configuration correction
+  \item System reset
+  \end{itemize}
+\end{enumerate}
+
+\TODO{Create manual recovery procedures}
+
+% ===============================================================================
+\section{Chapter Summary}
+% ===============================================================================
+
+This chapter provided comprehensive reference material for error detection, troubleshooting, and recovery. The 15-error taxonomy, quick lookup guides, and recovery procedures enable rapid error identification and appropriate remediation.

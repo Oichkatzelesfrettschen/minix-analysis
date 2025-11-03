@@ -1,0 +1,653 @@
+{
+  "kernel_core": [],
+  "system_calls": [
+    {
+      "name": "abort",
+      "file": "minix/kernel/system/do_abort.c",
+      "signature": "int do_abort(struct proc * caller, message * m_ptr) {",
+      "line_count": 29
+    },
+    {
+      "name": "irqctl",
+      "file": "minix/kernel/system/do_irqctl.c",
+      "signature": "int do_irqctl(struct proc * caller, message * m_ptr) {",
+      "line_count": 174
+    },
+    {
+      "name": "trace",
+      "file": "minix/kernel/system/do_trace.c",
+      "signature": "int do_trace(struct proc * caller, message * m_ptr) {",
+      "line_count": 208
+    },
+    {
+      "name": "clear",
+      "file": "minix/kernel/system/do_clear.c",
+      "signature": "int do_clear(struct proc * caller, message * m_ptr) {",
+      "line_count": 80
+    },
+    {
+      "name": "diagctl",
+      "file": "minix/kernel/system/do_diagctl.c",
+      "signature": "int do_diagctl(struct proc * caller, message * m_ptr) {",
+      "line_count": 68
+    },
+    {
+      "name": "getksig",
+      "file": "minix/kernel/system/do_getksig.c",
+      "signature": "int do_getksig(struct proc * caller, message * m_ptr) {",
+      "line_count": 43
+    },
+    {
+      "name": "getinfo",
+      "file": "minix/kernel/system/do_getinfo.c",
+      "signature": "int do_getinfo(struct proc * caller, message * m_ptr) {",
+      "line_count": 228
+    },
+    {
+      "name": "stime",
+      "file": "minix/kernel/system/do_stime.c",
+      "signature": "int do_stime(struct proc * caller, message * m_ptr) {",
+      "line_count": 19
+    },
+    {
+      "name": "schedule",
+      "file": "minix/kernel/system/do_schedule.c",
+      "signature": "int do_schedule(struct proc * caller, message * m_ptr) {",
+      "line_count": 30
+    },
+    {
+      "name": "vdevio",
+      "file": "minix/kernel/system/do_vdevio.c",
+      "signature": "int do_vdevio(struct proc * caller, message * m_ptr) {",
+      "line_count": 165
+    },
+    {
+      "name": "schedctl",
+      "file": "minix/kernel/system/do_schedctl.c",
+      "signature": "int do_schedctl(struct proc * caller, message * m_ptr) {",
+      "line_count": 46
+    },
+    {
+      "name": "sigsend",
+      "file": "minix/kernel/system/do_sigsend.c",
+      "signature": "int do_sigsend(struct proc * caller, message * m_ptr) {",
+      "line_count": 166
+    },
+    {
+      "name": "safememset",
+      "file": "minix/kernel/system/do_safememset.c",
+      "signature": "int do_safememset(struct proc *caller, message *m_ptr) {",
+      "line_count": 57
+    },
+    {
+      "name": "devio",
+      "file": "minix/kernel/system/do_devio.c",
+      "signature": "int do_devio(struct proc * caller, message * m_ptr) {",
+      "line_count": 107
+    },
+    {
+      "name": "umap_remote",
+      "file": "minix/kernel/system/do_umap_remote.c",
+      "signature": "int do_umap_remote(struct proc * caller, message * m_ptr) {",
+      "line_count": 122
+    },
+    {
+      "name": "exit",
+      "file": "minix/kernel/system/do_exit.c",
+      "signature": "int do_exit(struct proc * caller, message * m_ptr) {",
+      "line_count": 27
+    },
+    {
+      "name": "sprofile",
+      "file": "minix/kernel/system/do_sprofile.c",
+      "signature": "int do_sprofile(struct proc * caller, message * m_ptr) {",
+      "line_count": 132
+    },
+    {
+      "name": "umap",
+      "file": "minix/kernel/system/do_umap.c",
+      "signature": "int do_umap(struct proc * caller, message * m_ptr) {",
+      "line_count": 39
+    },
+    {
+      "name": "copy",
+      "file": "minix/kernel/system/do_copy.c",
+      "signature": "int do_copy(struct proc * caller, message * m_ptr) {",
+      "line_count": 91
+    },
+    {
+      "name": "settime",
+      "file": "minix/kernel/system/do_settime.c",
+      "signature": "int do_settime(struct proc * caller, message * m_ptr) {",
+      "line_count": 58
+    },
+    {
+      "name": "times",
+      "file": "minix/kernel/system/do_times.c",
+      "signature": "int do_times(struct proc * caller, message * m_ptr) {",
+      "line_count": 46
+    },
+    {
+      "name": "vtimer",
+      "file": "minix/kernel/system/do_vtimer.c",
+      "signature": "int do_vtimer(struct proc * caller, message * m_ptr) {",
+      "line_count": 103
+    },
+    {
+      "name": "runctl",
+      "file": "minix/kernel/system/do_runctl.c",
+      "signature": "int do_runctl(struct proc * caller, message * m_ptr) {",
+      "line_count": 76
+    },
+    {
+      "name": "sigreturn",
+      "file": "minix/kernel/system/do_sigreturn.c",
+      "signature": "int do_sigreturn(struct proc * caller, message * m_ptr) {",
+      "line_count": 98
+    },
+    {
+      "name": "fork",
+      "file": "minix/kernel/system/do_fork.c",
+      "signature": "int do_fork(struct proc * caller, message * m_ptr) {",
+      "line_count": 136
+    },
+    {
+      "name": "endksig",
+      "file": "minix/kernel/system/do_endksig.c",
+      "signature": "int do_endksig(struct proc * caller, message * m_ptr) {",
+      "line_count": 41
+    },
+    {
+      "name": "vmctl",
+      "file": "minix/kernel/system/do_vmctl.c",
+      "signature": "int do_vmctl(struct proc * caller, message * m_ptr) {",
+      "line_count": 173
+    },
+    {
+      "name": "vumap",
+      "file": "minix/kernel/system/do_vumap.c",
+      "signature": "int do_vumap(struct proc *caller, message *m_ptr) {",
+      "line_count": 131
+    },
+    {
+      "name": "update",
+      "file": "minix/kernel/system/do_update.c",
+      "signature": "int do_update(struct proc * caller, message * m_ptr) {",
+      "line_count": 340
+    },
+    {
+      "name": "exec",
+      "file": "minix/kernel/system/do_exec.c",
+      "signature": "int do_exec(struct proc * caller, message * m_ptr) {",
+      "line_count": 60
+    },
+    {
+      "name": "kill",
+      "file": "minix/kernel/system/do_kill.c",
+      "signature": "int do_kill(struct proc * caller, message * m_ptr) {",
+      "line_count": 41
+    },
+    {
+      "name": "statectl",
+      "file": "minix/kernel/system/do_statectl.c",
+      "signature": "int do_statectl(struct proc * caller, message * m_ptr) {",
+      "line_count": 53
+    },
+    {
+      "name": "safecopy",
+      "file": "minix/kernel/system/do_safecopy.c",
+      "signature": "int do_safecopy_to(struct proc * caller, message * m_ptr) {",
+      "line_count": 448
+    },
+    {
+      "name": "memset",
+      "file": "minix/kernel/system/do_memset.c",
+      "signature": "int do_memset(struct proc * caller, message * m_ptr) {",
+      "line_count": 28
+    },
+    {
+      "name": "setalarm",
+      "file": "minix/kernel/system/do_setalarm.c",
+      "signature": "int do_setalarm(struct proc * caller, message * m_ptr) {",
+      "line_count": 78
+    },
+    {
+      "name": "privctl",
+      "file": "minix/kernel/system/do_privctl.c",
+      "signature": "int do_privctl(struct proc * caller, message * m_ptr) {",
+      "line_count": 371
+    },
+    {
+      "name": "setgrant",
+      "file": "minix/kernel/system/do_setgrant.c",
+      "signature": "int do_setgrant(struct proc * caller, message * m_ptr) {",
+      "line_count": 30
+    }
+  ],
+  "arch_specific": {
+    "oxpcie": {
+      "functions": [
+        "oxpcie_set_vaddr",
+        "oxpcie_putc",
+        "oxpcie_in"
+      ],
+      "lines": 83,
+      "file": "minix/kernel/arch/i386/oxpcie.c"
+    },
+    "do_readbios": {
+      "functions": [
+        "do_readbios"
+      ],
+      "lines": 37,
+      "file": "minix/kernel/arch/i386/do_readbios.c"
+    },
+    "direct_tty_utils": {
+      "functions": [
+        "direct_put_char",
+        "direct_cls",
+        "direct_print_char",
+        "direct_print",
+        "direct_read_char"
+      ],
+      "lines": 130,
+      "file": "minix/kernel/arch/i386/direct_tty_utils.c"
+    },
+    "usermapped_data_arch": {
+      "functions": [],
+      "lines": 33,
+      "file": "minix/kernel/arch/i386/usermapped_data_arch.c"
+    },
+    "breakpoints": {
+      "functions": [
+        "breakpoint_set"
+      ],
+      "lines": 57,
+      "file": "minix/kernel/arch/i386/breakpoints.c"
+    },
+    "arch_do_vmctl": {
+      "functions": [
+        "arch_do_vmctl"
+      ],
+      "lines": 67,
+      "file": "minix/kernel/arch/i386/arch_do_vmctl.c"
+    },
+    "arch_reset": {
+      "functions": [
+        "reset",
+        "ser_putc"
+      ],
+      "lines": 173,
+      "file": "minix/kernel/arch/i386/arch_reset.c"
+    },
+    "protect": {
+      "functions": [
+        "vir2phys",
+        "enable_iop",
+        "init_param_dataseg",
+        "init_dataseg",
+        "tss_init",
+        "init_segdesc",
+        "int_gate",
+        "int_gate_idt",
+        "idt_copy_vectors",
+        "idt_copy_vectors_pic",
+        "idt_init",
+        "idt_reload",
+        "prot_load_selectors",
+        "prot_init",
+        "arch_post_init",
+        "arch_boot_proc"
+      ],
+      "lines": 456,
+      "file": "minix/kernel/arch/i386/protect.c"
+    },
+    "arch_system": {
+      "functions": [
+        "fpu_init",
+        "save_local_fpu",
+        "save_fpu",
+        "arch_proc_reset",
+        "arch_set_secondary_ipc_return",
+        "restore_fpu",
+        "cpu_identify",
+        "arch_init",
+        "do_ser_debug",
+        "arch_init_profile_clock",
+        "arch_stop_profile_clock",
+        "arch_ack_profile_clock",
+        "arch_do_syscall",
+        "arch_proc_setcontext",
+        "restore_user_context",
+        "fpu_sigcontext",
+        "arch_get_sp"
+      ],
+      "lines": 673,
+      "file": "minix/kernel/arch/i386/arch_system.c"
+    },
+    "pre_init": {
+      "functions": [
+        "vir2phys",
+        "overlaps",
+        "get_parameters",
+        "send_diag_sig",
+        "minix_shutdown",
+        "busy_delay_ms",
+        "raise"
+      ],
+      "lines": 243,
+      "file": "minix/kernel/arch/i386/pre_init.c"
+    },
+    "do_iopenable": {
+      "functions": [
+        "do_iopenable"
+      ],
+      "lines": 35,
+      "file": "minix/kernel/arch/i386/do_iopenable.c"
+    },
+    "exception": {
+      "functions": [
+        "exception_handler",
+        "proc_stacktrace",
+        "enable_fpu_exception",
+        "disable_fpu_exception"
+      ],
+      "lines": 386,
+      "file": "minix/kernel/arch/i386/exception.c"
+    },
+    "acpi": {
+      "functions": [
+        "acpi_get_table_base",
+        "acpi_get_table_length",
+        "acpi_init",
+        "__k_unpaged_acpi_poweroff",
+        "acpi_poweroff"
+      ],
+      "lines": 410,
+      "file": "minix/kernel/arch/i386/acpi.c"
+    },
+    "arch_watchdog": {
+      "functions": [
+        "arch_watchdog_init",
+        "arch_watchdog_stop",
+        "arch_watchdog_lockup",
+        "i386_watchdog_start"
+      ],
+      "lines": 235,
+      "file": "minix/kernel/arch/i386/arch_watchdog.c"
+    },
+    "pg_utils": {
+      "functions": [
+        "print_memmap",
+        "cut_memmap",
+        "alloc_lowest",
+        "add_memmap",
+        "pg_alloc_page",
+        "pg_identity",
+        "pg_mapkernel",
+        "vm_enable_paging",
+        "pg_load",
+        "pg_clear",
+        "pg_rounddown",
+        "pg_map",
+        "pg_info"
+      ],
+      "lines": 317,
+      "file": "minix/kernel/arch/i386/pg_utils.c"
+    },
+    "do_sdevio": {
+      "functions": [
+        "do_sdevio"
+      ],
+      "lines": 163,
+      "file": "minix/kernel/arch/i386/do_sdevio.c"
+    },
+    "arch_clock": {
+      "functions": [
+        "init_8253A_timer",
+        "stop_8253A_timer",
+        "arch_timer_int_handler",
+        "init_local_timer",
+        "stop_local_timer",
+        "restart_local_timer",
+        "register_local_timer_handler",
+        "cycles_accounting_init",
+        "context_stop",
+        "context_stop_idle",
+        "ms_2_cpu_time",
+        "cpu_time_2_ms",
+        "cpu_load",
+        "busy_delay_ms",
+        "get_cpu_ticks"
+      ],
+      "lines": 440,
+      "file": "minix/kernel/arch/i386/arch_clock.c"
+    },
+    "memory": {
+      "functions": [
+        "mem_clear_mapcache",
+        "umap_virtual",
+        "vm_lookup",
+        "vm_lookup_range",
+        "vm_check_range",
+        "vm_memset",
+        "virtual_copy_f",
+        "data_copy",
+        "data_copy_vmcheck",
+        "memory_init",
+        "arch_proc_init",
+        "arch_phys_map",
+        "arch_phys_map_reply",
+        "arch_enable_paging",
+        "release_address_space",
+        "platform_tbl_checksum_ok"
+      ],
+      "lines": 1020,
+      "file": "minix/kernel/arch/i386/memory.c"
+    },
+    "i8259": {
+      "functions": [
+        "intr_init",
+        "irq_8259_unmask",
+        "irq_8259_mask",
+        "i8259_disable",
+        "irq_8259_eoi"
+      ],
+      "lines": 80,
+      "file": "minix/kernel/arch/i386/i8259.c"
+    },
+    "arch_smp": {
+      "functions": [
+        "copy_trampoline",
+        "smp_halt_cpu",
+        "smp_shutdown_aps",
+        "smp_ap_boot",
+        "smp_init",
+        "arch_smp_halt_cpu",
+        "arch_send_smp_schedule_ipi"
+      ],
+      "lines": 360,
+      "file": "minix/kernel/arch/i386/arch_smp.c"
+    },
+    "apic": {
+      "functions": [
+        "arch_eoi",
+        "ioapic_eoi",
+        "ioapic_set_id",
+        "ioapic_enable_all",
+        "ioapic_disable_all",
+        "ioapic_unmask_irq",
+        "ioapic_mask_irq",
+        "lapic_set_timer_one_shot",
+        "lapic_set_timer_periodic",
+        "lapic_stop_timer",
+        "lapic_restart_timer",
+        "lapic_microsec_sleep",
+        "lapic_disable",
+        "lapic_enable",
+        "apic_spurios_intr_handler",
+        "apic_error_intr_handler",
+        "apic_idt_init",
+        "detect_ioapics",
+        "apic_send_ipi",
+        "apic_send_startup_ipi",
+        "apic_send_init_ipi",
+        "apic_single_cpu_init",
+        "set_irq_redir_low",
+        "ioapic_set_irq",
+        "ioapic_unset_irq",
+        "ioapic_reset_pic",
+        "dump_apic_irq_state"
+      ],
+      "lines": 1304,
+      "file": "minix/kernel/arch/i386/apic.c"
+    }
+  },
+  "interrupt_handlers": [
+    "do_ipc",
+    "do_notify",
+    "do_syscall",
+    "do_sync_ipc"
+  ],
+  "message_types": [
+    {
+      "type": "BUSC_RQ_BASE",
+      "description": "base for request types"
+    },
+    {
+      "type": "BUSC_RS_BASE",
+      "description": "base for response types"
+    },
+    {
+      "type": "KERNEL_CALL",
+      "description": "base for kernel calls to SYSTEM"
+    },
+    {
+      "type": "NR_SYS_CALLS",
+      "description": "number of kernel calls"
+    },
+    {
+      "type": "CP_FLAG_TRY",
+      "description": "do not transparently map"
+    },
+    {
+      "type": "SYS_PRIV_ALLOW",
+      "description": "Allow process to run"
+    },
+    {
+      "type": "SYS_PRIV_DISALLOW",
+      "description": "Disallow process to run"
+    },
+    {
+      "type": "SYS_PRIV_SET_SYS",
+      "description": "Set a system privilege structure"
+    },
+    {
+      "type": "SYS_PRIV_SET_USER",
+      "description": "Set a user privilege structure"
+    },
+    {
+      "type": "SYS_PRIV_ADD_IO",
+      "description": "Add I/O range (struct io_range)"
+    },
+    {
+      "type": "SYS_PRIV_ADD_MEM",
+      "description": "Add memory range (struct mem_range)"
+    },
+    {
+      "type": "SYS_PRIV_ADD_IRQ",
+      "description": "Add IRQ"
+    },
+    {
+      "type": "SYS_PRIV_QUERY_MEM",
+      "description": "Verify memory privilege."
+    },
+    {
+      "type": "SYS_PRIV_UPDATE_SYS",
+      "description": "Update a sys privilege structure."
+    },
+    {
+      "type": "SYS_PRIV_YIELD",
+      "description": "Allow process to run and suspend"
+    },
+    {
+      "type": "SYS_PRIV_CLEAR_IPC_REFS",
+      "description": "Clear pending IPC for the process"
+    },
+    {
+      "type": "PFF_VMINHIBIT",
+      "description": "Don't schedule until release by VM."
+    },
+    {
+      "type": "DIAGCTL_CODE_DIAG",
+      "description": "Print diagnostics."
+    },
+    {
+      "type": "DIAGCTL_CODE_STACKTRACE",
+      "description": "Print process stack."
+    },
+    {
+      "type": "DIAGCTL_CODE_REGISTER",
+      "description": "Register for diagnostic signals"
+    },
+    {
+      "type": "DIAGCTL_CODE_UNREGISTER",
+      "description": "Unregister for diagnostic signals"
+    },
+    {
+      "type": "SYS_STATE_CLEAR_IPC_REFS",
+      "description": "clear IPC references"
+    },
+    {
+      "type": "SYS_STATE_SET_STATE_TABLE",
+      "description": "set state map"
+    },
+    {
+      "type": "SYS_STATE_ADD_IPC_BL_FILTER",
+      "description": "set IPC blacklist filter"
+    },
+    {
+      "type": "SYS_STATE_ADD_IPC_WL_FILTER",
+      "description": "set IPC whitelist filter"
+    },
+    {
+      "type": "SYS_STATE_CLEAR_IPC_FILTERS",
+      "description": "clear IPC filters"
+    },
+    {
+      "type": "VMPPARAM_CLEAR",
+      "description": "values for VMPCTL_PARAM"
+    },
+    {
+      "type": "INPUT_RQ_BASE",
+      "description": "from TTY to server, or server to driver"
+    },
+    {
+      "type": "INPUT_RS_BASE",
+      "description": "from input driver to input server"
+    },
+    {
+      "type": "RTCDEV_NOFLAGS",
+      "description": "no flags are set"
+    },
+    {
+      "type": "RTCDEV_Y2KBUG",
+      "description": "Interpret 1980 as 2000 for RTC w/Y2K bug"
+    },
+    {
+      "type": "RTCDEV_CMOSREG",
+      "description": "Also set the CMOS clock register bits."
+    },
+    {
+      "type": "NR_MIB_CALLS",
+      "description": "highest number from base plus one"
+    },
+    {
+      "type": "NDEV_RQ_BASE",
+      "description": "ndev -> netdriver"
+    },
+    {
+      "type": "NDEV_RS_BASE",
+      "description": "netdriver -> ndev"
+    }
+  ]
+}

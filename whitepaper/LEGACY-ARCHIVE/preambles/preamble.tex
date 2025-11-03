@@ -1,0 +1,414 @@
+% MINIX 3.4 Whitepaper - LaTeX Preamble
+% Comprehensive package configuration and custom styling
+% Last Updated: 2025-11-01
+
+% ==============================================================================
+% DOCUMENT CLASS AND BASIC SETUP
+% ==============================================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+
+% Paper size and margins
+\usepackage[a4paper,left=1in,right=1in,top=1in,bottom=1in]{geometry}
+
+% ==============================================================================
+% CORE PACKAGES
+% ==============================================================================
+
+% Mathematics
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{stmaryrd}
+
+% Graphics and TikZ
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{tikzscale}
+\pgfplotsset{compat=1.18}
+
+% TikZ libraries
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{positioning}
+\usetikzlibrary{shapes}
+\usetikzlibrary{shapes.geometric}
+\usetikzlibrary{shapes.multipart}
+\usetikzlibrary{fit}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{matrix}
+\usetikzlibrary{calc}
+\usetikzlibrary{chains}
+\usetikzlibrary{scopes}
+\usetikzlibrary{shadows}
+\usetikzlibrary{graphs}
+\usetikzlibrary{3d}
+
+% Tables and data
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{array}
+\usepackage{colortbl}
+
+% ==============================================================================
+% TYPOGRAPHY AND FORMATTING
+% ==============================================================================
+
+% Font selection
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% Better line spacing
+\usepackage{setspace}
+\onehalfspacing
+
+% Paragraph formatting
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5\baselineskip}
+
+% Section formatting
+% titlesec temporarily disabled due to compatibility issues with book class
+% \usepackage{titlesec}
+% \titlespacing*{\chapter}{0pt}{-20pt}{20pt}
+% \titlespacing*{\section}{0pt}{12pt}{6pt}
+% \titlespacing*{\subsection}{0pt}{10pt}{4pt}
+% \titlespacing*{\subsubsection}{0pt}{8pt}{2pt}
+
+% ==============================================================================
+% COLORS AND STYLING
+% ==============================================================================
+
+\usepackage{xcolor}
+
+% Define color palette
+\definecolor{minixpurple}{RGB}{102, 126, 234}
+\definecolor{minixdark}{RGB}{26, 26, 26}
+\definecolor{minixlight}{RGB}{224, 224, 224}
+\definecolor{accentblue}{RGB}{33, 150, 243}
+\definecolor{accentgreen}{RGB}{76, 175, 80}
+\definecolor{accentorange}{RGB}{255, 152, 0}
+\definecolor{accentred}{RGB}{244, 67, 54}
+\definecolor{accentgray}{RGB}{158, 158, 158}
+\definecolor{codebackground}{RGB}{242, 242, 242}
+\definecolor{codelisting}{RGB}{248, 248, 248}
+
+% ==============================================================================
+% CODE AND LISTINGS
+% ==============================================================================
+
+\usepackage{listings}
+\usepackage{minted}
+
+% Fallback code listing styling (if minted unavailable)
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+    backgroundcolor=\color{codelisting},
+    frame=single,
+    frameround=tttt,
+    framesep=10pt,
+    rulecolor=\color{accentgray},
+    stringstyle=\color{accentgreen},
+    commentstyle=\color{accentgray},
+    keywordstyle=\color{accentblue},
+    numbers=left,
+    numberstyle=\tiny\color{accentgray},
+    stepnumber=1,
+}
+
+% Define language for common code types
+\lstdefinelanguage{Bash}{
+    keywords={bash, if, then, else, fi, for, do, done, while},
+    keywordstyle=\color{accentblue},
+    comment=[l]{\#},
+    commentstyle=\color{accentgray},
+    string=[b]",
+    stringstyle=\color{accentgreen},
+}
+
+\lstdefinelanguage{Python}{
+    keywords={def, class, if, else, elif, for, while, import, from, return, True, False, None},
+    keywordstyle=\color{accentblue},
+    comment=[l]{\#},
+    commentstyle=\color{accentgray},
+    string=[b]",
+    stringstyle=\color{accentgreen},
+}
+
+% ==============================================================================
+% REFERENCES AND BIBLIOGRAPHIES
+% ==============================================================================
+
+\usepackage[
+    backend=bibtex,
+    style=authoryear,
+    natbib=true,
+]{biblatex}
+\addbibresource{bibliography.bib}
+
+% ==============================================================================
+% HYPERLINKS AND CROSS-REFERENCES
+% ==============================================================================
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=minixpurple,
+    citecolor=accentblue,
+    urlcolor=accentblue,
+    pdftitle={MINIX 3.4 Operating System: Boot Analysis, Error Detection, and MCP Integration},
+    pdfauthor={Research Team},
+    pdfkeywords={MINIX, operating systems, error detection, boot analysis, MCP},
+}
+
+\usepackage{cleveref}
+\crefformat{chapter}{Chapter~#2#1#3}
+\crefformat{section}{\S~#2#1#3}
+\crefformat{figure}{Figure~#2#1#3}
+\crefformat{table}{Table~#2#1#3}
+
+% ==============================================================================
+% CAPTIONS AND FLOATS
+% ==============================================================================
+
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+
+\captionsetup{
+    margin=10pt,
+    font=small,
+    labelfont=bf,
+    labelformat=simple,
+}
+
+% Figure and table numbering
+\renewcommand{\thefigure}{\thechapter.\arabic{figure}}
+\renewcommand{\thetable}{\thechapter.\arabic{table}}
+
+% ==============================================================================
+% CUSTOM COMMANDS AND ENVIRONMENTS
+% ==============================================================================
+
+% System/component commands
+\newcommand{\minix}{\textsc{minix}}
+\newcommand{\linux}{\textsc{linux}}
+\newcommand{\qemu}{\textsc{qemu}}
+\newcommand{\mcp}{\textsc{mcp}}
+\newcommand{\sqlite}{\textsc{sqlite}}
+
+% Code and technical commands
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\cmd}[1]{\texttt{\textcolor{minixdark}{\$ #1}}}
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\env}[1]{\texttt{#1}}
+\newcommand{\error}[1]{\textbf{\textcolor{accentred}{#1}}}
+
+% Special formatting
+\newcommand{\TODO}[1]{\textcolor{accentorange}{\textbf{[TODO: #1]}}}
+\newcommand{\note}[1]{\textit{Note: #1}}
+\newcommand{\highlight}[1]{\colorbox{yellow!30}{#1}}
+
+% Error codes
+\newcommand{\errcode}[1]{\textbf{\textcolor{accentred}{E#1}}}
+
+% Custom environments
+% Temporarily disabled: theorem-like environments causing compatibility issues
+% \usepackage{amsthm}
+% \theoremstyle{definition}
+% \newtheorem{definition}{Definition}
+% \newtheorem{theorem}{Theorem}
+% \newtheorem{lemma}{Lemma}
+% \newtheorem{corollary}{Corollary}
+% \newtheorem{example}{Example}
+
+% Key insight box
+\newcommand{\keyinsight}[1]{%
+    \begin{tcolorbox}[
+        colback=minixpurple!10,
+        colframe=minixpurple,
+        left=10pt,
+        right=10pt,
+        top=8pt,
+        bottom=8pt,
+        arc=4pt,
+        boxsep=5pt,
+    ]
+    \textbf{Key Insight:} #1
+    \end{tcolorbox}
+}
+
+% Warning box
+\newcommand{\warning}[1]{%
+    \begin{tcolorbox}[
+        colback=accentorange!10,
+        colframe=accentorange,
+        left=10pt,
+        right=10pt,
+        top=8pt,
+        bottom=8pt,
+        arc=4pt,
+        boxsep=5pt,
+    ]
+    \textbf{\textcolor{accentorange}{Warning:}} #1
+    \end{tcolorbox}
+}
+
+% Definition box (renamed to \defterm to avoid conflict with amsthm \definition)
+\newcommand{\defterm}[2]{%
+    \begin{tcolorbox}[
+        colback=accentblue!10,
+        colframe=accentblue,
+        left=10pt,
+        right=10pt,
+        top=8pt,
+        bottom=8pt,
+        arc=4pt,
+        boxsep=5pt,
+    ]
+    \textbf{#1:} #2
+    \end{tcolorbox}
+}
+
+% ==============================================================================
+% FRONT MATTER STYLING
+% ==============================================================================
+
+% fancyhdr moved to master.tex to avoid early loading conflicts
+% It will be loaded after \begin{document} in the mainmatter section
+
+% Title page styling
+\newcommand{\titlepage@info}[3]{%
+    \begin{center}
+    \vspace*{2cm}
+    {\fontsize{28}{32}\selectfont\bfseries\textcolor{minixpurple}{#1}\par}
+    \vspace{1cm}
+    {\fontsize{14}{18}\selectfont\textcolor{accentblue}{#2}\par}
+    \vspace{3cm}
+    {\Large #3\par}
+    \vspace*{\fill}
+    \end{center}
+}
+
+% ==============================================================================
+% TABLE OF CONTENTS STYLING
+% ==============================================================================
+
+\usepackage{tocloft}
+\renewcommand{\cftchapfont}{\bfseries\color{minixpurple}}
+\renewcommand{\cftsecfont}{\color{minixdark}}
+
+% ==============================================================================
+% APPENDIX STYLING
+% ==============================================================================
+
+\usepackage{appendix}
+
+% ==============================================================================
+% MISCELLANEOUS
+% ==============================================================================
+
+% Better spacing in lists
+\usepackage{enumitem}
+\setlist[enumerate]{leftmargin=2em}
+\setlist[itemize]{leftmargin=2em}
+
+% Utility package for box creation
+\usepackage[most]{tcolorbox}
+
+% Better quotations
+\usepackage{csquotes}
+
+% Utility for scaling
+\usepackage{relsize}
+
+% ==============================================================================
+% CUSTOM TIKZ STYLES
+% ==============================================================================
+
+% Component box styles
+\tikzstyle{component}=[
+    rectangle,
+    draw=minixpurple,
+    fill=minixpurple!20,
+    thick,
+    minimum width=2cm,
+    minimum height=1cm,
+    text centered,
+]
+
+\tikzstyle{kernel}=[
+    rectangle,
+    draw=accentred,
+    fill=accentred!20,
+    thick,
+    minimum width=2cm,
+    minimum height=1cm,
+    text centered,
+]
+
+\tikzstyle{userspace}=[
+    rectangle,
+    draw=accentgreen,
+    fill=accentgreen!20,
+    thick,
+    minimum width=2cm,
+    minimum height=1cm,
+    text centered,
+]
+
+\tikzstyle{process}=[
+    ellipse,
+    draw=accentblue,
+    fill=accentblue!20,
+    thick,
+    minimum width=1.5cm,
+    minimum height=1cm,
+    text centered,
+]
+
+\tikzstyle{decision}=[
+    diamond,
+    draw=accentorange,
+    fill=accentorange!20,
+    thick,
+    minimum width=1.5cm,
+    minimum height=1.5cm,
+    text centered,
+]
+
+\tikzstyle{data}=[
+    cylinder,
+    draw=accentgray,
+    fill=accentgray!20,
+    thick,
+    minimum width=1.5cm,
+    minimum height=1.5cm,
+    text centered,
+]
+
+\tikzstyle{arrow}=[
+    thick,
+    ->,
+    >=stealth,
+    color=minixdark,
+]
+
+\tikzstyle{dashedarrow}=[
+    dashed,
+    ->,
+    >=stealth,
+    color=accentgray,
+]
+
+% ==============================================================================
+% END OF PREAMBLE
+% ==============================================================================

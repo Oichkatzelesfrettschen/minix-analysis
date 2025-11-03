@@ -1,0 +1,92 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathmorphing,backgrounds}
+
+\begin{document}
+\begin{tikzpicture}[
+    box/.style={rectangle, draw=black, minimum width=3cm, minimum height=0.8cm, font=\small},
+    user/.style={box, fill=blue!20},
+    kernel/.style={box, fill=red!20},
+    server/.style={box, fill=green!20},
+    data/.style={rectangle, draw=black, fill=yellow!10, minimum width=2cm, minimum height=0.6cm, font=\footnotesize},
+    arrow/.style={->, >=stealth, thick},
+    flow/.style={arrow, blue},
+    return/.style={arrow, green},
+    label/.style={font=\footnotesize},
+    timeline/.style={dashed, gray}
+]
+
+% Title
+\node[font=\Large\bfseries] at (6, 12) {MINIX System Call Flow};
+\node[font=\normalsize] at (6, 11.5) {Example: read() system call};
+
+% Time axis
+\draw[timeline] (0, 10.5) -- (0, -1);
+\node[rotate=90, font=\small] at (-0.5, 5) {Time →};
+
+% User space column
+\node[font=\bfseries] at (2, 10) {User Process};
+\node[user] (user1) at (2, 9) {Application};
+\node[user] (user2) at (2, 8) {libc wrapper};
+\node[user] (user3) at (2, 7) {Prepare message};
+
+% Kernel column
+\node[font=\bfseries] at (6, 10) {Kernel};
+\node[kernel] (kern1) at (6, 6) {INT handler};
+\node[kernel] (kern2) at (6, 5) {Validate msg};
+\node[kernel] (kern3) at (6, 4) {Route to VFS};
+\node[kernel] (kern4) at (6, 3) {Schedule VFS};
+\node[kernel] (kern5) at (6, 1) {Copy result};
+
+% Server column
+\node[font=\bfseries] at (10, 10) {VFS Server};
+\node[server] (vfs1) at (10, 3.5) {Receive msg};
+\node[server] (vfs2) at (10, 2.5) {Process read};
+\node[server] (vfs3) at (10, 1.5) {Send reply};
+
+% Flow arrows
+\draw[flow] (user1) -- node[right, label] {read(fd, buf, n)} (user2);
+\draw[flow] (user2) -- (user3);
+\draw[flow] (user3) -- node[above, label, sloped] {INT 0x21} (kern1);
+\draw[flow] (kern1) -- (kern2);
+\draw[flow] (kern2) -- (kern3);
+\draw[flow] (kern3) -- (kern4);
+\draw[flow, bend right=20] (kern4) -- (vfs1);
+\draw[flow] (vfs1) -- (vfs2);
+\draw[flow] (vfs2) -- (vfs3);
+\draw[return, bend right=20] (vfs3) -- (kern5);
+\draw[return] (kern5) -- node[above, label, sloped] {IRET} (2, 0);
+\node[user] (user4) at (2, 0) {Return to app};
+
+% Data structures
+\node[data] at (2, 6) {message struct\\56 bytes};
+\node[data] at (6, 7) {Process table\\check privileges};
+\node[data] at (10, 4.5) {File table\\Buffer cache};
+
+% Annotations
+\begin{scope}[on background layer]
+    \fill[blue!5] (0.5, 10.5) rectangle (3.5, 6.5);
+    \fill[red!5] (4.5, 6.5) rectangle (7.5, 0.5);
+    \fill[green!5] (8.5, 4) rectangle (11.5, 1);
+\end{scope}
+
+\node[font=\footnotesize, rotate=90] at (0.8, 8.5) {Ring 3};
+\node[font=\footnotesize, rotate=90] at (4.8, 3.5) {Ring 0};
+\node[font=\footnotesize, rotate=90] at (8.8, 2.5) {Ring 1};
+
+% Time measurements
+\draw[<->, red] (12, 7) -- node[right] {~2 μs} (12, 6);
+\draw[<->, red] (12, 6) -- node[right] {~5 μs} (12, 3);
+\draw[<->, red] (12, 3) -- node[right] {~20 μs} (12, 1.5);
+\draw[<->, red] (12, 1.5) -- node[right] {~2 μs} (12, 0);
+\node[font=\footnotesize] at (12, -0.5) {Total: ~30 μs};
+
+% Key steps numbered
+\node[circle, draw=red, fill=white] at (1.5, 7) {1};
+\node[circle, draw=red, fill=white] at (5.5, 6) {2};
+\node[circle, draw=red, fill=white] at (5.5, 4) {3};
+\node[circle, draw=red, fill=white] at (9.5, 2.5) {4};
+\node[circle, draw=red, fill=white] at (5.5, 1) {5};
+
+\end{tikzpicture}
+\end{document}

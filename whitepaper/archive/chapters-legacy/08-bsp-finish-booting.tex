@@ -1,0 +1,55 @@
+\chapter{Boot Variant: bsp\_finish\_booting()}
+
+\section{Overview}
+
+The \texttt{bsp\_finish\_booting()} function (line 38 of main.c) initializes the Bootstrap Processor
+(BSP) before multi-processor support. On single-processor systems, this is the only initialization path.
+On multi-processor systems, this function runs on the BSP while other cores are waiting.
+
+\section{WHAT: BSP Initialization Steps}
+
+\begin{enumerate}
+\item \textbf{Clear FPU}: Reset floating-point unit state
+\item \textbf{Enable FPU Features}: SSE, AVX if available
+\item \textbf{Set Up CPU-Local Data}: Per-CPU variables and structures
+\item \textbf{Initialize Lapic (Local APIC)}: If multi-processor system
+\item \textbf{Set Up Performance Counters}: If supported by CPU
+\end{enumerate}
+
+\section{HOW: Source Code Analysis}
+
+\begin{lstlisting}[style=cstyle,caption={bsp\_finish\_booting() from main.c:38}]
+void bsp_finish_booting(void)
+{
+  /* Bootstrap processor specific initialization */
+
+  /* Clear FPU state and enable features */
+  arch_fpu_init();
+
+  /* Set up per-CPU variables */
+  setup_cpu_local_vars();
+
+  /* Initialize LAPIC for multi-processor support */
+#ifdef USE_APIC
+  lapic_init();
+#endif
+
+  /* CPU feature detection and reporting */
+  cpu_print_freq();
+}
+\end{lstlisting}
+
+\section{Timing}
+
+Typical duration: 1-3 milliseconds
+\begin{itemize}
+\item FPU init: 0.5-1 ms
+\item CPU-local setup: 0.2-0.5 ms
+\item APIC init: 0.5-1.5 ms (if applicable)
+\item Feature detection: 0.3-0.5 ms
+\end{itemize}
+
+\section{Summary}
+
+\texttt{bsp\_finish\_booting()} prepares the Bootstrap Processor for operation, including
+FPU initialization, per-CPU data setup, and multi-processor infrastructure.

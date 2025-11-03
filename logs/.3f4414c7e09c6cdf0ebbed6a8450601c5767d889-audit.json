@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/home/eirikr/Playground/minix-cpu-analysis/logs/.3f4414c7e09c6cdf0ebbed6a8450601c5767d889-audit.json",
+    "files": [
+        {
+            "date": 1761869699365,
+            "name": "/home/eirikr/Playground/minix-cpu-analysis/logs/mcp-puppeteer-2025-10-30.log",
+            "hash": "16613002761310bcb71a6f5f18e1fc261fb1c21e5077819f7f9b09634a0182ca"
+        }
+    ],
+    "hashType": "sha256"
+}

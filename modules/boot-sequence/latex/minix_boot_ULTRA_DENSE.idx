@@ -1,0 +1,60 @@
+\indexentry{MINIX-3|hyperpage}{1}
+\indexentry{main.c|hyperpage}{1}
+\indexentry{kmain|hyperpage}{1}
+\indexentry{bsp\_finish\_booting|hyperpage}{1}
+\indexentry{cstart|hyperpage}{1}
+\indexentry{Desktop Commander|hyperpage}{1}
+\indexentry{infinite loop|hyperpage}{1}
+\indexentry{userspace|hyperpage}{1}
+\indexentry{topology!hub-and-spoke|hyperpage}{1}
+\indexentry{boot phases|hyperpage}{1}
+\indexentry{performance|hyperpage}{1}
+\indexentry{BSS section|hyperpage}{2}
+\indexentry{board identification|hyperpage}{2}
+\indexentry{memory allocation!kernel|hyperpage}{2}
+\indexentry{cstart|hyperpage}{2}
+\indexentry{Big Kernel Lock|hyperpage}{2}
+\indexentry{proc\_init|hyperpage}{2}
+\indexentry{boot processes|hyperpage}{2}
+\indexentry{scheduling!immediate|hyperpage}{2}
+\indexentry{privileges|hyperpage}{2}
+\indexentry{VM process|hyperpage}{2}
+\indexentry{IPC!send mask|hyperpage}{2}
+\indexentry{kernel calls!mask|hyperpage}{2}
+\indexentry{RTS flags|hyperpage}{2}
+\indexentry{arch\_boot\_proc|hyperpage}{2}
+\indexentry{proc\_ptr|hyperpage}{2}
+\indexentry{RTS\_VMINHIBIT|hyperpage}{2}
+\indexentry{IPC!names|hyperpage}{3}
+\indexentry{arch\_post\_init|hyperpage}{3}
+\indexentry{memory\_init|hyperpage}{3}
+\indexentry{system\_init|hyperpage}{3}
+\indexentry{memory!bootstrap|hyperpage}{3}
+\indexentry{SMP|hyperpage}{3}
+\indexentry{smp\_init|hyperpage}{3}
+\indexentry{bsp\_finish\_booting|hyperpage}{3}
+\indexentry{NOT\_REACHABLE|hyperpage}{3}
+\indexentry{cpu\_identify|hyperpage}{3}
+\indexentry{CPU accounting|hyperpage}{3}
+\indexentry{FPU|hyperpage}{3}
+\indexentry{switch\_to\_user|hyperpage}{3}
+\indexentry{prot\_init|hyperpage}{4}
+\indexentry{init\_clock|hyperpage}{4}
+\indexentry{APIC|hyperpage}{4}
+\indexentry{watchdog|hyperpage}{4}
+\indexentry{SMP|hyperpage}{4}
+\indexentry{intr\_init|hyperpage}{4}
+\indexentry{arch\_init|hyperpage}{4}
+\indexentry{adjacency matrix|hyperpage}{4}
+\indexentry{DFA|hyperpage}{5}
+\indexentry{switch\_to\_user|hyperpage}{5}
+\indexentry{NOT\_REACHABLE|hyperpage}{5}
+\indexentry{\_\_noreturn|hyperpage}{5}
+\indexentry{iretl|hyperpage}{5}
+\indexentry{BSS|hyperpage}{5}
+\indexentry{DFA|hyperpage}{5}
+\indexentry{FMEA|hyperpage}{5}
+\indexentry{IPC|hyperpage}{5}
+\indexentry{MMIO|hyperpage}{6}
+\indexentry{RTS|hyperpage}{6}
+\indexentry{SMP|hyperpage}{6}

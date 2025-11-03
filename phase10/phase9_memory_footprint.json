@@ -1,0 +1,42 @@
+{
+  "486": {
+    "estimated_kernel_kb": 512.0,
+    "estimated_ramdisk_mb": 2.0,
+    "total_estimated_mb": 2.5,
+    "serial_output_bytes": 7762,
+    "boot_time_ms": 120008,
+    "efficiency_bytes_per_ms": 0.06
+  },
+  "pentium": {
+    "estimated_kernel_kb": 512.0,
+    "estimated_ramdisk_mb": 2.0,
+    "total_estimated_mb": 2.5,
+    "serial_output_bytes": 7763,
+    "boot_time_ms": 120006,
+    "efficiency_bytes_per_ms": 0.06
+  },
+  "pentium2": {
+    "estimated_kernel_kb": 512.0,
+    "estimated_ramdisk_mb": 2.0,
+    "total_estimated_mb": 2.5,
+    "serial_output_bytes": 7762,
+    "boot_time_ms": 120006,
+    "efficiency_bytes_per_ms": 0.06
+  },
+  "pentium3": {
+    "estimated_kernel_kb": 512.0,
+    "estimated_ramdisk_mb": 2.0,
+    "total_estimated_mb": 2.5,
+    "serial_output_bytes": 7762,
+    "boot_time_ms": 120007,
+    "efficiency_bytes_per_ms": 0.06
+  },
+  "core2duo": {
+    "estimated_kernel_kb": 512.0,
+    "estimated_ramdisk_mb": 2.0,
+    "total_estimated_mb": 2.5,
+    "serial_output_bytes": 7762,
+    "boot_time_ms": 120006,
+    "efficiency_bytes_per_ms": 0.06
+  }
+}

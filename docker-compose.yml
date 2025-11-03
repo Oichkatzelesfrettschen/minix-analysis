@@ -1,0 +1,139 @@
+version: '3.9'
+
+services:
+  # i386 MINIX instance with QEMU and KVM
+  minix-i386:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.i386
+    container_name: minix-rc6-i386
+    privileged: true
+    devices:
+      - /dev/kvm:/dev/kvm
+    ports:
+      - "5900:5900"  # VNC display
+      - "2222:2222"  # SSH access
+      - "9000:9000"  # Analysis metrics port
+    volumes:
+      - ./docker:/minix-runtime
+      - ./measurements/i386:/measurements
+    environment:
+      - DISPLAY=:0
+      - QEMU_CPU=host
+      - BOOT_TIMEOUT=300
+    networks:
+      - minix-net
+    healthcheck:
+      test: ["CMD", "ps", "aux"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: no
+
+  # ARM MINIX instance (requires ARM MINIX artifacts)
+  minix-arm:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.arm
+    container_name: minix-rc6-arm
+    privileged: true
+    devices:
+      - /dev/kvm:/dev/kvm
+    ports:
+      - "5901:5900"  # VNC display (offset)
+      - "2223:2222"  # SSH access (offset)
+      - "9001:9000"  # Analysis metrics port (offset)
+    volumes:
+      - ./docker:/minix-runtime
+      - ./measurements/arm:/measurements
+    environment:
+      - DISPLAY=:0
+      - QEMU_CPU=host
+      - BOOT_TIMEOUT=300
+    networks:
+      - minix-net
+    depends_on:
+      - minix-i386
+    healthcheck:
+      test: ["CMD", "ps", "aux"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: no
+
+  # MCP Boot Profiler server
+  mcp-boot-profiler:
+    build:
+      context: ./mcp-servers/boot-profiler
+      dockerfile: Dockerfile
+    container_name: mcp-boot-profiler
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./measurements:/measurements
+      - ./data:/data
+    networks:
+      - minix-net
+    depends_on:
+      - minix-i386
+      - minix-arm
+    environment:
+      - MINIX_I386_CONTAINER=minix-rc6-i386
+      - MINIX_ARM_CONTAINER=minix-rc6-arm
+      - MEASUREMENTS_DIR=/measurements
+    restart: on-failure
+
+  # MCP Syscall Tracer server
+  mcp-syscall-tracer:
+    build:
+      context: ./mcp-servers/syscall-tracer
+      dockerfile: Dockerfile
+    container_name: mcp-syscall-tracer
+    ports:
+      - "5002:5000"
+    volumes:
+      - ./measurements:/measurements
+      - ./data:/data
+    networks:
+      - minix-net
+    depends_on:
+      - minix-i386
+    environment:
+      - MINIX_I386_CONTAINER=minix-rc6-i386
+      - MEASUREMENTS_DIR=/measurements
+    restart: on-failure
+
+  # MCP Memory Monitor server
+  mcp-memory-monitor:
+    build:
+      context: ./mcp-servers/memory-monitor
+      dockerfile: Dockerfile
+    container_name: mcp-memory-monitor
+    ports:
+      - "5003:5000"
+    volumes:
+      - ./measurements:/measurements
+      - ./data:/data
+    networks:
+      - minix-net
+    depends_on:
+      - minix-i386
+    environment:
+      - MINIX_I386_CONTAINER=minix-rc6-i386
+      - MEASUREMENTS_DIR=/measurements
+    restart: on-failure
+
+networks:
+  minix-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  minix-i386-data:
+    driver: local
+  minix-arm-data:
+    driver: local
+  measurements-data:
+    driver: local

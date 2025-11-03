@@ -1,0 +1,54 @@
+{
+  "mcp_servers": {
+    "fs": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/eirikr/Playground/minix-analysis"],
+      "env": {},
+      "description": "Filesystem access - read/write files in minix-analysis project"
+    },
+    "sqlite": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-sqlite", "/home/eirikr/Playground/minix-analysis/measurements/minix-analysis.db"],
+      "env": {},
+      "description": "SQLite database queries - analyze boot profiling measurements"
+    }
+  },
+  "settings": {
+    "context_window_budget_mb": 200,
+    "context_reservation_pct": 20,
+    "max_servers_enabled": 2,
+    "server_startup_timeout_sec": 30,
+    "request_timeout_sec": 300
+  },
+  "minix_analysis_config": {
+    "project_name": "minix-analysis",
+    "project_root": "/home/eirikr/Playground/minix-analysis",
+    "measurements_dir": "/home/eirikr/Playground/minix-analysis/measurements",
+    "docker_compose_file": "docker-compose.enhanced.yml",
+    "boot_profiler_port": 5010,
+    "syscall_tracer_port": 5011,
+    "memory_monitor_port": 5012,
+    "minix_i386_container": "minix-rc6-i386",
+    "minix_arm_container": "minix-rc6-arm"
+  },
+  "notes": {
+    "status": "Configuration corrected 2025-11-01 - using available, working packages",
+    "servers_updated": [
+      "fs: Official Anthropic filesystem server (works with allowed directories)",
+      "sqlite: Community mcp-sqlite package (v1.0.7+, actively maintained)"
+    ],
+    "packages_deprecated": [
+      "@modelcontextprotocol/server-github - development moved, no longer supported",
+      "@modelcontextprotocol/server-sqlite - never existed in registry"
+    ],
+    "next_steps": [
+      "1. Create minix-analysis.db with test data (SQLite)",
+      "2. Start Claude Code with corrected .mcp.json",
+      "3. Test fs server: read files from project",
+      "4. Test sqlite server: query measurements database",
+      "5. Set up Docker for advanced services (optional)"
+    ]
+  }
+}

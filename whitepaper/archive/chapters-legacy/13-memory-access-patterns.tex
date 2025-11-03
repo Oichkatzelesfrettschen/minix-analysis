@@ -1,0 +1,123 @@
+\chapter{Performance Characterization: Memory Access Patterns}
+
+\section{Overview}
+
+MINIX kernel boot and syscall execution involve various memory access patterns.
+Understanding these patterns is critical for cache behavior and performance prediction.
+
+\section{Boot-Time Memory Access Pattern}
+
+\subsection{During pre\_init()}
+
+When paging is enabled, the CPU transitions from using physical addresses to virtual addresses.
+Memory access pattern during page table construction:
+
+\begin{verbatim}
+Read from bootloader memory map:   sequential (1 MB)
+Write to page table memory:         random (one entry per 4 MB)
+Read from kernel BSS:              sequential (page tables zeroed)
+Write to page directory:           single page, multiple entries
+\end{verbatim}
+
+TLB behavior:
+\begin{itemize}
+\item Initial state: TLB empty (no translations cached)
+\item After pg\_load(): TLB flushed (CR3 write)
+\item First user instruction: TLB miss (fetch translation)
+\item Subsequent instructions: TLB hits (locality of reference)
+\end{itemize}
+
+\subsection{During kmain()}
+
+Memory access pattern:
+
+\begin{verbatim}
+Process table init:        sequential write (dense 200-byte structs)
+cstart() descriptor loads: random read from GDT/IDT data
+memory_init():             sparse write to allocator structures
+system_init():            sequential write to handler table
+\end{verbatim}
+
+Cache behavior:
+\begin{itemize}
+\item L1 cache (32KB typical): High hit rate for dense process table
+\item L2 cache (256KB typical): Misses for large descriptor tables
+\item L3 cache (8MB typical): High hit rate for working set
+\end{itemize}
+
+\section{Syscall Memory Access Pattern}
+
+\subsection{Simple Syscall (getpid)}
+
+\begin{verbatim}
+User code read:  fetch INT/SYSCALL instruction (L1 hit)
+Kernel handler:  fetch handler code (likely L1 hit)
+Process table:   read process structure (L1 hit if hot)
+Return to user:  fetch next user instruction (possibly miss)
+
+Typical:         2-3 TLB hits, 1 L1 cache hit,
+                 0-1 L2/L3 hits
+\end{verbatim}
+
+\subsection{IPC Syscall (SEND message)}
+
+\begin{verbatim}
+User code:       fetch syscall (L1 hit)
+Copy user msg:   read from user buffer (L2/L3 likely)
+Process table:   read source proc (L1 hit)
+IPC queue:       write to queue structure (L1 hit)
+Copy to dest:    write to kernel buffer (L1 write miss)
+Return to user:  fetch next instruction (L1 hit)
+
+Typical:         5-10 TLB hits, 2-3 cache misses,
+                 L2/L3 accessed for message buffer
+\end{verbatim}
+
+\section{Optimization Strategies}
+
+\subsection{Cache Alignment}
+
+\begin{verbatim}
+struct proc {
+  /* Frequently accessed fields first */
+  int p_nr;              /* 4 bytes */
+  int p_rts_flags;       /* 4 bytes */
+  volatile int *p_sp;    /* 8 bytes (pointer) */
+
+  /* Less frequently accessed fields */
+  phys_bytes p_memmap[8];
+  ... (rest of structure)
+} __attribute__((aligned(64)));  /* Align to cache line */
+\end{verbatim}
+
+This ensures that hot fields fit in a single cache line (typically 64 bytes).
+
+\subsection{Locality Optimization}
+
+For IPC syscalls:
+\begin{itemize}
+\item Keep frequently used process entries in contiguous memory
+\item Sort process table by access frequency
+\item Use cache prefetching for predictable access patterns
+\end{itemize}
+
+\subsection{TLB Optimization}
+
+Modern CPUs support PCID (Process-Context Identifier) to avoid TLB flushes on context switches.
+MINIX could benefit from PCID support:
+
+\begin{verbatim}
+Without PCID:
+  Context switch -> TLB flush -> many TLB misses on next process
+
+With PCID:
+  Context switch -> no flush -> TLB hits continue (tagged by PCID)
+  Potential improvement: 5-10% for context-switch-heavy workloads
+\end{verbatim}
+
+\section{Summary}
+
+MINIX memory access patterns during boot are predominantly sequential with good locality.
+Syscall execution shows mixed patterns: simple syscalls have high cache hit rates,
+while complex IPC syscalls benefit from cache-aware process table layout.
+Further optimization via PCID support could reduce context-switch overhead.

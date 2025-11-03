@@ -1,0 +1,427 @@
+\documentclass[tikz,border=10pt]{standalone}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,backgrounds,fit,decorations.pathreplacing,patterns}
+
+% MINIX TikZ style guide color palette
+\definecolor{primaryblue}{RGB}{41,128,185}
+\definecolor{secondarygreen}{RGB}{39,174,96}
+\definecolor{accentorange}{RGB}{230,126,34}
+\definecolor{warningred}{RGB}{192,57,43}
+\definecolor{lightgray}{RGB}{236,240,241}
+\definecolor{darkgray}{RGB}{52,73,94}
+
+\begin{document}
+\begin{tikzpicture}[
+    % Node styles
+    cpu/.style={rectangle, draw=primaryblue, fill=primaryblue!20, thick, minimum width=3.5cm, minimum height=0.8cm, font=\small\bfseries, align=center},
+    unit/.style={rectangle, draw=accentorange, fill=accentorange!15, thick, minimum width=3cm, minimum height=0.7cm, font=\footnotesize, align=center},
+    cache/.style={rectangle, draw=secondarygreen, fill=secondarygreen!15, thick, minimum width=2.5cm, minimum height=0.6cm, font=\footnotesize, align=center},
+    regbox/.style={rectangle, draw=darkgray, fill=lightgray, thick, minimum width=2cm, minimum height=0.5cm, font=\tiny\ttfamily, align=center},
+    pipeline/.style={rectangle, draw=warningred, fill=warningred!10, thick, minimum width=4cm, minimum height=0.6cm, font=\footnotesize, align=center},
+    instr/.style={rectangle, draw=primaryblue, fill=primaryblue!10, thick, minimum width=2.5cm, minimum height=0.5cm, font=\tiny, align=center},
+    arrow/.style={->, >=stealth, thick},
+    widearrow/.style={->, >=stealth, very thick, line width=1.5pt},
+    doublearrow/.style={<->, >=stealth, thick},
+    label/.style={font=\small\bfseries, align=center},
+    note/.style={font=\footnotesize\itshape, align=left, text=darkgray},
+]
+
+% Title
+\node[font=\LARGE\bfseries] at (10, 24) {Intel Pentium (P5) Microarchitecture};
+\node[font=\large] at (10, 23.2) {First Superscalar x86 - Dual-Issue Pipeline (1993)};
+
+% Specifications box
+\node[note, text width=18cm, font=\footnotesize] at (10, 22.4) {
+\textbf{Specifications:} 60-200 MHz, 3.1-3.3M transistors (0.8-0.35 \textmu m), 273-pin PGA,
+8 KB L1 I-cache + 8 KB L1 D-cache, 64-bit data bus, 32-bit address bus (4 GB physical),
+Superscalar (2-way), Branch prediction, APIC, FPU integrated, RDTSC instruction
+};
+
+% ============================================================================
+% TOP: Pipeline Overview
+% ============================================================================
+
+\node[label] at (5, 21) {\textbf{Dual-Issue Superscalar Pipeline}};
+
+% U-pipe (primary)
+\node[pipeline] (pf_u) at (3, 20) {U-Pipe\\(Primary)};
+\node[pipeline] (d1_u) at (3, 19.2) {D1: Decode 1};
+\node[pipeline] (d2_u) at (3, 18.4) {D2: Decode 2};
+\node[pipeline] (ex_u) at (3, 17.6) {EX: Execute};
+\node[pipeline] (wb_u) at (3, 16.8) {WB: Write Back};
+
+% V-pipe (secondary)
+\node[pipeline] (pf_v) at (7, 20) {V-Pipe\\(Secondary)};
+\node[pipeline] (d1_v) at (7, 19.2) {D1: Decode 1};
+\node[pipeline] (d2_v) at (7, 18.4) {D2: Decode 2};
+\node[pipeline] (ex_v) at (7, 17.6) {EX: Execute};
+\node[pipeline] (wb_v) at (7, 16.8) {WB: Write Back};
+
+% Pipeline flow
+\draw[widearrow] (pf_u) -- (d1_u);
+\draw[widearrow] (d1_u) -- (d2_u);
+\draw[widearrow] (d2_u) -- (ex_u);
+\draw[widearrow] (ex_u) -- (wb_u);
+
+\draw[widearrow] (pf_v) -- (d1_v);
+\draw[widearrow] (d1_v) -- (d2_v);
+\draw[widearrow] (d2_v) -- (ex_v);
+\draw[widearrow] (ex_v) -- (wb_v);
+
+% Pairing rules
+\node[note, text width=8cm] at (10.5, 18.9) {
+\textbf{Pairing Rules (U+V):}\\
+• Both must be simple (no complex addressing)\\
+• No dependencies (RAW, WAR, WAW)\\
+• V-pipe: Integer ALU only (no FPU, no shifts)\\
+• No control flow in V-pipe\\
+• Max 1 memory access per pair\\
+• U-pipe: Any instruction\\
+• V-pipe: Limited to: MOV, ADD, SUB, CMP, AND, OR, XOR, INC, DEC, LEA
+};
+
+\node[note, text width=8cm] at (10.5, 17) {
+\textbf{Pairing Examples:}\\
+✓ \texttt{ADD EAX, EBX} (U) + \texttt{MOV ECX, EDX} (V)\\
+✓ \texttt{CMP EAX, 10} (U) + \texttt{INC EBX} (V)\\
+✗ \texttt{ADD EAX, EBX} (U) + \texttt{SHL ECX, 4} (V) - shift not allowed\\
+✗ \texttt{ADD EAX, [EBX]} (U) + \texttt{MOV ECX, [EDX]} (V) - 2 mem ops\\
+✗ \texttt{JMP label} (U) + \texttt{ADD EAX, EBX} (V) - control flow
+};
+
+% ============================================================================
+% LEFT COLUMN: Execution Units
+% ============================================================================
+
+\node[label] at (3, 15.5) {\textbf{Execution Units}};
+
+% Integer ALU
+\node[unit] (alu) at (3, 14.7) {Integer ALU\\(U-pipe)};
+\node[note, text width=5cm] at (6, 14.7) {
+• ADD, SUB, AND, OR, XOR\\
+• INC, DEC, NEG, NOT\\
+• CMP, TEST\\
+• 1 cycle latency
+};
+
+% Integer ALU V-pipe
+\node[unit] (alu_v) at (3, 13.7) {Integer ALU\\(V-pipe)};
+\node[note, text width=5cm] at (6, 13.7) {
+• Subset of U-pipe ops\\
+• Simple ops only\\
+• No shifts, no multiply
+};
+
+% FPU
+\node[unit] (fpu) at (3, 12.7) {Floating Point Unit\\(U-pipe only)};
+\node[note, text width=5cm] at (6, 12.7) {
+• FADD: 3 cycles\\
+• FMUL: 3 cycles\\
+• FDIV: 39 cycles (FDIV bug!)\\
+• Pipelined (3-stage)
+};
+
+% Load/Store
+\node[unit] (mem) at (3, 11.5) {Load/Store Unit};
+\node[note, text width=5cm] at (6, 11.5) {
+• 64-bit data bus\\
+• Aligned access: 1 cycle\\
+• Misaligned: 2 cycles\\
+• Max 1 memory op per clock
+};
+
+% Branch Unit
+\node[unit] (branch) at (3, 10.5) {Branch Unit};
+\node[note, text width=5cm] at (6, 10.5) {
+• Dynamic branch prediction\\
+• 256-entry BTB (Branch Target Buffer)\\
+• 2-bit saturating counter\\
+• Misprediction penalty: 3-4 cycles
+};
+
+% ============================================================================
+% CENTER: Cache Hierarchy
+% ============================================================================
+
+\node[label] at (10, 15.5) {\textbf{Cache Hierarchy}};
+
+% L1 Instruction Cache
+\node[cache] (icache) at (10, 14.7) {L1 I-Cache\\8 KB, 2-way};
+\node[note, text width=4cm] at (13, 14.7) {
+• 32-byte lines\\
+• Write-through\\
+• 2-way set-associative
+};
+
+% L1 Data Cache
+\node[cache] (dcache) at (10, 13.7) {L1 D-Cache\\8 KB, 2-way};
+\node[note, text width=4cm] at (13, 13.7) {
+• 32-byte lines\\
+• Write-through\\
+• 2-way set-associative
+};
+
+% Cache controller
+\node[unit] (cache_ctrl) at (10, 12.7) {Cache Controller};
+\node[note, text width=4cm] at (13, 12.7) {
+• MESI protocol\\
+• Snooping for SMP\\
+• Write combining
+};
+
+% TLB
+\node[cache] (itlb) at (10, 11.7) {I-TLB\\32 entries};
+\node[cache] (dtlb) at (10, 10.9) {D-TLB\\64 entries};
+\node[note, text width=4cm] at (13, 11.3) {
+• 4 KB pages\\
+• Fully associative\\
+• TLB miss: page walk
+};
+
+% Bus Interface Unit
+\node[unit] (biu) at (10, 10) {Bus Interface Unit\\64-bit data bus};
+
+\draw[arrow] (icache) -- (cache_ctrl);
+\draw[arrow] (dcache) -- (cache_ctrl);
+\draw[arrow] (cache_ctrl) -- (biu);
+\draw[arrow] (itlb) -- (biu);
+\draw[arrow] (dtlb) -- (biu);
+
+% ============================================================================
+% RIGHT COLUMN: Register File and New Features
+% ============================================================================
+
+\node[label] at (17, 15.5) {\textbf{Register File}};
+
+% General Purpose Registers
+\node[regbox] (eax) at (17, 14.9) {EAX};
+\node[regbox] (ebx) at (17, 14.4) {EBX};
+\node[regbox] (ecx) at (17, 13.9) {ECX};
+\node[regbox] (edx) at (17, 13.4) {EDX};
+\node[regbox] (esi) at (17, 12.9) {ESI};
+\node[regbox] (edi) at (17, 12.4) {EDI};
+\node[regbox] (esp) at (17, 11.9) {ESP};
+\node[regbox] (ebp) at (17, 11.4) {EBP};
+
+% Segment Registers
+\node[label, font=\footnotesize] at (17, 10.8) {Segment Regs};
+\node[regbox] (cs) at (17, 10.3) {CS};
+\node[regbox] (ds) at (17, 9.8) {DS};
+\node[regbox] (ss) at (17, 9.3) {SS};
+
+% Control Registers
+\node[label, font=\footnotesize] at (17, 8.7) {Control Regs};
+\node[regbox] (cr0) at (17, 8.2) {CR0};
+\node[regbox] (cr3) at (17, 7.7) {CR3};
+
+% Timestamp Counter (NEW!)
+\node[label, font=\footnotesize] at (17, 7.1) {New in Pentium};
+\node[regbox, fill=accentorange!20] (tsc) at (17, 6.6) {TSC (64-bit)};
+\node[note, text width=3.5cm] at (17, 6) {
+\textbf{RDTSC} instruction\\
+Reads cycle counter\\
+High-res timing\\
+Ring 3 accessible
+};
+
+% ============================================================================
+% BOTTOM LEFT: RDTSC Example
+% ============================================================================
+
+\node[label] at (3, 5) {\textbf{RDTSC Instruction Usage}};
+
+\node[instr, minimum width=6cm, text width=5.5cm, align=left] at (3, 3.5) {
+\textbf{Assembly:}\\
+\texttt{rdtsc}  ; Read timestamp counter\\
+\texttt{; EDX:EAX = 64-bit cycle count}\\
+\\
+\textbf{C Usage:}\\
+\texttt{static inline uint64\_t rdtsc(void) \{}\\
+\texttt{\ \ uint32\_t lo, hi;}\\
+\texttt{\ \ asm volatile("rdtsc":"=a"(lo),"=d"(hi));}\\
+\texttt{\ \ return ((uint64\_t)hi << 32) | lo;}\\
+\texttt{\}}\\
+\\
+\textbf{Timing Example:}\\
+\texttt{uint64\_t start = rdtsc();}\\
+\texttt{/* code to measure */}\\
+\texttt{uint64\_t end = rdtsc();}\\
+\texttt{printf("Cycles: \%llu", end - start);}
+};
+
+% ============================================================================
+% BOTTOM CENTER: APIC
+% ============================================================================
+
+\node[label] at (10, 5) {\textbf{APIC (Advanced Programmable Interrupt Controller)}};
+
+\node[unit, minimum width=6cm] (apic) at (10, 4.2) {Local APIC};
+
+\node[note, text width=5.5cm] at (10, 3.3) {
+\textbf{Features:}\\
+• Per-CPU interrupt handling\\
+• Inter-Processor Interrupts (IPI)\\
+• Local timer interrupt\\
+• Performance monitoring counter\\
+• Thermal sensor interrupt\\
+\\
+\textbf{Registers (MMIO):}\\
+• Mapped at 0xFEE00000\\
+• 256-byte register space\\
+• Priority-based interrupt delivery
+};
+
+\node[unit, minimum width=6cm] (ioapic) at (10, 2.1) {I/O APIC (External)};
+
+\node[note, text width=5.5cm] at (10, 1.3) {
+\textbf{I/O APIC:}\\
+• External chip (on motherboard)\\
+• Routes IRQs to Local APICs\\
+• Supports up to 24 IRQs\\
+• Programmable routing\\
+• Edge or level-triggered
+};
+
+% ============================================================================
+% BOTTOM RIGHT: MMX Instructions (Pentium MMX variant)
+% ============================================================================
+
+\node[label] at (17, 5) {\textbf{MMX Instructions (P5 MMX)}};
+
+\node[note, text width=6cm] at (17, 3.8) {
+\textbf{MMX Registers:} (added in Pentium MMX, 1997)\\
+• MM0-MM7 (64-bit each)\\
+• Aliased to FPU ST(0)-ST(7)\\
+• SIMD operations (Single Instruction, Multiple Data)\\
+\\
+\textbf{Data Types:}\\
+• 8x 8-bit integers (packed bytes)\\
+• 4x 16-bit integers (packed words)\\
+• 2x 32-bit integers (packed dwords)\\
+• 1x 64-bit integer (quadword)\\
+\\
+\textbf{Instructions:}\\
+• PADDB/W/D: Packed add\\
+• PSUBB/W/D: Packed subtract\\
+• PMULL/H: Packed multiply\\
+• PAND/OR/XOR: Packed logical\\
+• PSLL/RL/RA: Packed shift\\
+\\
+\textbf{Use Cases:}\\
+• Graphics (pixel operations)\\
+• Video encoding/decoding\\
+• Audio processing\\
+• Image filtering
+};
+
+% ============================================================================
+% PENTIUM FDIV BUG (Famous!)
+% ============================================================================
+
+\node[label] at (10, 0) {\textbf{Pentium FDIV Bug (1994)}};
+
+\node[note, text width=18cm, fill=warningred!10, draw=warningred, thick] at (10, -1.5) {
+\textbf{Description:} Floating-point division bug in early Pentium (60-100 MHz) caused incorrect results for certain inputs.\\
+\\
+\textbf{Example:} \texttt{4195835.0 / 3145727.0} should give \texttt{1.333820449136241002} but Pentium returned \texttt{1.333739068902037589}\\
+\\
+\textbf{Root Cause:} Lookup table in FPU had 5 missing entries (out of 1066). Used in SRT division algorithm.\\
+\\
+\textbf{Impact:} Intel initially downplayed issue ("affects 1 in 9 billion divisions"). Public outcry forced full recall.\\
+\\
+\textbf{Cost:} \$475 million USD replacement program. Major PR disaster for Intel.\\
+\\
+\textbf{Detection:} \texttt{cpuid} instruction returns family=5, model=1 or 2. Check for errata via BIOS update or OS flag.\\
+\\
+\textbf{Workaround:} Linux kernel detects and disables FPU if bug present, uses software floating-point emulation.\\
+\\
+\textbf{Fixed:} Pentium 75 MHz and later (stepping C1 and beyond) have corrected lookup table.
+};
+
+% ============================================================================
+% PERFORMANCE CHARACTERISTICS
+% ============================================================================
+
+\node[label] at (3, -3.5) {\textbf{Performance Characteristics}};
+
+\node[note, text width=8cm] at (3, -5) {
+\textbf{IPC (Instructions Per Cycle):}\\
+• Single-issue code: 0.5-0.8 IPC\\
+• Dual-issue optimized: 1.5-1.8 IPC\\
+• Ideal (all pairs): 2.0 IPC\\
+\\
+\textbf{Latencies:}\\
+• Integer ADD/SUB: 1 cycle\\
+• Integer MUL: 10 cycles (non-pipelined)\\
+• FP ADD: 3 cycles (pipelined)\\
+• FP MUL: 3 cycles (pipelined)\\
+• FP DIV: 39 cycles (non-pipelined)\\
+• L1 cache hit: 1 cycle\\
+• L1 cache miss (to memory): 30-50 cycles\\
+\\
+\textbf{Branch Prediction:}\\
+• Prediction rate: 80-90\% (depends on code)\\
+• Misprediction penalty: 3-4 cycles\\
+• No speculative execution (unlike P6)
+};
+
+\node[note, text width=8cm] at (10, -5) {
+\textbf{Pentium vs 486:}\\
+• 2x performance on integer code (dual-issue)\\
+• 3-5x performance on FP code (pipelined FPU)\\
+• Better branch prediction\\
+• Larger caches (8KB vs 8KB unified on 486)\\
+• Faster bus (60-66 MHz vs 33 MHz)\\
+\\
+\textbf{Pentium Variants:}\\
+• Pentium 60/66: 0.8 \textmu m, 5V, 3.1M transistors\\
+• Pentium 75-200: 0.6-0.35 \textmu m, 3.3V, split voltage\\
+• Pentium MMX: 0.35 \textmu m, 2.8V, 4.5M transistors\\
+• Pentium OverDrive: Socket upgrade for 486
+};
+
+\node[note, text width=8cm] at (17, -5) {
+\textbf{System Integration:}\\
+• Socket 4 (Pentium 60/66, 273-pin PGA)\\
+• Socket 5 (Pentium 75-200, 320-pin SPGA)\\
+• Socket 7 (Pentium MMX, 321-pin SPGA)\\
+• Chipsets: 430FX (Triton), 430HX, 430VX\\
+\\
+\textbf{Operating Systems:}\\
+• DOS (16-bit real mode)\\
+• Windows 3.x (16-bit protected mode)\\
+• Windows 95/98/NT (32-bit)\\
+• Linux 1.x+ (full 32-bit support)\\
+• MINIX 3 (uses protected mode, paging)\\
+\\
+\textbf{Compilers:}\\
+• GCC: -march=pentium\\
+• MSVC: /G5\\
+• ICC: -mtune=pentium
+};
+
+% Background zones
+\begin{pgfonlayer}{background}
+    % Pipeline zone
+    \node[fill=warningred!5, rounded corners, fit=(pf_u) (wb_v)] {};
+
+    % Execution units
+    \node[fill=accentorange!5, rounded corners, fit=(alu) (branch)] {};
+
+    % Cache hierarchy
+    \node[fill=secondarygreen!5, rounded corners, fit=(icache) (biu)] {};
+
+    % Registers
+    \node[fill=lightgray, rounded corners, fit=(eax) (tsc)] {};
+\end{pgfonlayer}
+
+% Annotations
+\draw[decorate, decoration={brace, amplitude=8pt}]
+    (0.5, 20) -- (0.5, 16.8) node[midway, left=10pt, align=center, font=\footnotesize] {5-stage\\dual-issue\\pipeline};
+
+\draw[decorate, decoration={brace, amplitude=8pt, mirror}]
+    (19, 14.9) -- (19, 11.4) node[midway, right=10pt, align=center, font=\footnotesize] {8 GPRs\\32-bit};
+
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,21 @@
+{
+  "boot_stages": [
+    "assert",
+    "arch_ser_init",
+    "cstart",
+    "BKL_LOCK",
+    "proc_init",
+    "IPCF_POOL_INIT",
+    "panic",
+    "proc_addr",
+    "reset_proc_accounting",
+    "proc_nr",
+    "set_sys_bit",
+    "fill_sendto_mask",
+    "RTS_SET",
+    "arch_boot_proc",
+    "assert"
+  ],
+  "initialization_functions": [],
+  "boot_modules": []
+}

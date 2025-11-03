@@ -1,0 +1,64 @@
+FROM ubuntu:22.04
+
+LABEL description="MINIX 3.4.0-RC6 i386 (IA-32) in Docker with QEMU/KVM"
+LABEL maintainer="MINIX Analysis Project"
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install QEMU, utilities, and measurement tools
+RUN apt-get update && apt-get install -y \
+    qemu-system-x86 \
+    qemu-utils \
+    curl \
+    wget \
+    openssh-client \
+    socat \
+    netcat-openbsd \
+    strace \
+    perf-tools-unstable \
+    procps \
+    coreutils \
+    util-linux \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create working directory
+WORKDIR /minix-runtime
+
+# Create measurements directory
+RUN mkdir -p /measurements /data
+
+# Copy MINIX ISO (will be provided at build time)
+COPY minix_R3.4.0-rc6.iso* /minix-runtime/ 2>/dev/null || true
+
+# Create disk image if ISO exists
+RUN if [ -f /minix-runtime/minix_R3.4.0-rc6.iso ]; then \
+    echo "Creating QEMU disk image..."; \
+    qemu-img create -f qcow2 /minix-runtime/minix-i386.qcow2 2G; \
+    else \
+    echo "WARNING: MINIX ISO not found. Will need to be mounted."; \
+    fi
+
+# Copy boot measurement script
+COPY run-qemu-i386.sh /minix-runtime/
+RUN chmod +x /minix-runtime/run-qemu-i386.sh
+
+# Copy boot profiler tool
+COPY boot-profiler.py /minix-runtime/
+RUN chmod +x /minix-runtime/boot-profiler.py
+
+# Expose ports
+# 5900: VNC (remote display)
+# 2222: SSH (if MINIX has SSH)
+# 9000: Analysis metrics port
+EXPOSE 5900 2222 9000
+
+# Health check: ensure QEMU can start
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD qemu-system-i386 --version || exit 1
+
+# Default entrypoint: boot profiler script
+ENTRYPOINT ["/minix-runtime/run-qemu-i386.sh"]
+CMD []

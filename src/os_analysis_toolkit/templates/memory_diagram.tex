@@ -1,0 +1,28 @@
+\documentclass[tikz,border=5pt]{standalone}
+\usepackage{tikz}
+\usepackage{times}
+\usetikzlibrary{shapes,arrows,positioning}
+
+\begin{document}
+\begin{tikzpicture}[
+    mem/.style={rectangle, minimum width=2cm, draw=black, font=\small},
+    label/.style={font=\tiny}
+]
+
+% Title
+\node[font=\large\bfseries] at (2,-0.5) {MINIX Memory Layout (32-bit x86)};
+
+% Virtual address space (before paging)
+\node[font=\small\bfseries, anchor=north east] at (1,-1) {Virtual Memory (Phase 1)};
+
+% Virtual address space (after paging - Phase 2+)
+\node[font=\small\bfseries, anchor=north east] at (4,-1) {Virtual Memory (Phase 2+)};
+
+% Nodes
+{{nodes}}
+
+% Annotations
+{{annotations}}
+
+\end{tikzpicture}
+\end{document}

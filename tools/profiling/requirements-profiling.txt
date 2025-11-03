@@ -1,0 +1,24 @@
+# MINIX Analysis Profiling Tools - Python Dependencies
+# Install with: pip install --user -r tools/profiling/requirements-profiling.txt
+
+# Sampling profilers (low overhead)
+py-spy>=0.3.14           # Rust-based sampling profiler
+pyinstrument>=4.6.0      # Visual call stack profiler
+
+# Comprehensive profilers
+scalene>=1.5.0           # CPU + memory + GPU profiling
+memory-profiler>=0.61.0  # Line-level memory profiling
+
+# Deterministic profilers
+line-profiler>=4.1.0     # Line-level CPU profiling
+
+# Benchmarking
+pyperf>=2.6.0            # Stable benchmarking framework
+
+# Data processing
+pandas>=2.0.0            # For perf data analysis
+matplotlib>=3.7.0        # Plotting
+
+# Note: austin-python and QProfiler require manual installation
+# austin: requires austin binary (pacman -S austin or build from source)
+# QProfiler: git clone https://github.com/torokernel/qprofiler.git

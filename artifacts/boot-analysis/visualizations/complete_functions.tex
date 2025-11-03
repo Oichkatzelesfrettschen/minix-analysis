@@ -1,0 +1,55 @@
+\section{Complete Function Catalog (All 34 Functions)}
+\label{sec:complete_catalog}
+
+\begin{longtable}{@{}p{0.18\textwidth}p{0.10\textwidth}p{0.24\textwidth}p{0.18\textwidth}p{0.20\textwidth}@{}}
+\caption{Complete catalog of all 34 functions called from \texttt{kmain()}} \\
+\toprule
+\textbf{Function} & \textbf{Line(s)} & \textbf{Signature} & \textbf{Location} & \textbf{Purpose} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{c}{Table \thetable\ -- Function Catalog (continued)} \\
+\toprule
+\textbf{Function} & \textbf{Line(s)} & \textbf{Signature} & \textbf{Location} & \textbf{Purpose} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{5}{r}{Continued on next page...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{assert}\index{assert} & 121, 144 & macro & \texttt{<assert.h>} & Runtime assertion \\
+\texttt{memcpy}\index{memcpy} & 128, 129, 145, 275 & \texttt{void*(void*, const void*, size\_t)} & \texttt{<string.h>} & Copy memory blocks \\
+\texttt{get\_board\_id}\index{get\_board\_id} & 133 & \texttt{int(const char*)} & \texttt{minix/board.h} & Map board name to ID \\
+\texttt{env\_get}\index{env\_get} & 133 & \texttt{char*(const char*)} & \texttt{main.c:505} & Get boot parameter \\
+\texttt{arch\_ser\_init}\index{arch\_ser\_init} & 136 & \texttt{void(void)} & arch-specific & Init serial (ARM) \\
+\texttt{DEBUGBASIC}\index{DEBUGBASIC} & 139 & macro & \texttt{kernel.h} & Debug output level 1 \\
+\texttt{cstart}\index{cstart} & 147 & \texttt{void(void)} & \texttt{main.c:403} & Early C init \\
+\texttt{BKL\_LOCK}\index{BKL\_LOCK} & 149 & macro & \texttt{spinlock.h} & Acquire Big Kernel Lock \\
+\texttt{DEBUGEXTRA}\index{DEBUGEXTRA} & 151, 172, 271 & macro & \texttt{kernel.h} & Debug output level 2 \\
+\texttt{proc\_init}\index{proc\_init} & 157 & \texttt{void(void)} & \texttt{proc.c:119} & Init process table \\
+\texttt{IPCF\_POOL\_INIT}\index{IPCF\_POOL\_INIT} & 158 & macro & \texttt{ipc.h} & Init IPC filter pool \\
+\texttt{panic}\index{panic} & 161 & \texttt{void(const char*, ...)} & \texttt{sysutil.h} & Fatal error halt \\
+\texttt{proc\_addr}\index{proc\_addr} & 173, 264 & \texttt{struct proc*(int)} & macro & Get proc ptr from nr \\
+\texttt{strlcpy}\index{strlcpy} & 177 & \texttt{size\_t(char*, const char*, size\_t)} & \texttt{<string.h>} & Safe string copy \\
+\texttt{reset\_proc\_acct}\index{reset\_proc\_acct} & 186 & \texttt{void(struct proc*)} & \texttt{proc.c} & Reset CPU time \\
+\texttt{proc\_nr}\index{proc\_nr} & 195 & \texttt{int(struct proc*)} & macro & Get proc nr from ptr \\
+\texttt{iskerneln}\index{iskerneln} & 196, 212 & \texttt{int(int)} & macro & Check if kernel task \\
+\texttt{isrootsysn}\index{isrootsysn} & 196, 225 & \texttt{int(int)} & macro & Check if root system \\
+\texttt{get\_priv}\index{get\_priv} & 200 & \texttt{struct priv*(struct proc*, int)} & \texttt{proc.c} & Assign privilege \\
+\texttt{static\_priv\_id}\index{static\_priv\_id} & 200 & \texttt{int(int)} & macro & Static privilege ID \\
+\texttt{priv}\index{priv} & 204, 205, 248 & \texttt{struct priv*(struct proc*)} & macro & Get privilege ptr \\
+\texttt{memset}\index{memset} & 237 & \texttt{void*(void*, int, size\_t)} & \texttt{<string.h>} & Set memory to value \\
+\texttt{set\_sys\_bit}\index{set\_sys\_bit} & 241 & \texttt{void(sys\_map\_t, int)} & macro & Set IPC target bit \\
+\texttt{fill\_sendto\_mask}\index{fill\_sendto\_mask} & 244 & \texttt{void(struct proc*, sys\_map\_t*)} & \texttt{proc.c} & Fill IPC mask \\
+\texttt{RTS\_SET}\index{RTS\_SET} & 253 & macro & \texttt{proc.h} & Set process flags \\
+\texttt{arch\_boot\_proc}\index{arch\_boot\_proc} & 257 & \texttt{void(struct boot\_image*, struct proc*)} & arch-specific & Arch proc init \\
+\texttt{get\_cpulocal\_var}\index{get\_cpulocal\_var} & 260, 261 & macro & SMP-specific & Get CPU-local var \\
+\texttt{arch\_post\_init}\index{arch\_post\_init} & 283 & \texttt{void(void)} & arch-specific & Post-init arch setup \\
+\texttt{IPCNAME}\index{IPCNAME} & 285--290 & macro & \texttt{main.c:277} & Register IPC name \\
+\texttt{memory\_init}\index{memory\_init} & 293 & \texttt{void(void)} & \texttt{memory.c} & Init memory subsystem \\
+\texttt{system\_init}\index{system\_init} & 295 & \texttt{void(void)} & \texttt{system.c} & Init system services \\
+\texttt{add\_memmap}\index{add\_memmap} & 301 & \texttt{void(kinfo\_t*, phys\_bytes, phys\_bytes)} & \texttt{memory.c} & Add memory region \\
+\texttt{smp\_single\_cpu}\index{smp\_single\_cpu} & 306, 309 & \texttt{void(void)} & \texttt{smp.c} & SMP fallback \\
+\texttt{smp\_init}\index{smp\_init} & 311 & \texttt{void(void)} & \texttt{smp.c} & Init SMP \\
+\texttt{bsp\_finish\_boot}\index{bsp\_finish\_boot} & 316, 324 & \texttt{void(void)} & \texttt{main.c:38} & Final boot phase \\
+\end{longtable}

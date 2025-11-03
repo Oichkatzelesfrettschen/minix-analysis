@@ -1,0 +1,69 @@
+\chapter{Kernel Orchestration: kmain() Execution}
+
+\section{Overview}
+
+Chapter 3 provided a high-level overview of kmain() orchestration. This chapter
+focuses on the detailed execution path, process table setup, and transition to the scheduler.
+
+\section{Process Table Initialization}
+
+The process table (proc array in main.c) is initialized with:
+
+\begin{enumerate}
+\item NR\_TASKS kernel tasks (interrupt handlers, etc.)
+\item NR\_SYS\_PROCS system processes (filesystem, network, etc.)
+\item NR\_USER\_PROCS user processes (later added by VM)
+\end{enumerate}
+
+Typical configuration:
+\begin{verbatim}
+NR_TASKS:      10-15 (kernel tasks)
+NR_SYS_PROCS:  5-8 (system servers)
+NR_USER_PROCS: 128 (user processes)
+Total:         150-160 process slots
+\end{verbatim}
+
+\section{Boot Process Setup}
+
+For each boot process:
+
+\begin{enumerate}
+\item Assign process ID and endpoint
+\item Extract multiboot module info (start address, size)
+\item Initialize privilege structure
+\item Set scheduling flags (RTS\_PROC\_STOP, RTS\_NO\_PRIV, etc.)
+\item Call architecture-specific setup (arch\_boot\_proc)
+\end{enumerate}
+
+\section{Scheduling Flags}
+
+Process states during boot:
+
+\begin{table}[h!]
+\centering
+\caption{Process Scheduling Flags at Boot}
+\begin{tabular}{ll}
+\toprule
+Flag & Meaning \\
+\midrule
+RTS\_PROC\_STOP & Process inhibited (waiting for scheduler) \\
+RTS\_NO\_PRIV & No privileges assigned yet (waiting for root process) \\
+RTS\_NO\_QUANTUM & No CPU time quantum (scheduler inhibited) \\
+RTS\_VMINHIBIT & Inhibited until VM sets up page table \\
+RTS\_BOOTINHIBIT & Boot-time inhibition \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Only kernel tasks and the root system process are immediately schedulable.
+All other processes remain inhibited until the root process grants privileges.
+
+\section{Summary}
+
+kmain() creates the foundation for multitasking by:
+\begin{enumerate}
+\item Initializing all process structures
+\item Loading boot processes from multiboot modules
+\item Assigning privileges and capabilities
+\item Preparing for scheduler activation
+\end{enumerate}

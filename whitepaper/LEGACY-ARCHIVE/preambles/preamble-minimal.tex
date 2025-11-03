@@ -1,0 +1,99 @@
+% ===============================================================================
+% MINIMAL PREAMBLE FOR TESTING
+% ===============================================================================
+
+% Essential packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+% Math and symbols
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Page layout
+\usepackage{geometry}
+\geometry{a4paper,margin=1in,twoside}
+
+% Graphics and tikz
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{graphicx}
+
+% Tables
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{colortbl}
+
+% Colors
+\usepackage{xcolor}
+\definecolor{minixpurple}{RGB}{102, 126, 234}
+\definecolor{accentblue}{RGB}{33, 150, 243}
+\definecolor{accentgreen}{RGB}{76, 175, 80}
+\definecolor{accentorange}{RGB}{255, 152, 0}
+\definecolor{accentred}{RGB}{244, 67, 54}
+\definecolor{accentgray}{RGB}{158, 158, 158}
+\definecolor{minixdark}{RGB}{26, 26, 26}
+\definecolor{minixlight}{RGB}{224, 224, 224}
+
+% Special formatting
+\usepackage{tcolorbox}
+
+% References and hyperlinks
+\usepackage{hyperref}
+
+% Bibliography
+\usepackage[backend=bibtex,style=authoryear,natbib=true]{biblatex}
+\addbibresource{bibliography.bib}
+
+% Cross-references
+\usepackage{cleveref}
+
+% Code listings
+\usepackage{listings}
+
+% Typography
+\usepackage{microtype}
+\usepackage{setspace}
+\onehalfspacing
+
+% Page styling
+\usepackage{fancyhdr}
+
+% Custom commands
+\newcommand{\minix}{\textsc{minix}}
+\newcommand{\linux}{\textsc{linux}}
+\newcommand{\qemu}{\textsc{qemu}}
+\newcommand{\mcp}{\textsc{mcp}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\file}[1]{\texttt{#1}}
+
+% Key insight box
+\newcommand{\keyinsight}[1]{%
+    \begin{tcolorbox}[colback=minixpurple!10, colframe=minixpurple, arc=4pt, boxsep=10pt]
+    \textbf{Key Insight:} #1
+    \end{tcolorbox}
+}
+
+% Warning box
+\newcommand{\warning}[1]{%
+    \begin{tcolorbox}[colback=accentorange!10, colframe=accentorange, arc=4pt, boxsep=10pt]
+    \textbf{Warning:} #1
+    \end{tcolorbox}
+}
+
+% TikZ Styles
+\tikzstyle{component}=[rectangle, draw=minixpurple, fill=minixpurple!20, thick]
+\tikzstyle{kernel}=[rectangle, draw=accentred, fill=accentred!20, thick]
+\tikzstyle{userspace}=[rectangle, draw=accentgreen, fill=accentgreen!20, thick]
+\tikzstyle{process}=[ellipse, draw=accentblue, fill=accentblue!20, thick]
+\tikzstyle{decision}=[diamond, draw=accentorange, fill=accentorange!20, thick]
+\tikzstyle{data}=[cylinder, draw=accentgray, fill=accentgray!20, thick]
+\tikzstyle{arrow}=[thick, ->, >=stealth, color=minixdark]
+\tikzstyle{dashedarrow}=[dashed, ->, >=stealth, color=accentgray]
+
+% ==============================================================================
+% END OF MINIMAL PREAMBLE
+% ==============================================================================

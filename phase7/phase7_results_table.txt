@@ -1,0 +1,27 @@
+CONFIG | SAMPLE | BYTES | STATUS | DEVIATION | NOTES
+--------|--------|-------|--------|-----------|-------
+pentium2 | sample1 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2 | sample2 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2 | sample3 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2 | sample4 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2 | sample5 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2 | sample6 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2 | sample7 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2 | sample8 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2 | sample9 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2 | sample10 |  7762 |   PASS |       0% | Normal boot sequence
+pentium  | sample1 |  7762 |   PASS |       0% | Normal boot sequence
+pentium  | sample2 |  7762 |   PASS |       0% | Normal boot sequence
+pentium  | sample3 |  7762 |   PASS |       0% | Normal boot sequence
+pentium  | sample4 |  7762 |   PASS |       0% | Normal boot sequence
+pentium  | sample5 |  7762 |   PASS |       0% | Normal boot sequence
+pentium  | sample6 |  7762 |   PASS |       0% | Normal boot sequence
+pentium  | sample7 |  7762 |   PASS |       0% | Normal boot sequence
+pentium  | sample8 |  7762 |   PASS |       0% | Normal boot sequence
+pentium  | sample9 |  7762 |   PASS |       0% | Normal boot sequence
+pentium  | sample10 |  7762 |   PASS |       0% | Normal boot sequence
+486      | control1 |  7762 |   PASS |       0% | Normal boot sequence
+486      | control2 |  7762 |   PASS |       0% | Normal boot sequence
+486      | control3 |  7762 |   PASS |       0% | Normal boot sequence
+486      | control4 |  7762 |   PASS |       0% | Normal boot sequence
+486      | control5 |  7762 |   PASS |       0% | Normal boot sequence

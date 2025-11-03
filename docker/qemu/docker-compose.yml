@@ -1,0 +1,226 @@
+version: '3.9'
+
+services:
+  # Main QEMU container for MINIX testing
+  qemu-minix:
+    build:
+      context: ../..
+      dockerfile: docker/qemu/Dockerfile
+      args:
+        - QEMU_VERSION=latest
+        - BASE_IMAGE=ubuntu:22.04
+    
+    image: minix-qemu:latest
+    container_name: minix-qemu-test
+    
+    # Privileged mode needed for KVM and network configuration
+    privileged: true
+    
+    # Device access for KVM acceleration
+    devices:
+      - /dev/kvm:/dev/kvm
+      - /dev/net/tun:/dev/net/tun
+      - /dev/random:/dev/random
+      - /dev/urandom:/dev/urandom
+    
+    # Capabilities for network management
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    
+    # Environment variables
+    environment:
+      - QEMU_ENABLE_KVM=1
+      - QEMU_MACHINE=q35
+      - QEMU_MEMORY=2G
+      - QEMU_CPUS=4
+      - QEMU_DISK_SIZE=10G
+      - MINIX_ISO=/opt/minix-images/minix_R3.4.0rc6-d5e4fc0.iso
+      - MINIX_DISK=/vm/images/minix-test.qcow2
+      - LIBVIRTD_OPTS=-l
+    
+    # Volume mounts
+    volumes:
+      # VM storage
+      - qemu-images:/vm/images
+      - qemu-snapshots:/vm/snapshots
+      - qemu-logs:/vm/logs
+      
+      # MINIX source code
+      - ../../minix-source:/mnt/minix-source:ro
+      
+      # Test fixtures and scripts
+      - ../../tests/qemu:/opt/qemu-tests:ro
+      - ../../tests/fixtures:/opt/fixtures:ro
+      
+      # Configuration
+      - ../../.config:/etc/minix-analysis:ro
+      
+      # Docker socket (optional - for Docker-in-Docker)
+      - /var/run/docker.sock:/var/run/docker.sock
+    
+    # Port mapping
+    ports:
+      # VNC displays (multiple VMs)
+      - "5900:5900"
+      - "5901:5901"
+      - "5902:5902"
+      
+      # QEMU monitor ports
+      - "55555:55555"
+      - "55556:55556"
+      
+      # Serial port relays
+      - "9001:9001"
+      - "9002:9002"
+    
+    # Network configuration
+    networks:
+      qemu-net:
+        ipv4_address: 172.30.0.10
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 2G
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "qemu-system-i386", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Test runner container
+  test-runner:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile
+    
+    image: minix-analysis:test
+    container_name: minix-test-runner
+    
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TEST_ENV=docker
+      - QEMU_HOST=minix-qemu
+      - QEMU_PORT=55555
+    
+    volumes:
+      # Test files
+      - ../../tests:/app/tests:ro
+      - ../../src:/app/src:ro
+      
+      # Output and logs
+      - test-results:/app/results
+      - test-logs:/app/logs
+      
+      # Configuration
+      - ../../.config:/app/.config:ro
+    
+    networks:
+      - qemu-net
+    
+    depends_on:
+      qemu-minix:
+        condition: service_healthy
+    
+    # Don't start automatically, only when explicitly invoked
+    profiles:
+      - test
+    
+    restart: "no"
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # Monitor container for logging and metrics
+  monitor:
+    image: ubuntu:22.04
+    container_name: minix-monitor
+    
+    entrypoint: /bin/bash
+    
+    command: -c "tail -f /var/log/qemu/* || sleep infinity"
+    
+    volumes:
+      - qemu-logs:/var/log/qemu
+      - monitor-logs:/var/log/monitor
+    
+    networks:
+      - qemu-net
+    
+    profiles:
+      - debug
+    
+    restart: unless-stopped
+
+# Named volumes
+volumes:
+  qemu-images:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/docker/images
+  
+  qemu-snapshots:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/docker/snapshots
+  
+  qemu-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/logs/qemu
+  
+  test-results:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/test_results
+  
+  test-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/logs/tests
+  
+  monitor-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/logs/monitor
+
+# Networks
+networks:
+  qemu-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+          gateway: 172.30.0.1

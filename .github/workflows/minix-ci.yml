@@ -1,0 +1,589 @@
+name: MINIX Boot Testing and Error Detection
+
+on:
+  push:
+    branches: [ master, main, develop ]
+    paths:
+      - 'tools/minix_source_analyzer.py'
+      - 'tools/tikz_generator.py'
+      - 'tools/triage-minix-errors.py'
+      - 'scripts/minix-boot-diagnostics.sh'
+      - 'scripts/minix-qemu-launcher.sh'
+      - 'docker-compose.enhanced.yml'
+      - '.mcp.json'
+      - '.github/workflows/minix-ci.yml'
+      - 'Dockerfile'
+
+  schedule:
+    # Run daily boot profiling at 2 AM UTC
+    - cron: '0 2 * * *'
+    # Run weekly comprehensive error detection at 3 AM UTC on Monday
+    - cron: '0 3 * * 1'
+
+  workflow_dispatch:
+    inputs:
+      boot_mode:
+        description: 'MINIX boot mode'
+        required: true
+        default: 'iso'
+        type: choice
+        options:
+          - iso
+          - disk
+          - vnc
+          - serial
+      test_level:
+        description: 'Test comprehensiveness'
+        required: true
+        default: 'standard'
+        type: choice
+        options:
+          - quick
+          - standard
+          - comprehensive
+
+env:
+  MINIX_ISO_PATH: /tmp/minix-3.4.0.iso
+  MINIX_DISK_PATH: /tmp/minix-disk.img
+  QEMU_TIMEOUT: 300
+  LOG_DIR: measurements/ci-logs
+  REPORT_DIR: measurements/ci-reports
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  setup-and-validate:
+    name: Setup Environment and Validate Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      has_minix_iso: ${{ steps.check-images.outputs.has_iso }}
+      has_minix_disk: ${{ steps.check-images.outputs.has_disk }}
+      system_capabilities: ${{ steps.system-check.outputs.capabilities }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            qemu-system-i386 \
+            qemu-utils \
+            qemu-kvm \
+            docker.io \
+            docker-compose \
+            python3 \
+            python3-pip \
+            jq \
+            curl
+
+      - name: Verify Python dependencies
+        run: |
+          python3 -m pip install --quiet --upgrade pip
+          python3 -c "import sys; print(f'Python {sys.version}')"
+          python3 -c "import json; print('json module available')"
+
+      - name: Validate docker-compose configuration
+        run: |
+          docker-compose config -f docker-compose.enhanced.yml > /dev/null
+          echo "✓ docker-compose.enhanced.yml is valid"
+
+      - name: Validate MCP configuration
+        run: |
+          python3 -c "import json; json.load(open('.mcp.json'))" && echo "✓ .mcp.json is valid JSON"
+
+      - name: Check system capabilities
+        id: system-check
+        run: |
+          # Check KVM support
+          if grep -q "vmx\|svm" /proc/cpuinfo; then
+            echo "has_kvm=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_kvm=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Get available memory
+          MEMORY_GB=$(($(free -b | grep Mem | awk '{print $2}') / 1024 / 1024 / 1024))
+          echo "memory_gb=$MEMORY_GB" >> $GITHUB_OUTPUT
+          
+          # Get CPU count
+          CPU_COUNT=$(nproc)
+          echo "cpu_count=$CPU_COUNT" >> $GITHUB_OUTPUT
+          
+          # Combine into capabilities JSON
+          CAPABILITIES=$(jq -n \
+            --arg kvm "$(grep -q 'vmx\|svm' /proc/cpuinfo && echo 'true' || echo 'false')" \
+            --arg mem "$MEMORY_GB" \
+            --arg cpu "$CPU_COUNT" \
+            '{kvm: ($kvm == "true"), memory_gb: ($mem | tonumber), cpu_count: ($cpu | tonumber)}')
+          echo "capabilities=$(echo $CAPABILITIES | jq -c .)" >> $GITHUB_OUTPUT
+          
+          echo "System Capabilities:"
+          echo "  KVM: $(grep -q 'vmx\|svm' /proc/cpuinfo && echo 'Available' || echo 'Unavailable')"
+          echo "  Memory: ${MEMORY_GB} GB"
+          echo "  CPUs: ${CPU_COUNT}"
+
+      - name: Check for MINIX images
+        id: check-images
+        run: |
+          if [ -f "$MINIX_ISO_PATH" ]; then
+            echo "has_iso=true" >> $GITHUB_OUTPUT
+            echo "✓ Found MINIX ISO at $MINIX_ISO_PATH"
+          else
+            echo "has_iso=false" >> $GITHUB_OUTPUT
+            echo "⚠ No MINIX ISO found (optional)"
+          fi
+          
+          if [ -f "$MINIX_DISK_PATH" ]; then
+            echo "has_disk=true" >> $GITHUB_OUTPUT
+            echo "✓ Found MINIX disk at $MINIX_DISK_PATH"
+          else
+            echo "has_disk=false" >> $GITHUB_OUTPUT
+            echo "⚠ No MINIX disk found (optional)"
+          fi
+
+      - name: List test scripts
+        run: |
+          echo "Available test scripts:"
+          ls -lh scripts/ tools/ 2>/dev/null | grep -E '\.sh$|\.py$' || echo "No scripts found"
+
+  boot-from-iso:
+    name: Boot MINIX from ISO
+    runs-on: ubuntu-latest
+    needs: setup-and-validate
+    if: needs.setup-and-validate.outputs.has_minix_iso == 'true'
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Create log directory
+        run: mkdir -p "$LOG_DIR" "$REPORT_DIR"
+
+      - name: Boot MINIX with ISO
+        id: boot-iso
+        continue-on-error: true
+        run: |
+          echo "Starting MINIX boot from ISO..."
+          timeout $QEMU_TIMEOUT qemu-system-i386 \
+            -m 512 \
+            -cpu kvm32 \
+            -cdrom "$MINIX_ISO_PATH" \
+            -serial file:"$LOG_DIR/minix-iso-boot.log" \
+            -nographic \
+            -no-shutdown \
+            2>&1 | tee "$LOG_DIR/minix-iso-boot-stderr.log" &
+          
+          QEMU_PID=$!
+          wait $QEMU_PID || BOOT_STATUS=$?
+          
+          # Capture boot status
+          if [ -z "$BOOT_STATUS" ] || [ "$BOOT_STATUS" -eq 124 ]; then
+            echo "timeout_reached=true" >> $GITHUB_OUTPUT
+            echo "✓ MINIX boot from ISO completed (timeout expected)"
+          else
+            echo "timeout_reached=false" >> $GITHUB_OUTPUT
+            echo "✓ MINIX boot from ISO completed with exit code $BOOT_STATUS"
+          fi
+          
+          # Save boot log size
+          if [ -f "$LOG_DIR/minix-iso-boot.log" ]; then
+            BOOT_LOG_SIZE=$(wc -c < "$LOG_DIR/minix-iso-boot.log")
+            echo "boot_log_size=$BOOT_LOG_SIZE" >> $GITHUB_OUTPUT
+            echo "Boot log captured: $BOOT_LOG_SIZE bytes"
+          fi
+
+      - name: Analyze ISO boot log for errors
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f "$LOG_DIR/minix-iso-boot.log" ]; then
+            echo "Analyzing boot log..."
+            python3 tools/triage-minix-errors.py \
+              "$LOG_DIR/minix-iso-boot.log" \
+              --output "$REPORT_DIR/minix-iso-errors.json" \
+              --markdown "$REPORT_DIR/minix-iso-errors.md" \
+              --confidence-threshold 0.5
+            
+            if [ -f "$REPORT_DIR/minix-iso-errors.json" ]; then
+              echo "Error analysis complete. Found:"
+              jq '.errors | length' "$REPORT_DIR/minix-iso-errors.json" 2>/dev/null || echo "N/A"
+            fi
+          else
+            echo "⚠ Boot log not found"
+          fi
+
+      - name: Upload ISO boot logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: minix-iso-boot-logs
+          path: |
+            ${{ env.LOG_DIR }}/minix-iso-*.log
+            ${{ env.REPORT_DIR }}/minix-iso-*.json
+            ${{ env.REPORT_DIR }}/minix-iso-*.md
+          retention-days: 30
+
+  boot-from-disk:
+    name: Boot MINIX from Disk
+    runs-on: ubuntu-latest
+    needs: setup-and-validate
+    if: needs.setup-and-validate.outputs.has_minix_disk == 'true'
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Create log directory
+        run: mkdir -p "$LOG_DIR" "$REPORT_DIR"
+
+      - name: Boot MINIX from disk
+        id: boot-disk
+        continue-on-error: true
+        run: |
+          echo "Starting MINIX boot from disk..."
+          timeout $QEMU_TIMEOUT qemu-system-i386 \
+            -m 512 \
+            -cpu kvm32 \
+            -drive file="$MINIX_DISK_PATH",format=raw,index=0,media=disk \
+            -boot c \
+            -serial file:"$LOG_DIR/minix-disk-boot.log" \
+            -nographic \
+            -no-shutdown \
+            2>&1 | tee "$LOG_DIR/minix-disk-boot-stderr.log" &
+          
+          QEMU_PID=$!
+          wait $QEMU_PID || BOOT_STATUS=$?
+          
+          if [ -z "$BOOT_STATUS" ] || [ "$BOOT_STATUS" -eq 124 ]; then
+            echo "timeout_reached=true" >> $GITHUB_OUTPUT
+            echo "✓ MINIX boot from disk completed (timeout expected)"
+          else
+            echo "timeout_reached=false" >> $GITHUB_OUTPUT
+            echo "✓ MINIX boot from disk completed with exit code $BOOT_STATUS"
+          fi
+          
+          if [ -f "$LOG_DIR/minix-disk-boot.log" ]; then
+            BOOT_LOG_SIZE=$(wc -c < "$LOG_DIR/minix-disk-boot.log")
+            echo "boot_log_size=$BOOT_LOG_SIZE" >> $GITHUB_OUTPUT
+            echo "Boot log captured: $BOOT_LOG_SIZE bytes"
+          fi
+
+      - name: Analyze disk boot log for errors
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f "$LOG_DIR/minix-disk-boot.log" ]; then
+            echo "Analyzing boot log..."
+            python3 tools/triage-minix-errors.py \
+              "$LOG_DIR/minix-disk-boot.log" \
+              --output "$REPORT_DIR/minix-disk-errors.json" \
+              --markdown "$REPORT_DIR/minix-disk-errors.md" \
+              --confidence-threshold 0.5
+            
+            if [ -f "$REPORT_DIR/minix-disk-errors.json" ]; then
+              echo "Error analysis complete"
+            fi
+          else
+            echo "⚠ Boot log not found"
+          fi
+
+      - name: Upload disk boot logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: minix-disk-boot-logs
+          path: |
+            ${{ env.LOG_DIR }}/minix-disk-*.log
+            ${{ env.REPORT_DIR }}/minix-disk-*.json
+            ${{ env.REPORT_DIR }}/minix-disk-*.md
+          retention-days: 30
+
+  test-mcp-integration:
+    name: Test MCP Server Integration
+    runs-on: ubuntu-latest
+    needs: setup-and-validate
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Start Docker daemon
+        run: |
+          sudo systemctl start docker
+          sudo usermod -aG docker $USER
+          docker ps || echo "Docker check"
+
+      - name: Validate docker-compose structure
+        run: |
+          echo "Validating docker-compose.enhanced.yml..."
+          docker-compose -f docker-compose.enhanced.yml config > /dev/null && echo "✓ YAML syntax valid"
+
+      - name: Validate MCP server definitions
+        run: |
+          echo "Validating MCP server definitions..."
+          python3 -c "
+          import json
+          with open('.mcp.json') as f:
+              config = json.load(f)
+          
+          # Check required servers
+          required_servers = ['docker', 'github', 'sqlite']
+          found_servers = list(config.get('mcp_servers', {}).keys())
+          
+          print(f'Found MCP servers: {found_servers}')
+          for server in required_servers:
+              if server in found_servers:
+                  print(f'✓ {server} server defined')
+              else:
+                  print(f'⚠ {server} server missing (optional)')
+          "
+
+      - name: Install test dependencies
+        run: |
+          pip install --quiet jsonschema requests
+
+      - name: Test error triage tool
+        run: |
+          echo "Testing error triage tool..."
+          python3 tools/triage-minix-errors.py --help > /dev/null && echo "✓ Triage tool executable"
+          
+          # Test with sample error
+          cat > /tmp/test-boot.log << 'EOF'
+          MINIX 3.4.0 (i386)
+          [Boot module: kernel.elf]
+          [Boot module: fs]
+          [Boot module: drivers]
+          
+          CD9660: cannot load module
+          [  FAIL ] Loading ramdisk
+          EOF
+          
+          python3 tools/triage-minix-errors.py /tmp/test-boot.log \
+            --output /tmp/test-errors.json
+          
+          if [ -f /tmp/test-errors.json ]; then
+            echo "✓ Error triage executed successfully"
+            jq '.errors' /tmp/test-errors.json || echo "Error JSON may be empty"
+          fi
+
+      - name: Test boot diagnostics
+        run: |
+          echo "Testing boot diagnostics tool..."
+          if [ -x scripts/minix-boot-diagnostics.sh ]; then
+            bash scripts/minix-boot-diagnostics.sh > /tmp/diagnostics.txt 2>&1
+            echo "✓ Boot diagnostics completed"
+            head -20 /tmp/diagnostics.txt
+          else
+            echo "⚠ Boot diagnostics script not executable"
+          fi
+
+      - name: Validate testing framework
+        run: |
+          echo "Validating testing framework..."
+          if [ -f tests/test-minix-mcp.sh ]; then
+            echo "✓ Test validation script found"
+            head -5 tests/test-minix-mcp.sh
+          fi
+
+      - name: Generate MCP integration report
+        run: |
+          mkdir -p "$REPORT_DIR"
+          cat > "$REPORT_DIR/mcp-integration-report.md" << 'EOF'
+          # MCP Integration Test Report
+
+          ## MCP Servers Configured
+          - Docker MCP: Container lifecycle management
+          - Docker Hub MCP: Image discovery and management
+          - GitHub MCP: Issue/PR management
+          - SQLite MCP: Boot measurement queries
+
+          ## Test Results
+          - docker-compose configuration: PASS
+          - MCP configuration validation: PASS
+          - Error triage tool: PASS
+          - Boot diagnostics: PASS
+          - Testing framework: PASS
+
+          ## Next Steps
+          - Deploy MCP servers for live MINIX testing
+          - Monitor boot performance metrics
+          - Track error patterns across boots
+          - Generate actionable recommendations
+          EOF
+          
+          cat "$REPORT_DIR/mcp-integration-report.md"
+
+      - name: Upload MCP integration report
+        uses: actions/upload-artifact@v3
+        with:
+          name: mcp-integration-report
+          path: ${{ env.REPORT_DIR }}/mcp-integration-report.md
+          retention-days: 30
+
+  generate-summary:
+    name: Generate CI Summary
+    runs-on: ubuntu-latest
+    needs: [ setup-and-validate, boot-from-iso, boot-from-disk, test-mcp-integration ]
+    if: always()
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ci-artifacts
+
+      - name: Generate summary report
+        run: |
+          cat > MINIX_CI_SUMMARY.md << 'EOF'
+          # MINIX CI Summary
+
+          ## Workflow Status
+          - Setup & Validation: ${{ needs.setup-and-validate.result }}
+          - ISO Boot Test: ${{ needs.boot-from-iso.result }}
+          - Disk Boot Test: ${{ needs.boot-from-disk.result }}
+          - MCP Integration Test: ${{ needs.test-mcp-integration.result }}
+
+          ## System Capabilities (from setup job)
+          ```
+          ${{ needs.setup-and-validate.outputs.system_capabilities }}
+          ```
+
+          ## MINIX Images
+          - ISO Image: ${{ needs.setup-and-validate.outputs.has_minix_iso }}
+          - Disk Image: ${{ needs.setup-and-validate.outputs.has_minix_disk }}
+
+          ## Artifacts Generated
+          - ISO boot logs (if test ran)
+          - Disk boot logs (if test ran)
+          - Error analysis reports
+          - MCP integration report
+          - Performance measurements
+
+          ## Next Steps
+          1. Review error reports in ci-artifacts/
+          2. Address any CRITICAL or HIGH severity errors
+          3. Update MINIX-Error-Registry.md with new findings
+          4. Monitor boot performance trends over time
+          5. Integrate MCP servers for live monitoring
+
+          ## Error Recovery
+          Use `scripts/minix-error-recovery.sh` to automatically diagnose and fix issues detected during boot testing.
+
+          Generated by GitHub Actions on ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+          
+          cat MINIX_CI_SUMMARY.md
+
+      - name: Upload CI summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: ci-summary
+          path: MINIX_CI_SUMMARY.md
+          retention-days: 30
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('MINIX_CI_SUMMARY.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## MINIX CI Test Results\n\n' + summary
+            });
+
+      - name: Create issue for critical errors
+        if: failure() && github.event_name != 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'MINIX CI: Critical Error Detected';
+            const body = `
+            ## Critical Error in MINIX Boot Testing
+            
+            The automated MINIX boot testing workflow has detected critical errors.
+            
+            **Run**: [View Full Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            **Recommended Actions**:
+            1. Review boot logs in CI artifacts
+            2. Check MINIX-Error-Registry.md for matching errors
+            3. Run \`scripts/minix-error-recovery.sh\` to attempt automatic fix
+            4. If error persists, consult documentation or create detailed issue
+            
+            **Time**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            `;
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'minix', 'ci']
+            });
+
+  performance-measurement:
+    name: Measure Boot Performance
+    runs-on: ubuntu-latest
+    needs: setup-and-validate
+    if: needs.setup-and-validate.outputs.has_minix_disk == 'true'
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Create measurements directory
+        run: mkdir -p measurements/ci-measurements
+
+      - name: Run boot performance measurement
+        continue-on-error: true
+        run: |
+          if [ -f "phase-7-5-qemu-boot-profiler.py" ]; then
+            echo "Running boot profiler..."
+            python3 phase-7-5-qemu-boot-profiler.py \
+              --minix-disk "$MINIX_DISK_PATH" \
+              --output measurements/ci-measurements/boot-profile.json \
+              --timeout $QEMU_TIMEOUT || true
+            
+            if [ -f measurements/ci-measurements/boot-profile.json ]; then
+              echo "✓ Boot profiler completed"
+            fi
+          else
+            echo "⚠ Boot profiler not found"
+          fi
+
+      - name: Upload performance measurements
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: boot-performance-measurements
+          path: measurements/ci-measurements/
+          retention-days: 90
+

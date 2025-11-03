@@ -1,0 +1,195 @@
+\chapter{System Call Mechanism: SYSCALL (AMD Fast Syscall)}
+
+\section{Overview}
+
+SYSCALL/SYSRET is AMD's fast syscall mechanism, introduced in Opteron processors.
+It is the fastest x86 syscall mechanism, achieving approximately 31\% improvement over INT 0x80h
+and 7\% over SYSENTER.
+
+Like SYSENTER, SYSCALL bypasses exception handling. However, SYSCALL uses MSRs differently,
+allowing even faster dispatch.
+
+\section{WHAT: SYSCALL Execution Flow}
+
+\begin{enumerate}
+\item \textbf{User Preparation}: Load syscall number (RAX on x86-64), arguments
+\item \textbf{SYSCALL Instruction}: Jump to kernel handler via MSR
+\item \textbf{CPU Action}: Load kernel CS from IA32\_STAR MSR, switch privilege level
+\item \textbf{Kernel Handler}: Execute syscall dispatcher
+\item \textbf{SYSRET Instruction}: Return to user-space with fast restoration
+\end{enumerate}
+
+\section{HOW: Instruction-Level Execution}
+
+\subsection{Setup: MSR Configuration}
+
+SYSCALL uses a single combined MSR (IA32\_STAR) for configuration:
+
+\begin{lstlisting}[style=asmstyle,caption={SYSCALL MSR Setup (cstart)}]
+/* SYSCALL uses IA32_STAR (MSR 0xC0000081) and IA32_LSTAR (MSR 0xC0000082)
+   Bits 32-47 of IA32_STAR: kernel code segment
+   Bits 48-63 of IA32_STAR: user code segment
+   IA32_LSTAR: kernel handler address (for 64-bit mode)
+*/
+
+  mov    $0xC0000082, %ecx   /* IA32_LSTAR */
+  mov    $syscall_handler, %eax
+  mov    $0, %edx
+  wrmsr
+
+  mov    $0xC0000081, %ecx   /* IA32_STAR */
+  mov    $kernel_seg, %eax   /* Low 32 bits: kernel CS */
+  mov    $user_seg, %edx     /* High 32 bits: user CS */
+  wrmsr
+\end{lstlisting}
+
+\subsection{User-Space Invocation}
+
+\begin{lstlisting}[style=asmstyle,caption={User SYSCALL (AMD x86-64)}]
+/* User-space SYSCALL invocation (AMD x86-64) */
+
+  mov    $12, %rax           /* Syscall number */
+  mov    $dest_proc, %rdi    /* Arg 1 (System V ABI) */
+  mov    $call_num, %rsi     /* Arg 2 */
+  mov    $msg_ptr, %rdx      /* Arg 3 */
+
+  syscall                    /* Jump to kernel handler */
+  /* Never returns here directly; CPU switches to kernel */
+\end{lstlisting}
+
+\how{
+\begin{enumerate}
+\item \textbf{SYSCALL Microcode Action}:
+  \begin{enumerate}
+    \item Load CS and SS from IA32\_STAR MSR
+    \item Load RIP from IA32\_LSTAR MSR (handler address)
+    \item Set CPL (privilege level) to 0 (kernel mode)
+    \item Save user RCX (next instruction pointer) for SYSRET
+    \item Save user RFLAGS in R11 register
+    \item Clear IF flag (disable interrupts)
+  \end{enumerate}
+\item \textbf{Return Address Handling}: Unlike SYSENTER, user RCX is automatically saved
+\item \textbf{Timing}: 3-8 CPU cycles (faster MSR mechanism than SYSENTER)
+\end{enumerate}
+}
+
+\subsection{Kernel Handler}
+
+\begin{lstlisting}[style=asmstyle,caption={SYSCALL Kernel Handler (AMD x86-64)}]
+.global syscall_handler
+syscall_handler:
+  /* CPU has automatically saved user RCX and RFLAGS in R11 */
+  /* User RDI, RSI, RDX already in correct positions */
+
+  /* Save caller-saved registers and set up kernel stack */
+  push   %rbp
+  mov    %rsp, %rbp
+
+  /* Dispatch syscall (RDI, RSI, RDX already in place) */
+  call   do_ipc
+
+  /* RAX now contains syscall result */
+
+  /* Restore registers */
+  pop    %rbp
+
+  /* Return to user-space */
+  sysret                     /* Restore RCX (next instruction) and RFLAGS */
+\end{lstlisting}
+
+\how{
+\begin{enumerate}
+\item \textbf{Automatic Register Preservation}:
+  \begin{itemize}
+    \item User RCX (next instruction): saved by CPU, restored by SYSRET
+    \item User RFLAGS: saved by CPU in R11, restored by SYSRET
+    \item Arguments (RDI, RSI, RDX): already in correct System V ABI positions
+  \end{itemize}
+\item \textbf{Stack Handling}: Kernel and user stacks are separate (per-CPU kernel stack)
+\item \textbf{Return}: SYSRET automatically restores RCX into RIP and R11 into RFLAGS
+\item \textbf{Timing}: 15-25 cycles for handler execution (minimal register saves)
+\end{enumerate}
+}
+
+\subsection{Critical Differences from SYSENTER}
+
+\begin{table}[h!]
+\centering
+\caption{SYSENTER vs SYSCALL Comparison}
+\begin{tabular}{llll}
+\toprule
+Feature & INT 0x80h & SYSENTER & SYSCALL \\
+\midrule
+Return addr & Stack & EDX (manual) & RCX (auto) \\
+RFLAGS save & Stack & Not saved & R11 (auto) \\
+Stack switch & Yes & Manual & Manual \\
+Mode & 32-bit & 32-bit & 64-bit native \\
+Vendor & All & Intel & AMD \\
+Cycles (approx) & 1772 & 1305 & 1220 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Performance Characteristics}
+
+SYSCALL is the fastest syscall mechanism:
+
+\begin{table}[h!]
+\centering
+\caption{SYSCALL Timing Breakdown}
+\begin{tabular}{lrr}
+\toprule
+Phase & Cycles & Notes \\
+\midrule
+User prep & 2-4 & Load registers \\
+SYSCALL instruction & 3-8 & Load MSR, switch privilege \\
+Kernel entry & 5-10 & Minimal register saves \\
+Dispatch & 5-10 & Syscall table lookup \\
+Syscall exec & 50-100+ & Varies by operation \\
+Register restore & 5-10 & Minimal restoration \\
+SYSRET & 10-20 & Restore RCX, RFLAGS \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Total SYSCALL latency: 1220 CPU cycles (full roundtrip, measured)}
+
+\section{Advantages Over SYSENTER}
+
+\begin{itemize}
+\item \textbf{Automatic Return Address Save}: RCX saved by CPU, no EDX preparation needed
+\item \textbf{Automatic Flags Save}: RFLAGS saved in R11, no manual stack manipulation
+\item \textbf{Fewer Register Saves}: System V ABI means RDI, RSI, RDX already in argument positions
+\item \textbf{Native 64-bit Mode}: RIP, RAX are 64-bit (not 32-bit EIP, EAX)
+\item \textbf{Faster Restoration}: SYSRET is slightly faster than SYSEXIT
+\end{itemize}
+
+\section{Limitations}
+
+\begin{itemize}
+\item \textbf{AMD Only}: Not available on Intel (uses SYSENTER instead)
+\item \textbf{64-bit Only}: SYSCALL is primarily for x86-64 mode
+\item \textbf{No Selective Kernel Stack}: Uses MSR, not per-thread TSS
+\end{itemize}
+
+\section{Summary: SYSCALL Mechanism}
+
+SYSCALL is the fastest x86 syscall mechanism, achieving 31\% improvement over INT 0x80h through:
+
+\begin{enumerate}
+\item Automatic return address preservation (RCX)
+\item Automatic RFLAGS preservation (R11)
+\item Native 64-bit operation
+\item Minimal register save/restore overhead
+\end{enumerate}
+
+Performance rankings:
+\begin{enumerate}
+\item SYSCALL: 1220 cycles (fastest)
+\item SYSENTER: 1305 cycles (26\% slower)
+\item INT 0x80h: 1772 cycles (45\% slower)
+\end{enumerate}
+
+On modern AMD processors, SYSCALL is the preferred syscall mechanism.
+On Intel processors, SYSENTER is preferred. MINIX can dispatch to the appropriate
+mechanism based on CPU features detected during cstart().

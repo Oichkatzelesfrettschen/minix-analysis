@@ -1,0 +1,171 @@
+# Maintainer: Oaich <eirikr@local>
+# MINIX Boot Sequence Tracer
+
+pkgname=minix-boot-tracer
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Specialized kernel-mode tracer for MINIX boot sequence and CPU transitions"
+arch=('x86_64')
+url="https://github.com/eirikr/minix-analysis"
+license=('MIT')
+
+depends=(
+  'base'
+  'gcc'               # C compiler (required for kernel modules if needed)
+  'linux-headers'     # kernel headers
+  'kmod'              # kernel module utilities
+  'util-linux'        # system utilities
+  'perf'              # Linux performance profiling (linux-tools)
+)
+
+optdepends=(
+  'linux-tools: perf, trace-cmd for kernel event tracing'
+  'systemtap: dynamic kernel probing'
+  'uprobes: user-space probes'
+  'ftrace: kernel function tracer (included in linux-tools)'
+)
+
+makedepends=(
+  'make'
+  'binutils'
+  'python'
+)
+
+checkdepends=(
+  'python-pytest'
+)
+
+backup=()
+source=()
+sha256sums=()
+
+prepare() {
+  :
+}
+
+build() {
+  :
+}
+
+check() {
+  echo "Verifying boot tracer tool suite..."
+  
+  local tools=(
+    'perf'
+    'trace-cmd'
+  )
+  
+  for tool in "${tools[@]}"; do
+    if command -v "$tool" &>/dev/null; then
+      echo "OK: $tool"
+    else
+      echo "WARNING: $tool not found (install linux-tools)"
+    fi
+  done
+}
+
+package() {
+  install -dm755 "${pkgdir}/usr/share/doc/${pkgname}"
+  
+  # Boot tracer helper scripts
+  install -dm755 "${pkgdir}/usr/local/bin"
+  
+  cat > "${pkgdir}/usr/local/bin/minix-boot-trace" << 'SCRIPT'
+#!/bin/sh
+# MINIX Boot Sequence Tracer
+# Records CPU state transitions, function calls, and interrupt events
+# during MINIX boot sequence
+
+set -e
+
+TRACE_DIR="${TRACE_DIR:-.}"
+KERNEL_IMAGE="${1:-.}"
+
+if [ ! -f "$KERNEL_IMAGE" ]; then
+  echo "ERROR: Kernel image not found: $KERNEL_IMAGE"
+  exit 1
+fi
+
+echo "MINIX Boot Tracer"
+echo "================="
+echo "Kernel image: $KERNEL_IMAGE"
+echo "Trace directory: $TRACE_DIR"
+echo ""
+echo "Boot tracing requires:"
+echo "  1. Kernel built with CONFIG_FUNCTION_TRACER=y"
+echo "  2. MINIX kernel boot with ftrace enabled"
+echo "  3. Host kernel with perf/trace-cmd support"
+echo ""
+echo "Usage:"
+echo "  trace-cmd record -e sched_process_fork,sched_switch -o boot.dat <boot-minix>"
+echo "  trace-cmd report -i boot.dat > boot_trace.txt"
+echo ""
+echo "Analyze with:"
+echo "  minix-boot-analyze boot_trace.txt"
+SCRIPT
+  
+  chmod 755 "${pkgdir}/usr/local/bin/minix-boot-trace"
+  
+  cat > "${pkgdir}/usr/share/doc/${pkgname}/BOOT-TRACING.txt" << 'EOF'
+MINIX BOOT SEQUENCE TRACING
+===========================
+
+Overview:
+  Boot tracing captures CPU state transitions, context switches, function calls,
+  and interrupt events from bootloader through kernel initialization.
+
+Trace Points:
+  - System call entries (INT 0x33, SYSENTER, SYSCALL)
+  - Interrupt handlers (IRQ 0-15, exceptions)
+  - Context switches (sched_switch)
+  - Process creation (sched_process_fork)
+  - Function entries/returns (if enabled)
+  - CPU privilege level transitions
+
+Kernel Requirements:
+  CONFIG_FUNCTION_TRACER=y
+  CONFIG_EVENT_TRACING=y
+  CONFIG_HAVE_DYNAMIC_FTRACE=y
+
+Tools:
+  perf         - Linux kernel profiling (event-based)
+  trace-cmd    - tracer command tool (buffered tracing)
+  ftrace       - function tracer (kernel ftrace subsystem)
+
+Workflow:
+
+  1. RECORD PHASE (on running MINIX system):
+     perf record -e cycles,instructions,cache-misses -o boot.perf <minix-binary>
+     OR
+     trace-cmd record -e sched,irq -o boot.dat <minix-binary>
+
+  2. DECODE PHASE:
+     perf report -i boot.perf
+     OR
+     trace-cmd report -i boot.dat
+
+  3. ANALYSIS PHASE:
+     - Parse function names with objdump
+     - Map addresses to source lines with addr2line
+     - Build call graph from function entry/return events
+     - Correlate with symbol table and debug info
+
+Limitations:
+  - Requires MINIX kernel with tracing support (may not exist)
+  - Bootloader phase not easily traced (runs in real mode)
+  - Ring 0 -> Ring 3 transitions need debug symbols
+
+Alternative Approach (Recommended):
+  - Source code static analysis (objdump + readelf)
+  - Build call graph from object files (nm + cflow)
+  - Read assembly to understand CPU state changes
+  - Trace stack frame setup and context switching
+EOF
+  
+  chmod 644 "${pkgdir}/usr/share/doc/${pkgname}/BOOT-TRACING.txt"
+}
+
+post_install() {
+  echo "MINIX boot tracer installed"
+  echo "See /usr/share/doc/minix-boot-tracer/BOOT-TRACING.txt for usage"
+}

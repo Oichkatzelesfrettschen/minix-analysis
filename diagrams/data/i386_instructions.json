@@ -1,0 +1,223 @@
+{
+  "architecture": "i386",
+  "total_instructions": 1307,
+  "unique_instructions": 96,
+  "files_processed": 14,
+  "files": [
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/mpx.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/io_outl.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/io_inb.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/usermapped_glo_ipc.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/klib.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/apic_asm.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/io_intr.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/io_outw.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/trampoline.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/io_inl.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/head.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/io_outb.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/io_inw.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/i386/debugreg.S"
+  ],
+  "instruction_frequencies": {
+    "import": 12,
+    "push": 82,
+    "call": 26,
+    "add": 17,
+    "test_int_in_kernel": 6,
+    "save_process_ctx": 10,
+    "movl": 61,
+    "pic_irq_handler": 4,
+    "movb": 6,
+    "outb": 10,
+    "jmp": 23,
+    "0": 8,
+    "pusha": 6,
+    "clear_if": 4,
+    "popa": 6,
+    "iret": 7,
+    "entry": 96,
+    "hwint_master": 8,
+    "hwint_slave": 8,
+    "xchg": 5,
+    "mov": 204,
+    "ipc_entry_syscall_percpu": 8,
+    "pushf": 5,
+    "pop": 56,
+    "cmp": 8,
+    "jz": 4,
+    "pushl": 5,
+    "movw": 8,
+    "popf": 3,
+    "sti": 4,
+    "sysexit": 1,
+    "sysret": 1,
+    "restore_gp_regs": 1,
+    "exception_err_code": 7,
+    "label": 39,
+    "exception_no_err_code": 12,
+    "pushw": 4,
+    "popw": 4,
+    "cld": 7,
+    "ret": 61,
+    "hlt": 3,
+    "outl": 1,
+    "xorl": 2,
+    "inb": 1,
+    "setargs": 3,
+    "int": 2,
+    "posttrap": 3,
+    "sysenter": 1,
+    "syscall": 1,
+    "ipcfunc": 7,
+    "action": 1,
+    "shr": 4,
+    "rep": 9,
+    "jb": 1,
+    "neg": 1,
+    "and": 6,
+    "sub": 2,
+    "lidt": 1,
+    "cpuid": 2,
+    "test": 3,
+    "jne": 3,
+    "cli": 4,
+    "1": 2,
+    "fninit": 1,
+    "clts": 1,
+    "xor": 7,
+    "fnstsw": 1,
+    "fxrstor": 1,
+    "frstor": 1,
+    "arg_eax_return": 4,
+    "arg_eax_set": 3,
+    "arg_eax_action": 10,
+    "arg_ax_set": 5,
+    "rdmsr": 1,
+    "wrmsr": 1,
+    "cmpl": 1,
+    "je": 7,
+    "shl": 1,
+    "pause": 2,
+    "mfence": 3,
+    "apic_irq_handler": 2,
+    "lapic_intr_handler": 2,
+    "lapic_intr": 5,
+    "_lapic_intr_dummy_handler_": 1,
+    "apic_hwint": 64,
+    "lapic_intr_dummy_handler": 256,
+    "outw": 1,
+    "lgdtl": 1,
+    "lidtl": 1,
+    "orb": 1,
+    "orl": 3,
+    "andl": 1,
+    "ljmpl": 1,
+    "inl": 1,
+    "inw": 1,
+    "ld_st_reg": 6
+  },
+  "top_20_instructions": [
+    {
+      "instruction": "lapic_intr_dummy_handler",
+      "count": 256
+    },
+    {
+      "instruction": "mov",
+      "count": 204
+    },
+    {
+      "instruction": "entry",
+      "count": 96
+    },
+    {
+      "instruction": "push",
+      "count": 82
+    },
+    {
+      "instruction": "apic_hwint",
+      "count": 64
+    },
+    {
+      "instruction": "movl",
+      "count": 61
+    },
+    {
+      "instruction": "ret",
+      "count": 61
+    },
+    {
+      "instruction": "pop",
+      "count": 56
+    },
+    {
+      "instruction": "label",
+      "count": 39
+    },
+    {
+      "instruction": "call",
+      "count": 26
+    },
+    {
+      "instruction": "jmp",
+      "count": 23
+    },
+    {
+      "instruction": "add",
+      "count": 17
+    },
+    {
+      "instruction": "import",
+      "count": 12
+    },
+    {
+      "instruction": "exception_no_err_code",
+      "count": 12
+    },
+    {
+      "instruction": "save_process_ctx",
+      "count": 10
+    },
+    {
+      "instruction": "outb",
+      "count": 10
+    },
+    {
+      "instruction": "arg_eax_action",
+      "count": 10
+    },
+    {
+      "instruction": "rep",
+      "count": 9
+    },
+    {
+      "instruction": "0",
+      "count": 8
+    },
+    {
+      "instruction": "hwint_master",
+      "count": 8
+    }
+  ],
+  "categories": {
+    "other": 668,
+    "stack": 151,
+    "control": 125,
+    "arithmetic": 19,
+    "movement": 75,
+    "privileged": 223,
+    "comparison": 12,
+    "logical": 20,
+    "shift": 5,
+    "string": 9
+  },
+  "addressing_modes": {
+    "unknown": 1116,
+    "memory": 777,
+    "immediate": 118,
+    "32-bit": 151,
+    "register": 519,
+    "8-bit": 21,
+    "16-bit": 19
+  }
+}

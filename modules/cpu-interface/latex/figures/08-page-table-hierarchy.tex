@@ -1,0 +1,159 @@
+\documentclass[tikz,border=5pt]{standalone}
+\usepackage{tikz}
+\usepackage{lmodern}
+\usetikzlibrary{shapes,arrows,positioning,calc,matrix}
+
+\begin{document}
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    table/.style={rectangle, draw, fill=blue!10, minimum width=2cm, minimum height=0.6cm, font=\scriptsize},
+    arrow/.style={->,>=stealth,thick},
+    label/.style={font=\tiny}
+]
+
+% Title
+\node[font=\Large\bfseries] at (0,0) {i386 2-Level Paging Hierarchy};
+
+% Virtual Address breakdown
+\node[font=\scriptsize,align=center] (vaddr) at (0,-1.5) {
+    \textbf{Virtual Address (32-bit)}\\
+    \begin{tabular}{|c|c|c|}
+    \hline
+    [31:22] & [21:12] & [11:0] \\
+    \hline
+    10 bits & 10 bits & 12 bits \\
+    \hline
+    PDE Index & PTE Index & Offset \\
+    \hline
+    \end{tabular}
+};
+
+% CR3 Register
+\node[table, fill=red!20, minimum width=3cm] (cr3) at (-5,-4) {\textbf{CR3 Register}};
+\node[label, below=0.1cm of cr3, text width=2.5cm, align=center] {
+    Points to Page\\
+    Directory base
+};
+
+% Page Directory (Level 1)
+\node[table, minimum height=3cm] (pd) at (0,-5.5) {
+    \textbf{Page Directory}\\
+    \textbf{(PD)}\\
+    (1024 entries)\\
+    \vspace{0.2cm}
+    Entry 0\\
+    Entry 1\\
+    ...\\
+    Entry 1023
+};
+\node[label, above=0.1cm of pd] {Level 1 (Directory)};
+
+% Page Table (Level 2)
+\node[table, minimum height=2.8cm] (pt) at (4,-5.5) {
+    \textbf{Page Table}\\
+    \textbf{(PT)}\\
+    (1024 entries)\\
+    \vspace{0.2cm}
+    Entry 0\\
+    ...\\
+    Entry 1023
+};
+\node[label, above=0.1cm of pt] {Level 2 (Table)};
+
+% Physical Page
+\node[table, fill=green!20, minimum height=1.5cm, minimum width=2cm] (page) at (8,-5.5) {
+    \textbf{Physical}\\
+    \textbf{Page}\\
+    (4 KB)
+};
+\node[label, above=0.1cm of page] {Physical Memory};
+
+% Arrows showing translation
+\draw[arrow] (cr3) -- (pd) node[midway,above,label] {Base PA};
+\draw[arrow] (pd) -- (pt) node[midway,above,label] {PD[i] $\rightarrow$ PT};
+\draw[arrow] (pt) -- (page) node[midway,above,label] {PT[j] $\rightarrow$ PFN};
+
+% Page Directory Entry format
+\node[font=\scriptsize, fill=yellow!20, draw, text width=5.5cm, align=left] (pde) at (0,-9) {
+    \textbf{Page Directory Entry (32-bit):}\\
+    \texttt{[31:12]} Page table base address\\
+    \texttt{[11:9]} Available for OS use\\
+    \texttt{[8]} Global (if CR4.PGE=1)\\
+    \texttt{[7]} Page Size (0=4KB, 1=4MB)\\
+    \texttt{[6]} Reserved (0)\\
+    \texttt{[5]} Accessed\\
+    \texttt{[4]} Cache disable (PCD)\\
+    \texttt{[3]} Write-through (PWT)\\
+    \texttt{[2]} User/Supervisor\\
+    \texttt{[1]} Read/Write\\
+    \texttt{[0]} Present
+};
+
+% Page Table Entry format
+\node[font=\scriptsize, fill=orange!20, draw, text width=5.5cm, align=left] (pte) at (7,-9) {
+    \textbf{Page Table Entry (32-bit):}\\
+    \texttt{[31:12]} Physical frame address\\
+    \texttt{[11:9]} Available for OS\\
+    \texttt{[8]} Global page\\
+    \texttt{[7]} Reserved (0)\\
+    \texttt{[6]} Dirty (written)\\
+    \texttt{[5]} Accessed\\
+    \texttt{[4]} Cache disable\\
+    \texttt{[3]} Write-through\\
+    \texttt{[2]} User/Supervisor\\
+    \texttt{[1]} Read/Write\\
+    \texttt{[0]} Present
+};
+
+% Address translation steps
+\node[font=\tiny, fill=cyan!10, draw, text width=3.5cm, align=left] (steps) at (-5.5,-9) {
+    \textbf{Translation Steps:}\\
+    1. VA[31:22] = PD index (i)\\
+    2. PD[i] $\rightarrow$ PT base addr\\
+    3. VA[21:12] = PT index (j)\\
+    4. PT[j] $\rightarrow$ page frame\\
+    5. VA[11:0] = offset\\
+    6. PA = frame + offset
+};
+
+% TLB note
+\node[font=\tiny, fill=magenta!20, draw, text width=3.5cm, align=center] (tlb) at (-5.5,-12) {
+    \textbf{TLB Caches Translations}\\
+    2 table lookups avoided\\
+    on TLB hit (1 cycle)\\
+    vs 2 memory accesses\\
+    (200+ cycles)
+};
+
+% Page sizes annotation
+\node[font=\tiny, fill=green!10, draw, text width=2.5cm, align=left] (sizes) at (0,-12) {
+    \textbf{Page Sizes:}\\
+    • 4 KB (standard)\\
+    • 4 MB (PSE bit)\\
+    \\
+    \textbf{Address Space:}\\
+    • 32-bit: 4 GB max
+};
+
+% MINIX specific
+\node[font=\tiny, fill=blue!10, draw, text width=4cm, align=left] (minix) at (7,-12) {
+    \textbf{MINIX i386 Details:}\\
+    • Standard 2-level paging\\
+    • PSE enabled (CR4.PSE)\\
+    • 4 MB kernel mappings\\
+    • 1024 entries per level\\
+    • Defined in vm.h:34,38
+};
+
+% Constants box
+\node[font=\tiny, fill=cyan!20, draw, text width=3cm, align=left] (consts) at (3.5,-12) {
+    \textbf{i386 Constants:}\\
+    I386\_VM\_DIR\_ENTRIES: 1024\\
+    I386\_VM\_PT\_ENTRIES: 1024\\
+    I386\_VM\_DIR\_ENT\_SHIFT: 22\\
+    I386\_VM\_PT\_ENT\_SHIFT: 12\\
+    I386\_PAGE\_SIZE: 4096
+};
+
+\end{tikzpicture}
+\end{document}

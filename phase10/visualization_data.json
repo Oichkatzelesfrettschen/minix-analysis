@@ -1,0 +1,60 @@
+{
+  "cpu_timeline": {
+    "cpu_types": [
+      "486",
+      "pentium",
+      "pentium2",
+      "pentium3",
+      "core2duo"
+    ],
+    "boot_times_ms": [
+      120008,
+      120006.33,
+      120006,
+      120007,
+      120006.33
+    ],
+    "success_rates_percent": [
+      100.0,
+      100.0,
+      100.0,
+      100.0,
+      100.0
+    ],
+    "x_label": "CPU Type (1989-2008)",
+    "y_label": "Boot Time (milliseconds)",
+    "title": "MINIX 3.4 RC6 Boot Performance Across CPU Architectures"
+  },
+  "consistency_data": {
+    "metric": "Serial Output Size (bytes)",
+    "mean": 7762,
+    "stdev": 3,
+    "variance_percent": 0.04,
+    "samples": 120,
+    "title": "Deterministic Boot Output Consistency"
+  },
+  "cpu_distribution": {
+    "cpu_types": [
+      "486",
+      "pentium",
+      "pentium2",
+      "pentium3",
+      "core2duo"
+    ],
+    "sample_counts": [
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "success_counts": [
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "title": "Test Coverage by CPU Type"
+  }
+}

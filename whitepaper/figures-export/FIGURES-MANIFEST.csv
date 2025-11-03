@@ -1,0 +1,23 @@
+figure_id,name,type,chapter,description,page,format,dpi,timestamp
+1,fig-01-microkernel-architecture,tikz-diagrams,Chapter 1,MINIX 3.4 Microkernel Architecture Overview,18,PNG,300,2025-11-02T00:15:08.668373
+2,fig-02-message-passing,tikz-diagrams,Chapter 2,Synchronous Message Passing Sequence,29,PNG,300,2025-11-02T00:15:08.882436
+3,fig-03-memory-layout,tikz-diagrams,Chapter 2,x86 Memory Layout and CPU State,32,PNG,300,2025-11-02T00:15:09.046473
+4,fig-04-data-pipeline,tikz-diagrams,Chapter 3,Data Pipeline Architecture,42,PNG,300,2025-11-02T00:15:09.260587
+5,fig-05-workflow,tikz-diagrams,Chapter 3,Experimental Workflow,45,PNG,300,2025-11-02T00:15:09.424641
+6,fig-06-boot-flowchart,tikz-diagrams,Chapter 4,MINIX 3.4 Boot Phase Flowchart,55,PNG,300,2025-11-02T00:15:09.638784
+7,fig-07-cpu-registers,pgfplots-charts,Chapter 4,CPU Register State During Boot Phases,58,PNG,300,2025-11-02T00:15:09.852881
+8,fig-08-boot-durations,pgfplots-charts,Chapter 4,Boot Phase Durations (Measured in QEMU),60,PNG,300,2025-11-02T00:15:10.016895
+9,fig-09-boot-timeline,tikz-diagrams,Chapter 4,Boot Sequence Timeline,62,PNG,300,2025-11-02T00:15:10.231006
+10,fig-10-memory-allocation,pgfplots-charts,Chapter 4,Memory Allocation During Boot,65,PNG,300,2025-11-02T00:15:10.395034
+11,fig-11-boot-detailed,tikz-diagrams,Chapter 4,Detailed Boot Sequence Flowchart,67,PNG,300,2025-11-02T00:15:10.609080
+12,fig-12-boot-distribution,pgfplots-charts,Chapter 4,Boot Time Distribution,70,PNG,300,2025-11-02T00:15:10.823168
+13,fig-13-error-catalog,pgfplots-charts,Chapter 5,MINIX 3.4 Error Catalog (15-Error Registry),82,PNG,300,2025-11-02T00:15:11.037265
+14,fig-14-error-detection-algo,tikz-diagrams,Chapter 5,Error Detection Algorithm Flowchart,85,PNG,300,2025-11-02T00:15:11.251353
+15,fig-15-error-regex,pgfplots-charts,Chapter 5,Error Detection Regex Patterns,87,PNG,300,2025-11-02T00:15:11.465416
+16,fig-16-error-frequency,pgfplots-charts,Chapter 5,Error Frequency and Impact,89,PNG,300,2025-11-02T00:15:11.679500
+17,fig-17-error-graph,tikz-diagrams,Chapter 5,Error Causal Relationship Graph,91,PNG,300,2025-11-02T00:15:11.893606
+18,fig-18-syscall-selection,pgfplots-charts,Chapter 6,System Call Mechanism Selection,102,PNG,300,2025-11-02T00:15:12.107702
+19,fig-19-syscall-latency,pgfplots-charts,Chapter 6,System Call Latency Comparison,105,PNG,300,2025-11-02T00:15:12.321789
+20,fig-20-system-arch,tikz-diagrams,Chapter 6,Complete MINIX 3.4 System Architecture,107,PNG,300,2025-11-02T00:15:12.485780
+21,fig-21-process-ipc,tikz-diagrams,Chapter 6,Process and IPC Architecture,110,PNG,300,2025-11-02T00:15:12.699878
+22,fig-22-error-recovery,tikz-diagrams,Chapter 10,Error Detection and Recovery Flowchart,180,PNG,300,2025-11-02T00:15:12.914006

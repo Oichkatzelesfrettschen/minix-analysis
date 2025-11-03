@@ -1,0 +1,23 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{chains,positioning}
+
+\begin{document}
+\begin{tikzpicture}[
+    stage/.style={rectangle, draw, minimum width=3cm, minimum height=1cm, on chain},
+    arrow/.style={->, thick}
+]
+
+% Boot stages
+\begin{scope}[start chain=going below, node distance=5mm]
+{{nodes}}
+\end{scope}
+
+% Descriptions
+{{descriptions}}
+
+% Connections
+{{connections}}
+
+\end{tikzpicture}
+\end{document}

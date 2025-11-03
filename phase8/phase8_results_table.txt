@@ -1,0 +1,34 @@
+CONFIG | CPU_TYPE | SAMPLE | BYTES | STATUS | DEVIATION | NOTES
+--------|----------|--------|-------|--------|-----------|-------
+486_1vcpu_sample1 |      486 | sample1 |  7762 |   PASS |       0% | Normal boot sequence
+486_1vcpu_sample2 |      486 | sample2 |  7762 |   PASS |       0% | Normal boot sequence
+486_1vcpu_sample3 |      486 | sample3 |  7762 |   PASS |       0% | Normal boot sequence
+486_1vcpu_sample4 |      486 | sample4 |  7762 |   PASS |       0% | Normal boot sequence
+pentium_1vcpu_sample1 |  pentium | sample1 |  7762 |   PASS |       0% | Normal boot sequence
+pentium_1vcpu_sample2 |  pentium | sample2 |  7762 |   PASS |       0% | Normal boot sequence
+pentium_1vcpu_sample3 |  pentium | sample3 |  7762 |   PASS |       0% | Normal boot sequence
+pentium_1vcpu_sample4 |  pentium | sample4 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2_1vcpu_sample1 | pentium2 | sample1 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2_1vcpu_sample2 | pentium2 | sample2 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2_1vcpu_sample3 | pentium2 | sample3 |  7762 |   PASS |       0% | Normal boot sequence
+pentium2_1vcpu_sample4 | pentium2 | sample4 |  7762 |   PASS |       0% | Normal boot sequence
+pentium3_1vcpu_sample1 | pentium3 | sample1 |  7762 |   PASS |       0% | Normal boot sequence
+pentium3_1vcpu_sample2 | pentium3 | sample2 |  7762 |   PASS |       0% | Normal boot sequence
+pentium3_1vcpu_sample3 | pentium3 | sample3 |  7762 |   PASS |       0% | Normal boot sequence
+pentium3_1vcpu_sample4 | pentium3 | sample4 |  7762 |   PASS |       0% | Normal boot sequence
+pentium4_1vcpu_sample1 | pentium4 | sample1 |     0 |   FAIL |    100.0 | Early termination
+pentium4_1vcpu_sample2 | pentium4 | sample2 |     0 |   FAIL |    100.0 | Early termination
+pentium4_1vcpu_sample3 | pentium4 | sample3 |     0 |   FAIL |    100.0 | Early termination
+pentium4_1vcpu_sample4 | pentium4 | sample4 |     0 |   FAIL |    100.0 | Early termination
+core2duo_1vcpu_sample1 | core2duo | sample1 |  7762 |   PASS |       0% | Normal boot sequence
+core2duo_1vcpu_sample2 | core2duo | sample2 |  7762 |   PASS |       0% | Normal boot sequence
+core2duo_1vcpu_sample3 | core2duo | sample3 |  7762 |   PASS |       0% | Normal boot sequence
+core2duo_1vcpu_sample4 | core2duo | sample4 |  7762 |   PASS |       0% | Normal boot sequence
+nehalem_1vcpu_sample1 |  nehalem | sample1 |     0 |   FAIL |    100.0 | Early termination
+nehalem_1vcpu_sample2 |  nehalem | sample2 |     0 |   FAIL |    100.0 | Early termination
+nehalem_1vcpu_sample3 |  nehalem | sample3 |     0 |   FAIL |    100.0 | Early termination
+nehalem_1vcpu_sample4 |  nehalem | sample4 |     0 |   FAIL |    100.0 | Early termination
+westmere_1vcpu_sample1 | westmere | sample1 |     0 |   FAIL |    100.0 | Early termination
+westmere_1vcpu_sample2 | westmere | sample2 |     0 |   FAIL |    100.0 | Early termination
+westmere_1vcpu_sample3 | westmere | sample3 |     0 |   FAIL |    100.0 | Early termination
+westmere_1vcpu_sample4 | westmere | sample4 |     0 |   FAIL |    100.0 | Early termination

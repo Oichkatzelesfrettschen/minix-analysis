@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__desktop-commander__read_process_output",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__read_file",
+      "mcp__filesystem__write_file",
+      "Bash(if git log origin/master -1)",
+      "Bash(/dev/null)",
+      "Bash(then echo \"✓ Push completed successfully!\")",
+      "Bash(else echo \"Push still in progress or checking...\")",
+      "Bash(fi)",
+      "mcp__desktop-commander__read_file",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch:*)",
+      "Bash(__NEW_LINE__ git remote set-url origin https://github.com/Oichkatzelesfrettschen/minix-analysis.git)",
+      "Bash(__NEW_LINE__ git remote remove origin)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

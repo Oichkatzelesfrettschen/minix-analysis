@@ -1,0 +1,13 @@
+CPU_TYPE | SAMPLE | BYTES | STATUS
+---------|--------|-------|--------
+486      |      1 |  7762 | PASS
+486      |      2 |  7762 | PASS
+486      |      3 |  7762 | PASS
+k6       |      1 |     0 | FAIL
+k6       |      2 |     0 | FAIL
+pentium  |      1 |  7762 | PASS
+pentium  |      2 |   828 | FAIL
+pentium2 |      1 |   850 | FAIL
+pentium2 |      2 |  7762 | PASS
+pentium3 |      1 |  7762 | PASS
+pentium3 |      2 |  7762 | PASS

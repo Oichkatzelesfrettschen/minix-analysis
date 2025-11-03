@@ -1,0 +1,130 @@
+{
+  "cpu_1": {
+    "cpus": 1,
+    "samples": [
+      {
+        "timestamp": "2025-10-31T22:09:53.128486",
+        "cpus": 1,
+        "boot_time_seconds": 0.018067121505737305,
+        "boot_time_ms": 18,
+        "marker_count": 0,
+        "markers": {},
+        "success": true
+      }
+    ],
+    "statistics": {
+      "mean_seconds": 0.018067121505737305,
+      "mean_ms": 18,
+      "median_seconds": 0.018067121505737305,
+      "median_ms": 18,
+      "min_seconds": 0.018067121505737305,
+      "min_ms": 18,
+      "max_seconds": 0.018067121505737305,
+      "max_ms": 18,
+      "stdev_seconds": 0,
+      "stdev_ms": 0
+    },
+    "whitepaper_comparison": {
+      "estimated_ms": 65,
+      "measured_ms": 18,
+      "error_percent": 72.3,
+      "status": "NEEDS_VALIDATION"
+    }
+  },
+  "cpu_2": {
+    "cpus": 2,
+    "samples": [
+      {
+        "timestamp": "2025-10-31T22:09:53.178369",
+        "cpus": 2,
+        "boot_time_seconds": 0.01766371726989746,
+        "boot_time_ms": 17,
+        "marker_count": 0,
+        "markers": {},
+        "success": true
+      }
+    ],
+    "statistics": {
+      "mean_seconds": 0.01766371726989746,
+      "mean_ms": 17,
+      "median_seconds": 0.01766371726989746,
+      "median_ms": 17,
+      "min_seconds": 0.01766371726989746,
+      "min_ms": 17,
+      "max_seconds": 0.01766371726989746,
+      "max_ms": 17,
+      "stdev_seconds": 0,
+      "stdev_ms": 0
+    },
+    "whitepaper_comparison": {
+      "estimated_ms": 65,
+      "measured_ms": 17,
+      "error_percent": 73.8,
+      "status": "NEEDS_VALIDATION"
+    }
+  },
+  "cpu_4": {
+    "cpus": 4,
+    "samples": [
+      {
+        "timestamp": "2025-10-31T22:09:53.228829",
+        "cpus": 4,
+        "boot_time_seconds": 0.01753711700439453,
+        "boot_time_ms": 17,
+        "marker_count": 0,
+        "markers": {},
+        "success": true
+      }
+    ],
+    "statistics": {
+      "mean_seconds": 0.01753711700439453,
+      "mean_ms": 17,
+      "median_seconds": 0.01753711700439453,
+      "median_ms": 17,
+      "min_seconds": 0.01753711700439453,
+      "min_ms": 17,
+      "max_seconds": 0.01753711700439453,
+      "max_ms": 17,
+      "stdev_seconds": 0,
+      "stdev_ms": 0
+    },
+    "whitepaper_comparison": {
+      "estimated_ms": 65,
+      "measured_ms": 17,
+      "error_percent": 73.8,
+      "status": "NEEDS_VALIDATION"
+    }
+  },
+  "cpu_8": {
+    "cpus": 8,
+    "samples": [
+      {
+        "timestamp": "2025-10-31T22:09:53.280962",
+        "cpus": 8,
+        "boot_time_seconds": 0.017704486846923828,
+        "boot_time_ms": 17,
+        "marker_count": 0,
+        "markers": {},
+        "success": true
+      }
+    ],
+    "statistics": {
+      "mean_seconds": 0.017704486846923828,
+      "mean_ms": 17,
+      "median_seconds": 0.017704486846923828,
+      "median_ms": 17,
+      "min_seconds": 0.017704486846923828,
+      "min_ms": 17,
+      "max_seconds": 0.017704486846923828,
+      "max_ms": 17,
+      "stdev_seconds": 0,
+      "stdev_ms": 0
+    },
+    "whitepaper_comparison": {
+      "estimated_ms": 65,
+      "measured_ms": 17,
+      "error_percent": 73.8,
+      "status": "NEEDS_VALIDATION"
+    }
+  }
+}

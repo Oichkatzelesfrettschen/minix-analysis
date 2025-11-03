@@ -1,0 +1,99 @@
+{
+  "mcp_servers": {
+    "gh": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": null
+      },
+      "description": "GitHub repository management - create issues, manage PRs, track diagnostics",
+      "tools": [
+        "list_issues",
+        "create_issue",
+        "update_issue",
+        "list_pull_requests",
+        "search_code",
+        "list_repo_contents"
+      ]
+    },
+    "db": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sqlite",
+        "/home/eirikr/Playground/minix-analysis/measurements/minix-analysis.db"
+      ],
+      "env": {},
+      "description": "SQLite database queries - analyze boot profiling measurements, correlations",
+      "tools": [
+        "query",
+        "list_tables",
+        "get_schema",
+        "create_record",
+        "read_records",
+        "update_records"
+      ]
+    }
+  },
+  "settings": {
+    "context_window_budget_mb": 200,
+    "context_reservation_pct": 20,
+    "max_servers_enabled": 2,
+    "server_startup_timeout_sec": 30,
+    "request_timeout_sec": 300
+  },
+  "minix_analysis_config": {
+    "project_name": "minix-analysis",
+    "project_root": "/home/eirikr/Playground/minix-analysis",
+    "measurements_dir": "/home/eirikr/Playground/minix-analysis/measurements",
+    "docker_compose_file": "docker-compose.enhanced.yml",
+    "boot_profiler_port": 5010,
+    "syscall_tracer_port": 5011,
+    "memory_monitor_port": 5012,
+    "minix_i386_container": "minix-rc6-i386",
+    "minix_arm_container": "minix-rc6-arm",
+    "required_environment_variables": [
+      "GITHUB_TOKEN",
+      "GITHUB_PERSONAL_ACCESS_TOKEN",
+      "DOCKER_HUB_USERNAME",
+      "DOCKER_HUB_TOKEN"
+    ]
+  },
+  "quick_commands": {
+    "verify_env": "echo $GITHUB_TOKEN && echo $DOCKER_HUB_USERNAME && echo $DOCKER_HUB_TOKEN",
+    "setup_dirs": "mkdir -p measurements/{i386,arm}/{syscalls,memory} data logs",
+    "start_services": "docker-compose -f docker-compose.enhanced.yml up -d",
+    "check_status": "docker-compose -f docker-compose.enhanced.yml ps",
+    "view_logs": "docker-compose -f docker-compose.enhanced.yml logs -f",
+    "stop_services": "docker-compose -f docker-compose.enhanced.yml down"
+  },
+  "notes": {
+    "important_fixes": [
+      "Use @modelcontextprotocol package names (NOT docker-mcp, @github/cli-mcp-server)",
+      "Set GITHUB_TOKEN environment variable BEFORE starting Claude Code",
+      "Use null for env values to inherit from system environment",
+      "Server names 'gh' and 'db' are short to avoid 64-char tool name limit",
+      "All tools are < 64 characters in combined name format"
+    ],
+    "setup_instructions": [
+      "1. Set environment: export GITHUB_TOKEN='ghp_...' && export DOCKER_HUB_USERNAME='...' && export DOCKER_HUB_TOKEN='dckr_...'",
+      "2. Create directories: bash -c 'mkdir -p measurements/{i386,arm}/{syscalls,memory} data logs'",
+      "3. Replace .mcp.json with this corrected version",
+      "4. Start services: docker-compose -f docker-compose.enhanced.yml up -d",
+      "5. Verify: docker-compose -f docker-compose.enhanced.yml ps",
+      "6. Start Claude Code: claude",
+      "7. Test: 'List my GitHub issues for minix-analysis' (should work with GitHub MCP)"
+    ],
+    "validation_tests": {
+      "test_github_mcp": "npx -y @modelcontextprotocol/server-github --version",
+      "test_docker": "docker ps",
+      "test_compose": "docker-compose -f docker-compose.enhanced.yml config",
+      "test_services": "docker-compose -f docker-compose.enhanced.yml ps",
+      "test_boot_profiler": "curl http://localhost:5010/health",
+      "test_syscall_tracer": "curl http://localhost:5011/health",
+      "test_memory_monitor": "curl http://localhost:5012/health"
+    }
+  }
+}

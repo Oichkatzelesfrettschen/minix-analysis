@@ -1,0 +1,149 @@
+{
+  "architecture": "arm",
+  "total_instructions": 439,
+  "unique_instructions": 26,
+  "files_processed": 6,
+  "files": [
+    "/home/eirikr/Playground/minix/minix/kernel/arch/earm/mpx.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/earm/phys_copy.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/earm/klib.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/earm/head.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/earm/phys_memset.S",
+    "/home/eirikr/Playground/minix/minix/kernel/arch/earm/exc.S"
+  ],
+  "instruction_frequencies": {
+    "sub": 28,
+    "srsdb": 2,
+    "cps": 1,
+    "push": 17,
+    "ldr": 33,
+    "orr": 33,
+    "str": 48,
+    "and": 6,
+    "cmp": 19,
+    "pop": 25,
+    "b": 67,
+    "add": 18,
+    "stm": 35,
+    "mov": 75,
+    "rfeia": 2,
+    "dsb": 3,
+    "msr": 1,
+    "ldm": 14,
+    "eor": 3,
+    "cmn": 1,
+    "rsb": 2,
+    "bic": 1,
+    "mrc": 2,
+    "cpsie": 1,
+    "cpsid": 1,
+    "tst": 1
+  },
+  "top_20_instructions": [
+    {
+      "instruction": "mov",
+      "count": 75
+    },
+    {
+      "instruction": "b",
+      "count": 67
+    },
+    {
+      "instruction": "str",
+      "count": 48
+    },
+    {
+      "instruction": "stm",
+      "count": 35
+    },
+    {
+      "instruction": "ldr",
+      "count": 33
+    },
+    {
+      "instruction": "orr",
+      "count": 33
+    },
+    {
+      "instruction": "sub",
+      "count": 28
+    },
+    {
+      "instruction": "pop",
+      "count": 25
+    },
+    {
+      "instruction": "cmp",
+      "count": 19
+    },
+    {
+      "instruction": "add",
+      "count": 18
+    },
+    {
+      "instruction": "push",
+      "count": 17
+    },
+    {
+      "instruction": "ldm",
+      "count": 14
+    },
+    {
+      "instruction": "and",
+      "count": 6
+    },
+    {
+      "instruction": "dsb",
+      "count": 3
+    },
+    {
+      "instruction": "eor",
+      "count": 3
+    },
+    {
+      "instruction": "srsdb",
+      "count": 2
+    },
+    {
+      "instruction": "rfeia",
+      "count": 2
+    },
+    {
+      "instruction": "rsb",
+      "count": 2
+    },
+    {
+      "instruction": "mrc",
+      "count": 2
+    },
+    {
+      "instruction": "cps",
+      "count": 1
+    }
+  ],
+  "categories": {
+    "arithmetic": 48,
+    "other": 50,
+    "movement": 205,
+    "logical": 43,
+    "comparison": 21,
+    "control": 67,
+    "memory": 3,
+    "coprocessor": 2
+  },
+  "addressing_modes": {
+    "unconditional": 386,
+    "operands_3": 139,
+    "immediate": 229,
+    "operands_2": 137,
+    "memory_access": 69,
+    "conditional_ne": 6,
+    "conditional_eq": 14,
+    "operands_4": 58,
+    "conditional_lt": 17,
+    "operands_5": 9,
+    "conditional_ge": 12,
+    "conditional_gt": 4,
+    "operands_6": 2
+  }
+}

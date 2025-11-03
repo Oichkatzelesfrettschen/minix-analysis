@@ -1,0 +1,11 @@
+{
+  "message_size": null,
+  "message_types": [],
+  "ipc_functions": [],
+  "endpoints": [
+    {
+      "name": "LAST_SPECIAL_PROC_NR",
+      "number": 11
+    }
+  ]
+}

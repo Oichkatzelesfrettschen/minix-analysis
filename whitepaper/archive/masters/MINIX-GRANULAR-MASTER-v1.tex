@@ -1,0 +1,244 @@
+\documentclass[11pt,oneside,letterpaper]{book}
+
+% ============================================================================
+% PREAMBLE: COMPREHENSIVE MINIX GRANULAR ANALYSIS
+% ============================================================================
+
+% Page layout
+\usepackage[margin=1in]{geometry}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Graphics, TikZ, and plots
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,patterns,calc,matrix,
+                  chains,scopes,decorations.pathreplacing,backgrounds,mindmap,trees}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{statistics,groupplots,colorbrewer}
+
+% Advanced formatting
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{footnote}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.1}
+
+% Math and algorithms
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Advanced sectioning and content
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{imakeidx}
+\usepackage{nomencl}
+
+% References and annotations
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{cleveref}
+\usepackage{xargs}
+\usepackage[colorinlistoftodos,prependcaption]{todonotes}
+
+% Bibliography
+\usepackage[style=ieee,backend=bibtex]{biblatex}
+\addbibresource{references.bib}
+
+% Colors
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{userspace}{RGB}{173,216,230}
+\definecolor{kernelspace}{RGB}{255,165,79}
+\definecolor{cpuhw}{RGB}{169,169,169}
+\definecolor{highlight}{RGB}{255,255,0}
+\definecolor{annotation}{RGB}{200,220,255}
+
+% Custom annotations
+\newcommandx{\what}[2][1=]{\todo[inline,color=annotation,caption={WHAT}]{#2}}
+\newcommandx{\when}[2][1=]{\todo[inline,color=blue!20,caption={WHEN}]{#2}}
+\newcommandx{\why}[2][1=]{\todo[inline,color=yellow!20,caption={WHY}]{#2}}
+\newcommandx{\how}[2][1=]{\todo[inline,color=green!20,caption={HOW}]{#2}}
+
+% Code styles
+\lstdefinestyle{asmstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=[x86masm]Assembler,
+    frame=single,
+    rulecolor=\color{gray}
+}
+
+\lstdefinestyle{cstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=C,
+    frame=single,
+    rulecolor=\color{gray}
+}
+
+% Page style
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\thepage}
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyfoot[C]{MINIX 3.4.0-RC6 Granular CPU-Kernel Analysis}
+
+% Title
+\title{\textbf{MINIX 3 CPU-Kernel Interactions: \\
+A Granular Execution Analysis}}
+\subtitle{\textit{Comprehensive Trace of Boot Initialization, \\
+Syscall Mechanisms, and Microarchitectural Behavior}}
+\author{MINIX Analysis Project}
+\date{\today}
+
+% ============================================================================
+% BEGIN DOCUMENT
+% ============================================================================
+
+\begin{document}
+
+\maketitle
+
+\frontmatter
+
+% Table of contents
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+\listoftables
+
+% ============================================================================
+% INTRODUCTION
+% ============================================================================
+
+\chapter{Introduction}
+
+This premier whitepaper provides a comprehensive, granular analysis of CPU-kernel
+interactions in MINIX 3.4.0-RC6. We dissect:
+
+\begin{enumerate}
+\item \textbf{Boot Execution Trace}: From MINIX entry point through kmain()
+\item \textbf{CPU Instruction-Level Analysis}: Each assembly instruction's effect
+\item \textbf{Main Function Variants}: bsp\_finish\_booting(), kmain(), cstart()
+\item \textbf{Syscall Mechanism Traces}: Complete instruction flow for INT/SYSENTER/SYSCALL
+\item \textbf{Performance Characterization}: Cycle counts, timing, memory behavior
+\end{enumerate}
+
+Each section includes:
+\begin{itemize}
+\item \textbf{WHAT}: Exact actions being performed
+\item \textbf{WHEN}: Timing and sequence relative to other operations
+\item \textbf{WHY}: Architectural rationale and design decisions
+\item \textbf{HOW}: Detailed mechanism, register state, CPU operations
+\end{itemize}
+
+% ============================================================================
+% PART I: BOOT EXECUTION TRACE
+% ============================================================================
+
+\part{Boot Execution Trace}
+
+\input{chapters/01-boot-entry-point.tex}
+\input{chapters/02-boot-to-kmain.tex}
+\input{chapters/03-kmain-orchestration.tex}
+
+% ============================================================================
+% PART II: CPU-INSTRUCTION LEVEL ANALYSIS
+% ============================================================================
+
+\part{CPU-Instruction Level Analysis}
+
+\input{chapters/04-cpu-state-transitions.tex}
+\input{chapters/05-syscall-int80h.tex}
+\input{chapters/06-syscall-sysenter.tex}
+\input{chapters/07-syscall-syscall.tex}
+
+% ============================================================================
+% PART III: MAIN FUNCTION VARIANTS
+% ============================================================================
+
+\part{Main Function Variants Trace}
+
+\input{chapters/08-bsp-finish-booting.tex}
+\input{chapters/09-kmain-execution.tex}
+\input{chapters/10-cstart-initialization.tex}
+
+% ============================================================================
+% PART IV: PERFORMANCE CHARACTERIZATION
+% ============================================================================
+
+\part{Performance Characterization}
+
+\input{chapters/11-boot-timeline-analysis.tex}
+\input{chapters/12-syscall-cycle-analysis.tex}
+\input{chapters/13-memory-access-patterns.tex}
+
+% ============================================================================
+% APPENDIX
+% ============================================================================
+
+\appendix
+
+\chapter{MINIX Source Code Reference}
+
+Complete file listings for key sources analyzed in this whitepaper.
+
+\chapter{Formal Definitions}
+
+Formal specifications of CPU states, instruction encodings, and transition rules.
+
+\chapter{Performance Metrics Tables}
+
+Complete tabular data for all performance measurements.
+
+% ============================================================================
+% BACKMATTER
+% ============================================================================
+
+\backmatter
+
+\printbibliography
+
+\end{document}

@@ -1,0 +1,335 @@
+% minix-styles.sty
+% Unified TikZ/PGFPlots style package for MINIX CPU and Boot Analysis
+% Version: 1.0.0
+% Date: 2025-10-30
+%
+% Usage: \usepackage{minix-styles}
+
+\ProvidesPackage{minix-styles}[2025/10/30 v1.0.0 MINIX Analysis TikZ Styles]
+
+% Required packages
+\RequirePackage{tikz}
+\RequirePackage{pgfplots}
+\RequirePackage{xcolor}
+
+% TikZ libraries
+\usetikzlibrary{shapes,arrows,positioning,calc,fit,backgrounds,decorations.pathreplacing,patterns,shadows}
+\pgfplotsset{compat=1.18}
+
+% =============================================================================
+% COLOR PALETTE (Unified Figma/Canva-inspired + Classic CPU Analysis)
+% =============================================================================
+
+% Primary Colors (Boot Analysis - Figma/Canva inspired)
+\definecolor{primaryblue}{RGB}{0,102,204}      % Professional blue
+\definecolor{secondarygreen}{RGB}{46,204,113}  % Success green
+\definecolor{accentorange}{RGB}{255,127,0}     % Warning/highlight orange
+\definecolor{warningred}{RGB}{231,76,60}       % Error/critical red
+
+% Supporting Colors
+\definecolor{lightgray}{RGB}{236,240,241}      % Background light
+\definecolor{darkgray}{RGB}{52,73,94}          % Text dark
+\definecolor{mediumgray}{RGB}{149,165,166}     % Muted elements
+
+% CPU Analysis Colors (Legacy - kept for compatibility)
+\definecolor{cpubox}{RGB}{204,229,255}         % blue!10 equivalent (CPU diagrams)
+\definecolor{hwbox}{RGB}{255,204,204}          % red!20 equivalent (hardware)
+\definecolor{annotation}{RGB}{255,255,204}     % yellow!30 equivalent
+
+% Semantic Color Aliases
+\colorlet{flowbox}{primaryblue!15}              % Flow diagram boxes
+\colorlet{hardware}{warningred!20}              % Hardware operations
+\colorlet{kernel}{secondarygreen!15}            % Kernel operations
+\colorlet{critical}{accentorange!25}            % Critical path
+\colorlet{background}{lightgray!50}             % Diagram backgrounds
+
+% =============================================================================
+% NODE STYLES (Unified across CPU and Boot diagrams)
+% =============================================================================
+
+\tikzset{
+    % -------------------------------------------------------------------------
+    % Basic Box Styles (CPU Diagrams - Flow Charts)
+    % -------------------------------------------------------------------------
+    box/.style={
+        rectangle,
+        draw=primaryblue,
+        fill=flowbox,
+        text width=5.5cm,
+        align=center,
+        minimum height=0.7cm,
+        font=\small,
+        rounded corners=2pt
+    },
+    hw/.style={
+        rectangle,
+        draw=warningred,
+        fill=hardware,
+        text width=5.5cm,
+        align=center,
+        minimum height=0.7cm,
+        font=\small,
+        rounded corners=2pt
+    },
+    kernelbox/.style={
+        rectangle,
+        draw=secondarygreen,
+        fill=kernel,
+        text width=5.5cm,
+        align=center,
+        minimum height=0.7cm,
+        font=\small,
+        rounded corners=2pt
+    },
+
+    % -------------------------------------------------------------------------
+    % Boot Analysis Styles (Process/Phase Diagrams)
+    % -------------------------------------------------------------------------
+    process/.style={
+        rectangle,
+        draw=primaryblue,
+        fill=primaryblue!20,
+        text width=3cm,
+        text centered,
+        rounded corners=3pt,
+        minimum height=1cm,
+        drop shadow={
+            shadow xshift=0.5pt,
+            shadow yshift=-0.5pt,
+            opacity=0.3
+        }
+    },
+    phase/.style={
+        rectangle,
+        draw=secondarygreen,
+        fill=secondarygreen!20,
+        text width=4cm,
+        text centered,
+        rounded corners=3pt,
+        minimum height=0.8cm,
+        drop shadow={
+            shadow xshift=0.5pt,
+            shadow yshift=-0.5pt,
+            opacity=0.3
+        }
+    },
+    critical/.style={
+        rectangle,
+        draw=warningred,
+        line width=2pt,
+        fill=accentorange!20,
+        text width=3cm,
+        text centered,
+        rounded corners=3pt,
+        minimum height=1cm,
+        drop shadow={
+            shadow xshift=0.5pt,
+            shadow yshift=-0.5pt,
+            opacity=0.4
+        }
+    },
+
+    % -------------------------------------------------------------------------
+    % Call Graph / Tree Styles
+    % -------------------------------------------------------------------------
+    func/.style={
+        rectangle,
+        draw=primaryblue,
+        fill=primaryblue!15,
+        rounded corners=2pt,
+        minimum width=2.5cm,
+        minimum height=0.7cm,
+        font=\footnotesize
+    },
+    extfunc/.style={
+        rectangle,
+        draw=mediumgray,
+        fill=lightgray,
+        rounded corners=2pt,
+        minimum width=2.5cm,
+        minimum height=0.7cm,
+        dashed,
+        font=\footnotesize
+    },
+
+    % -------------------------------------------------------------------------
+    % Special Purpose Styles
+    % -------------------------------------------------------------------------
+    decision/.style={
+        diamond,
+        draw=accentorange,
+        fill=accentorange!20,
+        text width=2cm,
+        text centered,
+        inner sep=0pt
+    },
+    terminate/.style={
+        rectangle,
+        draw=warningred,
+        line width=2pt,
+        fill=warningred!20,
+        text width=3cm,
+        text centered,
+        rounded corners=3pt,
+        minimum height=1cm
+    },
+    annotation/.style={
+        font=\tiny,
+        text width=2.5cm,
+        align=left
+    },
+    infobox/.style={
+        draw=darkgray,
+        fill=lightgray,
+        text width=3cm,
+        rounded corners=3pt,
+        font=\small
+    },
+
+    % -------------------------------------------------------------------------
+    % Arrow/Edge Styles
+    % -------------------------------------------------------------------------
+    arrow/.style={
+        ->,
+        >=stealth,
+        thick,
+        draw=primaryblue
+    },
+    critarrow/.style={
+        ->,
+        >=stealth,
+        line width=2pt,
+        draw=warningred
+    },
+    dasharrow/.style={
+        ->,
+        >=stealth,
+        thick,
+        dashed,
+        draw=mediumgray
+    },
+    edge from parent/.style={
+        draw,
+        -latex,
+        thick,
+        primaryblue
+    },
+}
+
+% =============================================================================
+% PGFPLOTS STYLES (Charts and Graphs)
+% =============================================================================
+
+\pgfplotsset{
+    % Default axis style
+    minix axis/.style={
+        grid=major,
+        grid style={line width=0.2pt, draw=lightgray},
+        axis line style={line width=0.5pt, draw=darkgray},
+        tick style={line width=0.3pt, draw=darkgray},
+        xlabel style={font=\small},
+        ylabel style={font=\small},
+        title style={font=\large\bfseries},
+        legend style={font=\footnotesize},
+    },
+    % Bar chart style
+    minix bar/.style={
+        ybar,
+        bar width=0.8cm,
+        nodes near coords,
+        nodes near coords style={font=\footnotesize},
+        fill=primaryblue!70,
+        draw=primaryblue
+    },
+    % Line plot style
+    minix line/.style={
+        thick,
+        mark=*,
+        mark size=2pt
+    },
+}
+
+% =============================================================================
+% CUSTOM COMMANDS
+% =============================================================================
+
+% Cycle cost annotation (CPU diagrams)
+\newcommand{\cyclecost}[2]{%
+    \node[font=\scriptsize, fill=annotation, draw=accentorange, text width=3cm, align=center, rounded corners=2pt] #1 {%
+        \textbf{Cost: #2}\\
+        (estimated)%
+    };
+}
+
+% Phase header (Boot diagrams)
+\newcommand{\phaseheader}[2]{%
+    \node[font=\Large\bfseries, text=primaryblue] #1 {#2};
+}
+
+% Metric box (both diagram types)
+\newcommand{\metricbox}[3]{%
+    \node[draw=darkgray, fill=lightgray, rounded corners=3pt, text width=#2, font=\small] #1 {#3};
+}
+
+% =============================================================================
+% DIAGRAM-SPECIFIC PRESETS
+% =============================================================================
+
+% CPU Flow Diagram preset
+\tikzset{
+    cpu flow/.style={
+        node distance=0.8cm,
+        every node/.style={font=\small},
+    }
+}
+
+% Boot Topology preset
+\tikzset{
+    boot topology/.style={
+        node distance=2cm,
+        every node/.style={font=\small},
+    }
+}
+
+% Call Graph preset
+\tikzset{
+    call graph/.style={
+        level 1/.style={sibling distance=4cm, level distance=2cm},
+        level 2/.style={sibling distance=2cm, level distance=2cm},
+        level 3/.style={sibling distance=1.5cm, level distance=2cm},
+    }
+}
+
+% =============================================================================
+% STANDALONE COMPATIBILITY
+% =============================================================================
+
+% Detect if we're in standalone document class (CPU diagrams)
+% and provide appropriate defaults
+\@ifclassloaded{standalone}{%
+    % Standalone-specific settings (individual diagrams)
+    \tikzset{
+        every picture/.style={
+            font=\normalsize,
+        }
+    }
+}{%
+    % Article/report-specific settings (multi-diagram documents)
+    \tikzset{
+        every picture/.style={
+            font=\small,
+        }
+    }
+}
+
+% =============================================================================
+% COMPATIBILITY LAYER
+% =============================================================================
+
+% Provide legacy color names for backward compatibility with existing CPU diagrams
+\colorlet{blue10}{cpubox}
+\colorlet{red20}{hwbox}
+\colorlet{yellow30}{annotation}
+
+\endinput
+% End of minix-styles.sty

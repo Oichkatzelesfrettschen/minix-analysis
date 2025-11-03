@@ -1,0 +1,60 @@
+# ==============================================================================
+# GIT IGNORE FOR MINIX 3.4 WHITEPAPER
+# ==============================================================================
+
+# LaTeX auxiliary files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.toc
+*.out
+*.run.xml
+*.synctex.gz
+*.synctex.gz(busy)
+
+# Bibtex files
+*.bcf
+
+# Index and glossary files
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.glsdefs
+*.tdo
+*.tdof
+
+# PDF temp files
+*.pdfsync
+
+# Build artifacts
+build/
+*.pdf
+!master.pdf
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# ==============================================================================
+# END .GITIGNORE
+# ==============================================================================

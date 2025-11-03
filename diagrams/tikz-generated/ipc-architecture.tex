@@ -1,0 +1,23 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+
+\begin{document}
+\begin{tikzpicture}[
+    endpoint/.style={rectangle, draw=black, fill=green!20, minimum width=2cm, minimum height=0.8cm},
+    arrow/.style={<->, >=stealth, thick}
+]
+
+% Title
+\node[font=\Large\bfseries] at (0, 8) {MINIX IPC Architecture};
+\node[font=\normalsize] at (0, 7.5) {Message Passing System};
+
+\node[endpoint, fill=red!20, minimum width=3cm] (kernel) at (0, 5) {KERNEL};
+
+% Message Info
+\node[draw=black, fill=blue!10] at (0, -3) {
+Message Size: None
+};
+
+\end{tikzpicture}
+\end{document}

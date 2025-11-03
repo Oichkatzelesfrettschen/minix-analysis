@@ -1,0 +1,206 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathmorphing,backgrounds,shadows,fit}
+
+% Define colors
+\definecolor{primaryblue}{RGB}{0,102,204}
+\definecolor{secondarygreen}{RGB}{46,204,113}
+\definecolor{accentorange}{RGB}{255,127,0}
+\definecolor{warningred}{RGB}{231,76,60}
+\definecolor{lightgray}{RGB}{236,240,241}
+\definecolor{darkgray}{RGB}{52,73,94}
+
+\begin{document}
+\begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=2pt, draw=primaryblue, fill=primaryblue!15, minimum width=5.5cm, minimum height=0.7cm, font=\small, align=center},
+    hw/.style={rectangle, rounded corners=2pt, draw=warningred, fill=warningred!20, minimum width=5.5cm, minimum height=0.7cm, font=\small, align=center},
+    kernelbox/.style={rectangle, rounded corners=2pt, draw=secondarygreen, fill=secondarygreen!15, minimum width=5.5cm, minimum height=0.7cm, font=\small, align=center},
+    procbox/.style={rectangle, draw=darkgray, fill=yellow!15, minimum width=3cm, minimum height=2cm, font=\footnotesize\ttfamily, align=left},
+    regbox/.style={rectangle, draw=accentorange, fill=accentorange!10, minimum width=2.5cm, minimum height=0.5cm, font=\footnotesize\ttfamily},
+    arrow/.style={->, >=stealth, thick},
+    flow/.style={arrow, primaryblue},
+    hwflow/.style={arrow, warningred},
+    dataflow/.style={<->, >=stealth, thick, accentorange, line width=1.2pt},
+    label/.style={font=\footnotesize}
+]
+
+% Title
+\node[font=\Large\bfseries] at (8, 18) {MINIX Context Switch: Process A → Process B};
+\node[font=\normalsize] at (8, 17.5) {Complete CPU state transition with CR3 (page directory) switch};
+
+% Current state: Process A
+\node[font=\bfseries] at (3, 16.5) {Process A (Current)};
+\node[regbox] (reg_a_eip) at (3, 15.8) {EIP: 0x0804abcd};
+\node[regbox] (reg_a_esp) at (3, 15.2) {ESP: 0xbffff800};
+\node[regbox] (reg_a_cr3) at (3, 14.6) {CR3: 0x01000000};
+\node[regbox] (reg_a_eax) at (3, 14.0) {EAX: 42};
+\node[label] at (3, 13.5) {+ all other GPRs};
+
+% Kernel entry (already in kernel from syscall/interrupt)
+\node[kernelbox] (kern1) at (8, 16) {Kernel: In syscall handler};
+\node[label] at (11.5, 16) {(Process A already saved)};
+
+% Scheduler decision
+\node[kernelbox] (kern2) at (8, 15.2) {Kernel: switch\_to\_user()};
+\node[kernelbox] (kern3) at (8, 14.4) {Kernel: pick\_proc()};
+\node[label, text width=6cm, align=left] at (12, 14.4) {
+    Scan run queues by priority\\
+    Select next runnable process
+};
+
+% Process table lookup
+\node[kernelbox] (kern4) at (8, 13.5) {Returns: proc\_table[B] pointer};
+
+% Context switch function
+\node[kernelbox, fill=accentorange!20, draw=accentorange] (kern5) at (8, 12.6) {arch\_finish\_switch\_to\_user(\&proc\_B)};
+\node[font=\footnotesize\bfseries, accentorange] at (8, 12.1) {Critical CPU manipulation begins};
+
+% Process table structures
+\node[procbox] (proc_a) at (3, 10.5) {
+proc\_table[A]:\\
+\ \ EIP: 0x0804abcd\\
+\ \ ESP: 0xbffff800\\
+\ \ CR3: 0x01000000\\
+\ \ EAX: 42\\
+\ \ ... (all regs)\\
+\ \ trap\_style: KTS\_INT
+};
+
+\node[procbox] (proc_b) at (13, 10.5) {
+proc\_table[B]:\\
+\ \ EIP: 0x0805ffee\\
+\ \ ESP: 0xbfffe000\\
+\ \ CR3: 0x02000000\\
+\ \ EAX: 1337\\
+\ \ ... (all regs)\\
+\ \ trap\_style: KTS\_SYSENTER
+};
+
+% CR3 switch (THE KEY OPERATION)
+\node[hw, fill=warningred!30, minimum width=11cm] (cr3_1) at (8, 8.5) {
+ASM: movl P\_CR3(\%edx), \%eax \ \ \ // Load proc\_B's page dir addr
+};
+\node[hw, fill=warningred!30, minimum width=11cm] (cr3_2) at (8, 7.8) {
+ASM: mov \%cr3, \%ecx \ \ \ \ \ \ \ \ \ \ \ \ \ \ // Read current CR3
+};
+\node[hw, fill=warningred!30, minimum width=11cm] (cr3_3) at (8, 7.1) {
+ASM: cmp \%eax, \%ecx \ \ \ \ \ \ \ \ \ \ \ \ \ \ // Same address space?
+};
+\node[hw, fill=warningred!30, minimum width=11cm] (cr3_4) at (8, 6.4) {
+ASM: je 4f \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ // Skip if same
+};
+\node[hw, fill=warningred!30, minimum width=11cm, line width=2pt] (cr3_5) at (8, 5.7) {
+ASM: mov \%eax, \%cr3 \ \ \ \ \ \ \ \ \ \ \ \ \ // ★ SWITCH PAGE TABLES ★
+};
+
+% Hardware effect
+\node[hw, fill=yellow!30, minimum width=11cm] (tlb_flush) at (8, 4.8) {
+CPU Hardware: TLB flush (all non-global entries invalidated)
+};
+\node[label, warningred, font=\bfseries] at (3, 4.8) {~100 cycles};
+
+% TSS update
+\node[kernelbox] (tss_update) at (8, 3.9) {
+Update TSS.ESP0 ← proc\_B.kernel\_stack\_top
+};
+\node[label] at (12.5, 3.9) {For next interrupt};
+
+% Restore segments
+\node[kernelbox] (seg1) at (8, 3.1) {Load segment registers from proc\_B};
+\node[regbox] at (12, 3.1) {DS, ES, FS, GS};
+
+% Check trap style
+\node[kernelbox, fill=primaryblue!20] (trap_check) at (8, 2.2) {
+Check proc\_B.trap\_style
+};
+
+% Three return paths
+\node[kernelbox, minimum width=3cm] (ret_int) at (3, 1.2) {KTS\_INT → IRET};
+\node[kernelbox, minimum width=3cm] (ret_sysenter) at (8, 1.2) {KTS\_SYSENTER → SYSEXIT};
+\node[kernelbox, minimum width=3cm] (ret_syscall) at (13, 1.2) {KTS\_SYSCALL → SYSRET};
+
+% Restore registers
+\node[kernelbox] (restore1) at (8, 0.3) {RESTORE\_GP\_REGS from proc\_B};
+\node[kernelbox] (restore2) at (8, -0.4) {Pop/load all GPRs: EAX-EDI, EBP};
+
+% Return to user
+\node[hw] (final_ret) at (8, -1.2) {CPU: Return instruction (IRET/SYSEXIT/SYSRET)};
+\node[hw] (cpu_restore) at (8, -2.0) {CPU: Restore EIP, ESP, EFLAGS, CS, SS};
+
+% Process B resumes
+\node[font=\bfseries] at (13, -2.9) {Process B (New)};
+\node[regbox] (reg_b_eip) at (13, -3.6) {EIP: 0x0805ffee};
+\node[regbox] (reg_b_esp) at (13, -4.2) {ESP: 0xbfffe000};
+\node[regbox] (reg_b_cr3) at (13, -4.8) {CR3: 0x02000000};
+\node[regbox] (reg_b_eax) at (13, -5.4) {EAX: 1337};
+\node[box, minimum width=4cm] (proc_b_running) at (13, -6.2) {Process B resumes execution};
+
+% Flow arrows
+\draw[flow] (kern1) -- (kern2);
+\draw[flow] (kern2) -- (kern3);
+\draw[flow] (kern3) -- (kern4);
+\draw[flow] (kern4) -- (kern5);
+\draw[flow] (kern5) -- (cr3_1);
+\draw[hwflow] (cr3_1) -- (cr3_2);
+\draw[hwflow] (cr3_2) -- (cr3_3);
+\draw[hwflow] (cr3_3) -- (cr3_4);
+\draw[hwflow, line width=2pt] (cr3_4) -- (cr3_5);
+\draw[hwflow, line width=2pt] (cr3_5) -- (tlb_flush);
+\draw[flow] (tlb_flush) -- (tss_update);
+\draw[flow] (tss_update) -- (seg1);
+\draw[flow] (seg1) -- (trap_check);
+\draw[flow] (trap_check) -- (ret_int);
+\draw[flow] (trap_check) -- (ret_sysenter);
+\draw[flow] (trap_check) -- (ret_syscall);
+\draw[flow] (ret_int) -- (restore1);
+\draw[flow] (ret_sysenter) -- (restore1);
+\draw[flow] (ret_syscall) -- (restore1);
+\draw[flow] (restore1) -- (restore2);
+\draw[flow] (restore2) -- (final_ret);
+\draw[hwflow] (final_ret) -- (cpu_restore);
+\draw[hwflow] (cpu_restore) -- (proc_b_running);
+
+% Data flows
+\draw[dataflow] (proc_a) -- node[above, label] {saved} (3, 12.6);
+\draw[dataflow] (proc_b) -- node[above, label] {loaded} (13, 12.6);
+\draw[dataflow, bend left=20] (proc_b.west) to node[above, label, sloped] {CR3 value} (cr3_1.east);
+
+% Background highlighting
+\begin{scope}[on background layer]
+    \fill[lightgray!30] (0, 18.5) rectangle (16, -6.8);
+    % Highlight critical CR3 switch
+    \fill[warningred!10] (2, 9) rectangle (14, 4.5);
+    \node[font=\footnotesize\bfseries, warningred] at (1.5, 7) {Critical Section};
+\end{scope}
+
+% Side annotations
+\node[font=\footnotesize, rotate=90, secondarygreen] at (0.3, 14) {Scheduler};
+\node[font=\footnotesize, rotate=90, warningred] at (0.3, 7) {CPU State Switch};
+\node[font=\footnotesize, rotate=90, primaryblue] at (0.3, 0) {Context Restore};
+
+% Key points box
+\node[rectangle, draw=accentorange, fill=accentorange!10, text width=14.5cm, align=left, font=\footnotesize] at (8, -7.5) {
+\textbf{Critical CPU Operations:}\\
+1. **CR3 Write**: Most expensive operation (~100 cycles) + TLB flush invalidates all cached page table entries\\
+2. **TLB Flush**: Necessary evil - next process would see wrong virtual→physical mappings otherwise\\
+3. **TSS.ESP0 Update**: Must point to new process's kernel stack for next interrupt\\
+4. **Segment Register Reload**: User segments must match new process's GDT/LDT entries\\
+5. **No Lazy Context Switch**: MINIX saves/restores ALL state (Linux lazy FPU, MINIX doesn't)\\
+6. **Three Return Paths**: IRET (legacy), SYSEXIT (Intel), SYSRET (AMD) - chosen by saved trap\_style
+};
+
+% File references
+\node[font=\footnotesize, text=darkgray, align=left] at (4, -8.8) {
+\texttt{klib.S:586-651} arch\_finish\_switch\_to\_user\\
+\texttt{klib.S:609-621} CR3 conditional switch\\
+\texttt{proc.c} switch\_to\_user(), pick\_proc()
+};
+
+\node[font=\footnotesize, text=darkgray, align=left] at (12, -8.8) {
+\texttt{mpx.S:434} restore\_user\_context\_int\\
+\texttt{mpx.S:391} restore\_user\_context\_sysenter\\
+\texttt{mpx.S:414} restore\_user\_context\_syscall
+};
+
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,19 @@
+\\documentclass[tikz,border=5pt]{standalone}
+\\usepackage{tikz}
+\\usepackage{times}
+\\usetikzlibrary{shapes,arrows,positioning}
+
+\\begin{document}
+\\begin{tikzpicture}[
+    mem/.style={rectangle, minimum width=2cm, draw=black, font=\\small},
+    label/.style={font=\\tiny}
+]
+
+% Nodes
+\\node[font=\\large\\bfseries] at (2,-0.5) {MINIX Memory Layout (32-bit x86)};\n\\node[font=\\small\\bfseries, anchor=north east] at (1,-1) {Virtual Memory (Phase 1)};\n\\node[font=\\small\\bfseries, anchor=north east] at (4,-1) {Virtual Memory (Phase 2+)};\n\\node[mem, fill=yellow!30, minimum height=3cm, anchor=north west] (low_mem) at (0,-1.5) {Kernel\0x00000000\\[-2mm]\...\\[-2mm]\0x007FFFFF};\n\\node[mem, fill=white, minimum height=2cm, anchor=north west] (free_modules) at (0,-4.7) {Free/Modules\0x00800000\\[-2mm]\...\\[-2mm]\0x7FFFFFFF};\n\\node[mem, fill=white, minimum height=1.5cm, anchor=north west] (user_app) at (2.5,-1.5) {User App\0x08000000\\[-2mm]\...\\[-2mm]\0x7FFFFFFF};\n\\node[mem, fill=yellow!30, minimum height=1cm, anchor=north west] (kernel_high) at (2.5,-3.1) {Kernel\0x80000000\\[-2mm]\...\\[-2mm]\0x80FFFFFF};\n\\node[mem, fill=white, minimum height=1cm, anchor=north west] (free_high) at (2.5,-4.2) {Free\0x81000000\\[-2mm]\...\\[-2mm]\0xFFFFFFFF};
+
+% Annotations
+\\node[label, anchor=west] at (4.8,-1.8) {1:1 mapping};\n\\node[label, anchor=west] at (4.8,-2.8) {Remapped to high\address};
+
+\\end{tikzpicture}
+\\end{document}

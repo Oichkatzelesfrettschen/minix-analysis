@@ -1,0 +1,45 @@
+{
+  "mcp_servers": {
+    "fs": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {},
+      "description": "Filesystem access - read/write files in project"
+    },
+    "sqlite": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-sqlite", "/home/eirikr/Playground/minix-analysis/measurements/minix-analysis.db"],
+      "env": {},
+      "description": "SQLite database queries - analyze boot profiling measurements"
+    }
+  },
+  "settings": {
+    "context_window_budget_mb": 200,
+    "context_reservation_pct": 20,
+    "max_servers_enabled": 2,
+    "server_startup_timeout_sec": 30,
+    "request_timeout_sec": 300
+  },
+  "minix_analysis_config": {
+    "project_name": "minix-analysis",
+    "project_root": "/home/eirikr/Playground/minix-analysis",
+    "measurements_dir": "/home/eirikr/Playground/minix-analysis/measurements",
+    "docker_compose_file": "docker-compose.enhanced.yml",
+    "boot_profiler_port": 5010,
+    "syscall_tracer_port": 5011,
+    "memory_monitor_port": 5012,
+    "minix_i386_container": "minix-rc6-i386",
+    "minix_arm_container": "minix-rc6-arm"
+  },
+  "notes": {
+    "filesystem_server": "Official Anthropic filesystem MCP - provides safe file read/write access within project boundaries",
+    "sqlite_server": "Community-maintained mcp-sqlite package (version 1.0.7+) - actively maintained, supports full CRUD + custom SQL",
+    "deprecated_servers": [
+      "GitHub MCP (@modelcontextprotocol/server-github) - development moved to GitHub, no longer actively supported",
+      "Docker MCP - requires Docker installation + custom socket configuration"
+    ],
+    "status": "Configuration updated 2025-11-01 with available, working packages"
+  }
+}

@@ -1,0 +1,70 @@
+================================================================================
+MINIX 3.4 IA-32 Boot Timing Report - Phase 7.5
+================================================================================
+
+Report Generated: 2025-11-01T03:18:58.017936
+ISO Image: /home/eirikr/Playground/minix-analysis/docker/minix_R3.4.0rc6-d5e4fc0.iso
+
+MEASUREMENT METHOD
+--------------------------------------------------------------------------------
+Wall-clock timing from QEMU invocation to system startup/timeout
+Captures real boot performance across CPU models and vCPU configurations
+
+BOOT TIMING RESULTS (milliseconds)
+--------------------------------------------------------------------------------
+CPU Model       vCPUs    Mean         Median       StDev     
+--------------------------------------------------------------------------------
+486             1        180025.3     180025.3     0.4       
+486             2        180023.8     180023.8     0.1       
+486             4        180024.8     180024.8     2.7       
+486             8        180027.3     180027.3     0.7       
+athlon          1        180025.8     180025.8     1.4       
+athlon          2        180027.3     180027.3     0.7       
+athlon          4        180034.8     180034.8     2.8       
+athlon          8        180031.9     180031.9     4.3       
+pentium         1        180024.9     180024.9     2.9       
+pentium         2        180022.3     180022.3     2.3       
+pentium         4        180034.3     180034.3     3.6       
+pentium         8        180029.3     180029.3     5.1       
+pentium2        1        180023.3     180023.3     1.8       
+pentium2        2        180025.4     180025.4     2.1       
+pentium2        4        180022.4     180022.4     0.8       
+pentium2        8        180029.8     180029.8     3.0       
+pentium3        1        180024.3     180024.3     0.6       
+pentium3        2        180028.9     180028.9     0.1       
+pentium3        4        180027.8     180027.8     7.0       
+pentium3        8        180026.3     180026.3     0.7       
+
+================================================================================
+SCALING EFFICIENCY METRICS
+--------------------------------------------------------------------------------
+CPU Model       vCPUs    Speedup      Efficiency (%) 
+--------------------------------------------------------------------------------
+486             1        1.00         100.0          
+486             2        1.00         50.0           
+486             4        1.00         25.0           
+486             8        1.00         12.5           
+athlon          1        1.00         100.0          
+athlon          2        1.00         50.0           
+athlon          4        1.00         25.0           
+athlon          8        1.00         12.5           
+pentium         1        1.00         100.0          
+pentium         2        1.00         50.0           
+pentium         4        1.00         25.0           
+pentium         8        1.00         12.5           
+pentium2        1        1.00         100.0          
+pentium2        2        1.00         50.0           
+pentium2        4        1.00         25.0           
+pentium2        8        1.00         12.5           
+pentium3        1        1.00         100.0          
+pentium3        2        1.00         50.0           
+pentium3        4        1.00         25.0           
+pentium3        8        1.00         12.5           
+
+================================================================================
+INTERPRETATION
+--------------------------------------------------------------------------------
+Speedup: Improvement factor vs single-CPU baseline
+Efficiency: Percent of ideal linear scaling achieved
+  100% = perfect linear scaling (speedup = num_cpus)
+  <100% = SMP overhead or contention reducing efficiency

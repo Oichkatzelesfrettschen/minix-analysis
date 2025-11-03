@@ -1,0 +1,283 @@
+% ===============================================================================
+% MINIX 3.4 OPERATING SYSTEM: BOOT ANALYSIS, ERROR DETECTION,
+% AND MODEL CONTEXT PROTOCOL INTEGRATION FOR EDUCATIONAL RESEARCH
+%
+% A Comprehensive Whitepaper with Educational Focus
+% Last Updated: 2025-11-01
+% ===============================================================================
+
+\documentclass[12pt,twoside,openright]{book}
+
+% ===============================================================================
+% PREAMBLE (All packages, colors, custom commands)
+% ===============================================================================
+
+\input{preamble-minimal.tex}
+
+% ===============================================================================
+% SELECTIVE COMPILATION FOR SUBPAPERS
+% Uncomment only the chapters you want to compile
+% For full paper: comment out the \includeonly line below
+% ===============================================================================
+
+% Uncomment one of the following for subpaper compilation:
+% \includeonly{ch01-introduction,ch02-fundamentals,ch03-methodology}        % Part 1: Foundations
+% \includeonly{ch04-boot-metrics,ch05-error-analysis,ch06-architecture}    % Part 2: Analysis
+% \includeonly{ch07-results,ch08-education}                                 % Part 3: Results
+% \includeonly{ch09-implementation,ch10-error-reference,ch11-appendices}   % Part 4: Reference
+
+% For single chapter compilation, uncomment:
+% \includeonly{ch04-boot-metrics}
+
+% ===============================================================================
+% DOCUMENT BEGIN
+% ===============================================================================
+
+\begin{document}
+
+% ===============================================================================
+% FRONT MATTER
+% ===============================================================================
+
+\frontmatter
+
+% Title Page
+\pagestyle{empty}
+\begin{titlepage}
+\begin{center}
+\vspace*{2cm}
+
+{\fontsize{24}{28}\selectfont\bfseries\textcolor{minixpurple}{MINIX 3.4 Operating System}\par}
+\vspace{0.3cm}
+{\fontsize{20}{24}\selectfont\bfseries\textcolor{minixpurple}{Boot Analysis, Error Detection, and MCP Integration}\par}
+
+\vspace{2cm}
+
+{\Large A Comprehensive Whitepaper for Educational and Research Applications\par}
+
+\vspace{3cm}
+
+{\large\itshape Research Team\par}
+{\large November 2025\par}
+
+\vspace*{\fill}
+
+\begin{tcolorbox}[
+    colback=minixpurple!10,
+    colframe=minixpurple,
+    width=0.8\textwidth,
+    arc=4pt,
+    boxsep=10pt,
+]
+\textbf{Abstract:} This whitepaper presents a comprehensive framework for analyzing MINIX 3.4 boot sequences, detecting and recovering from 15+ system errors, and integrating external services via Model Context Protocol (MCP). We provide detailed boot sequence metrics with performance analysis, a complete error pattern catalog with automated detection algorithms, MCP architecture for extending system observability, educational tools for OS pedagogy, and implementation results from extensive empirical testing. The work spans foundational concepts through advanced implementation details, with extensive infographics, data tables, and pedagogical materials suitable for researchers and educators. All tools, data, and documentation are provided as open-source resources for academic use.
+\end{tcolorbox}
+
+\vspace{2cm}
+
+{\large\textbf{Keywords:} MINIX, microkernel, boot analysis, error detection, recovery automation, MCP integration, operating systems education, system analysis tools\par}
+
+\end{center}
+\end{titlepage}
+
+\clearpage
+
+% Copyright and Version Information
+\thispagestyle{empty}
+\vspace*{\fill}
+\begin{center}
+\small
+\textbf{Document Information}
+
+Version: 1.0
+
+Date: November 1, 2025
+
+Status: Complete
+
+License: Open Source (Educational Use)
+
+\vspace{1cm}
+
+\textbf{Availability}
+
+Source Code Repository: \url{https://github.com/minix-analysis}
+
+Documentation: Complete in accompanying materials
+
+Tools: Fully functional and tested
+
+\vspace{1cm}
+
+\textbf{Revision History}
+
+\begin{tabular}{lll}
+\toprule
+Version & Date & Changes \\
+\midrule
+1.0 & 2025-11-01 & Initial complete release \\
+\bottomrule
+\end{tabular}
+
+\end{center}
+\vspace*{\fill}
+
+\clearpage
+
+% Table of Contents
+\tableofcontents
+
+\clearpage
+
+% List of Figures
+\listoffigures
+
+\clearpage
+
+% List of Tables
+\listoftables
+
+\clearpage
+
+% Preface
+\chapter*{Preface}
+
+This whitepaper represents a comprehensive study of MINIX 3.4 operating system boot sequences, error patterns, and system integration capabilities. What began as a focused analysis project evolved into a complete pedagogical resource for operating systems education and research.
+
+\section*{Who Should Read This Document}
+
+\begin{itemize}
+\item \textbf{Students:} Learning about microkernel architectures and OS fundamentals
+\item \textbf{Educators:} Creating lab assignments and demonstrations for OS courses
+\item \textbf{Researchers:} Studying boot-time behavior and system error patterns
+\item \textbf{System Engineers:} Implementing similar analysis frameworks
+\item \textbf{Tool Developers:} Extending the provided tools for new use cases
+\end{itemize}
+
+\section*{How to Use This Document}
+
+This whitepaper is structured to support multiple reading paths:
+
+\begin{description}
+\item[Quick Start:] Read the Abstract, Chapter 1 (Introduction), and Chapter 7 (Results)
+\item[Educator:] Read Chapters 1-3 for context, Chapter 8 for pedagogical applications
+\item[Researcher:] Read Part 1 (Foundations) + Part 2 (Analysis) for technical depth
+\item[Implementer:] Focus on Chapter 9 (Implementation) and Chapter 10 (Reference)
+\item[Reference:] Use Chapter 10 (Error Reference) and Appendices as lookup
+\end{description}
+
+Each chapter is self-contained enough to be read independently, though cross-references are provided throughout.
+
+\section*{Organization of Materials}
+
+This whitepaper is accompanied by:
+
+\begin{enumerate}
+\item \textbf{Source Code Repository:} All tools, scripts, and utilities
+\item \textbf{Example Data:} Real boot logs and analysis outputs
+\item \textbf{Documentation:} Setup guides, quick references, troubleshooting
+\item \textbf{Dashboard:} Interactive HTML visualization of metrics
+\item \textbf{Test Suite:} Validation and integration tests
+\end{enumerate}
+
+All materials are designed to be reproducible and extensible.
+
+\clearpage
+
+% ===============================================================================
+% MAIN MATTER
+% ===============================================================================
+
+\mainmatter
+
+% Set default page style for main content
+% fancyhdr already loaded in preamble-minimal.tex
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[RE]{\leftmark}
+\fancyhead[LO]{\rightmark}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% ===============================================================================
+% PART 1: FOUNDATIONS
+% ===============================================================================
+
+\part{Foundations}
+
+\include{ch01-introduction}
+\include{ch02-fundamentals}
+\include{ch03-methodology}
+
+% ===============================================================================
+% PART 2: CORE ANALYSIS
+% ===============================================================================
+
+\part{Core Analysis}
+
+\include{ch04-boot-metrics}
+\include{ch05-error-analysis}
+\include{ch06-architecture}
+
+% ===============================================================================
+% PART 3: RESULTS AND INSIGHTS
+% ===============================================================================
+
+\part{Results and Insights}
+
+\include{ch07-results}
+\include{ch08-education}
+
+% ===============================================================================
+% PART 4: IMPLEMENTATION AND REFERENCE
+% ===============================================================================
+
+\part{Implementation and Reference}
+
+\include{ch09-implementation}
+\include{ch10-error-reference}
+\include{ch11-appendices}
+
+% ===============================================================================
+% BACK MATTER
+% ===============================================================================
+
+\backmatter
+
+% Bibliography
+\printbibliography[title={References}]
+
+% Index (if generated)
+\printindex
+
+% ===============================================================================
+% END OF DOCUMENT
+% ===============================================================================
+
+\end{document}
+
+% ===============================================================================
+% COMPILATION NOTES
+% ===============================================================================
+%
+% To compile the full whitepaper:
+%   pdflatex master.tex
+%   bibtex master
+%   pdflatex master.tex
+%   pdflatex master.tex
+%
+% To compile Part 1 (Foundations) only:
+%   pdflatex --jobname=part1-foundations master.tex
+%   (after uncommenting \includeonly in preamble)
+%
+% To compile Chapter 4 only:
+%   pdflatex --jobname=ch04-boot-metrics master.tex
+%   (after uncommenting appropriate \includeonly)
+%
+% Required files:
+%   - preamble.tex (packages, styling, commands)
+%   - ch01-introduction.tex through ch11-appendices.tex (11 chapter files)
+%   - tikz-diagrams.tex (all 30+ TikZ diagrams)
+%   - bibliography.bib (references)
+%
+% ===============================================================================

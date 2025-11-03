@@ -1,0 +1,10 @@
+{
+  "timestamp": "2025-11-01T05:15:31Z",
+  "cpus": 1,
+  "iso": "docker/minix_R3.4.0rc6-d5e4fc0.iso",
+  "disk": "measurements/phase-7-5-direct/disk-1cpu-1761974131.qcow2",
+  "boot_log": "measurements/phase-7-5-direct/boot-1cpu-1761974131.log",
+  "boot_time_ms": 19,
+  "log_size_bytes": 0,
+  "log_lines": 0
+}

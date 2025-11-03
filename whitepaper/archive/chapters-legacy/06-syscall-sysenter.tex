@@ -1,0 +1,174 @@
+\chapter{System Call Mechanism: SYSENTER (Intel Fast Syscall)}
+
+\section{Overview}
+
+SYSENTER/SYSEXIT is Intel's fast syscall mechanism, introduced in the Pentium II era.
+It bypasses the exception handling machinery, achieving approximately 26\% performance improvement
+over INT 0x80h.
+
+\section{WHAT: SYSENTER Execution Flow}
+
+\begin{enumerate}
+\item \textbf{User Preparation}: Load syscall number (EAX), arguments (EBX-ESI)
+\item \textbf{SYSENTER Instruction}: Jump to kernel handler (no exception)
+\item \textbf{CPU Action}: Load kernel CS, ESP, EIP from MSRs (Model-Specific Registers)
+\item \textbf{Kernel Handler}: Execute syscall dispatcher
+\item \textbf{SYSEXIT Instruction}: Return to user-space
+\end{enumerate}
+
+\section{HOW: Instruction-Level Execution}
+
+\subsection{Setup: MSR Configuration}
+
+Before SYSENTER can be used, the kernel must configure three MSRs:
+
+\begin{lstlisting}[style=asmstyle,caption={SYSENTER MSR Setup (cstart)}]
+/* SYSENTER requires three MSRs:
+   IA32_SYSENTER_CS  (MSR 0x174) - kernel code segment
+   IA32_SYSENTER_ESP (MSR 0x175) - kernel stack pointer
+   IA32_SYSENTER_EIP (MSR 0x176) - kernel handler address
+*/
+
+  mov    $0x174, %ecx
+  mov    $KERNEL_CODE_SEG, %eax
+  mov    $0, %edx
+  wrmsr                      /* Write MSR */
+
+  mov    $0x175, %ecx
+  mov    $kernel_stack_base, %eax
+  mov    $0, %edx
+  wrmsr
+
+  mov    $0x176, %ecx
+  mov    $sysenter_handler, %eax
+  mov    $0, %edx
+  wrmsr
+\end{lstlisting}
+
+\subsection{User-Space Invocation}
+
+\begin{lstlisting}[style=asmstyle,caption={User SYSENTER Syscall}]
+/* User-space SYSENTER invocation */
+
+  mov    $12, %eax           ; Syscall number
+  mov    $dest_proc, %ebx    ; Arg 1
+  mov    $call_num, %ecx     ; Arg 2
+  mov    $msg_ptr, %edx      ; Arg 3
+  mov    $arg4, %esi         ; Arg 4
+  mov    $arg5, %edi         ; Arg 5
+
+  sysenter                   ; Jump to kernel handler
+  /* Never returns here directly; CPU switches to kernel */
+\end{lstlisting}
+
+\how{
+\begin{enumerate}
+\item \textbf{SYSENTER Microcode Action}:
+  \begin{enumerate}
+    \item Load CS from IA32\_SYSENTER\_CS MSR
+    \item Load ESP from IA32\_SYSENTER\_ESP MSR
+    \item Load EIP from IA32\_SYSENTER\_EIP MSR
+    \item Set CPL (privilege level) to 0 (kernel mode)
+    \item Clear IF flag (disable interrupts)
+    \item No exception, no stack switching overhead
+  \end{enumerate}
+\item \textbf{Timing}: 5-10 CPU cycles (MSR load + register setup)
+\end{enumerate}
+}
+
+\subsection{Kernel Handler}
+
+\begin{lstlisting}[style=asmstyle,caption={SYSENTER Kernel Handler}]
+.global sysenter_handler
+sysenter_handler:
+  /* CPU has already switched to kernel mode */
+  /* User EIP is in EDX, user REGS need manual save */
+
+  push   %edx                /* Save user return address */
+  push   %ecx                /* Save user ECX */
+
+  /* Save all user registers (manual) */
+  push   %eax
+  push   %ebx
+  /* ... save all registers ... */
+
+  /* Dispatch syscall */
+  call   do_ipc
+
+  /* Restore registers and return */
+  /* ... pop all registers ... */
+  pop    %ecx
+  pop    %edx                /* Restore user return address */
+
+  /* Return to user-space */
+  sysexit                    /* Jump back to EDX (user EIP) */
+\end{lstlisting}
+
+\how{
+\begin{enumerate}
+\item \textbf{Critical Difference}: SYSENTER does NOT save return address on stack
+  \begin{itemize}
+    \item User EIP is NOT saved by CPU (unlike INT exception)
+    \item User must save it in EDX before SYSENTER
+    \item Kernel must manually save/restore EDX
+  \end{itemize}
+\item \textbf{User Stack}: NOT switched by SYSENTER
+  \begin{itemize}
+    \item User ESP remains unchanged
+    \item Kernel must use separate per-CPU kernel stack
+    \item Typically set via per-CPU data structure
+  \end{itemize}
+\item \textbf{Timing}: Same as INT 0x80h for handler execution (~20-30 cycles for stub)
+\end{enumerate}
+}
+
+\section{Performance Advantage}
+
+SYSENTER achieves 26\% speedup over INT 0x80h due to:
+
+\begin{itemize}
+\item \textbf{No exception handling}: Bypass IDT lookup, permission checks
+\item \textbf{Direct MSR load}: Faster than descriptor table lookup
+\item \textbf{No stack save}: User stack pointer not saved (small savings)
+\end{itemize}
+
+\begin{table}[h!]
+\centering
+\caption{SYSENTER vs INT 0x80h Timing}
+\begin{tabular}{lrr}
+\toprule
+Phase & INT 0x80h & SYSENTER \\
+\midrule
+User prep & 2-4 & 2-4 \\
+Exception handling & 10-30 & 5-10 \\
+Kernel entry & 20-30 & 20-30 \\
+Dispatch & 5-10 & 5-10 \\
+Syscall exec & 50-100 & 50-100 \\
+Return & 20-30 & 15-25 \\
+\bottomrule
+\toprule
+Total & 107-184 & 97-179 \\
+Full roundtrip (measured) & 1772 cycles & 1305 cycles \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Limitations and Requirements}
+
+\begin{itemize}
+\item \textbf{Intel Only}: Not available on AMD (uses SYSCALL instead)
+\item \textbf{Stack Handling}: Kernel must manage per-CPU stack pointers
+\item \textbf{Return Address}: User code must prepare EDX with return address
+\item \textbf{Compatibility}: Requires Pentium II or later (1997+)
+\end{itemize}
+
+\section{Summary: SYSENTER Mechanism}
+
+SYSENTER provides 26\% performance improvement over INT 0x80h by:
+\begin{enumerate}
+\item Skipping exception handling machinery
+\item Using fast MSR loads instead of descriptor table lookups
+\item Eliminating some stack switching overhead
+\end{enumerate}
+
+The next chapter analyzes SYSCALL/SYSRET, the AMD equivalent mechanism.

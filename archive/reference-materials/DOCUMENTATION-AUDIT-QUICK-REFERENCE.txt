@@ -1,0 +1,349 @@
+================================================================================
+DOCUMENTATION AUDIT - QUICK REFERENCE CARD
+Print this for your desk while reorganizing
+================================================================================
+
+THE 5 CRITICAL ISSUES (in order of priority)
+================================================================================
+
+1. ROOT CLUTTER (40 → 5 files needed)
+   MOVE TO ARCHIVE:
+     - PHASE-1-COMPLETE.md → archive/phase-reports/
+     - PHASE-2-COMPLETE.md → archive/phase-reports/
+     - PHASE-3-COMPLETE.md → archive/phase-reports/
+     - [all 13 PHASE-*.md files]
+     - INTEGRATION-COMPLETE.md → archive/integration-reports/
+     - [all 14 INTEGRATION-*.md files]
+     - PROJECT-SYNTHESIS.md → archive/integration-reports/
+     - [all 3 PROJECT-*.md files]
+   
+   KEEP AT ROOT:
+     ✓ README.md
+     ✓ CLAUDE.md
+     ✓ REQUIREMENTS.md
+     ✓ INSTALLATION.md
+     ✓ MINIX-Error-Registry.md (optional)
+
+2. CASE INCONSISTENCY (Fix directory names)
+   RENAME IN docs/:
+     Analysis/        → analysis/
+     Architecture/    → architecture/
+     Audits/          → audits/
+     Examples/        → examples/
+     MCP/             → mcp/
+     Performance/     → performance/
+     Planning/        → planning/
+     Standards/       → standards/
+   
+   [Use: git mv docs/OldName docs/newname]
+
+3. DUPLICATE DIRECTORIES
+   ✗ whitepaper/ (14 files) + whitepapers/ (5 files)
+     ACTION: Move whitepapers/* → whitepaper/essays/, delete whitepapers/
+   
+   ✗ arxiv-submission/ + arxiv-submissions/
+     ACTION: Keep arxiv-submission/, delete arxiv-submissions/
+   
+   ✗ examples/ (root) + docs/Examples/
+     ACTION: Move examples/* → docs/examples/, delete root examples/
+   
+   ✗ .benchmarks/ (hidden) + benchmarks/
+     ACTION: Delete .benchmarks/
+
+4. BROKEN REFERENCES (Fix INDEX.md)
+   MERGE:
+     docs/index.md (primary) + docs/INDEX.md (delete after merge)
+   
+   CREATE OR FIX:
+     ✗ docs/Architecture/CPU-INTERFACE-ANALYSIS.md
+       → Actually in: modules/cpu-interface/docs/
+       → Either create symlink or update reference
+     
+     ✗ docs/Architecture/MEMORY-LAYOUT-ANALYSIS.md
+       → MISSING - create file or remove reference
+     
+     ✗ docs/Performance/BOOT-PROFILING-RESULTS.md
+       → MISSING - check benchmarks/ or create
+     
+     ✗ docs/Standards/CODING-STANDARDS.md
+       → MISSING - create or remove reference
+
+5. SCATTERED ANALYSIS
+   CPU Interface Analysis:
+     ✓ Keep: modules/cpu-interface/docs/
+     ✗ Remove: archive/deprecated/architecture/ (duplicates)
+   
+   Boot Sequence Analysis:
+     ✓ Keep: modules/boot-sequence/docs/
+     ✗ Remove: archive/deprecated/boot-analysis/ (duplicates)
+
+================================================================================
+HOUR-BY-HOUR EXECUTION CHECKLIST
+================================================================================
+
+HOUR 1: Merge indexes & consolidate
+  [ ] 0:00-0:15 Merge docs/index.md + docs/INDEX.md
+  [ ] 0:15-0:35 Move whitepapers/* → whitepaper/essays/
+  [ ] 0:35-0:45 Delete arxiv-submissions/ (empty)
+  [ ] 0:45-0:50 Delete .benchmarks/
+  [ ] 0:50-1:00 Move examples/* → docs/examples/, delete root examples/
+
+HOUR 2: Archive root files
+  [ ] 0:00-0:20 Move PHASE-*.md (13 files) → archive/phase-reports/ [git mv]
+  [ ] 0:20-0:35 Move INTEGRATION-*.md (14 files) → archive/integration-reports/ [git mv]
+  [ ] 0:35-0:45 Move PROJECT-*.md (3 files) → archive/integration-reports/ [git mv]
+  [ ] 0:45-1:00 Move WHITEPAPER-*.md (6 files) → whitepaper/ [NOT archive]
+
+HOUR 3: Case standardization (first batch)
+  [ ] 0:00-0:15 git mv docs/Analysis → docs/analysis
+  [ ] 0:15-0:30 git mv docs/Architecture → docs/architecture
+  [ ] 0:30-0:45 git mv docs/Audits → docs/audits
+  [ ] 0:45-1:00 git mv docs/Examples → docs/examples
+
+HOUR 4: Case standardization (second batch)
+  [ ] 0:00-0:15 git mv docs/MCP → docs/mcp
+  [ ] 0:15-0:30 git mv docs/Performance → docs/performance
+  [ ] 0:30-0:45 git mv docs/Planning → docs/planning
+  [ ] 0:45-1:00 git mv docs/Standards → docs/standards
+
+HOUR 5: Fix references & verify
+  [ ] 0:00-0:30 Audit all internal links, create missing files
+  [ ] 0:30-0:45 Update mkdocs.yml nav: section
+  [ ] 0:45-0:55 Test mkdocs build (mkdocs build)
+  [ ] 0:55-1:00 Verify zero errors, commit
+
+================================================================================
+FILES TO DELETE (AFTER MOVING CONTENT)
+================================================================================
+
+Safe to delete (content moved elsewhere):
+  ✗ docs/INDEX.md (content merged to docs/index.md)
+  ✗ whitepapers/ (content moved to whitepaper/essays/)
+  ✗ arxiv-submissions/ (empty or duplicate)
+  ✗ .benchmarks/ (duplicate of benchmarks/)
+  ✗ examples/ (content moved to docs/examples/)
+
+DANGER: Don't delete these!
+  ✓ docs/index.md (primary entry point!)
+  ✓ whitepaper/ (contains primary content)
+  ✓ archive/deprecated/ (preserve history)
+  ✓ modules/ (code modules)
+
+================================================================================
+FILES TO CREATE (missing but referenced)
+================================================================================
+
+Either create these files OR remove their references from docs/index.md:
+
+  docs/architecture/memory-layout-analysis.md
+  docs/performance/boot-profiling-results.md
+  docs/performance/cpu-utilization-analysis.md
+  docs/performance/optimization-recommendations.md
+  docs/standards/coding-standards.md
+  docs/audits/completeness-checklist.md
+  docs/planning/phase-summary.md (aggregate PHASE-*.md)
+  docs/mcp/mcp-troubleshooting.md
+  docs/mcp/mcp-integration.md
+
+Recommendation: Create stub files with content TBD for now, at minimum.
+This unblocks the documentation freeze.
+
+================================================================================
+CROSS-CHECK: FILES THAT SHOULD EXIST
+================================================================================
+
+After cleanup is complete, verify these exist:
+
+✓ docs/index.md (unified, single entry point)
+✓ docs/overview.md
+✓ docs/architecture/README.md (or index file)
+✓ docs/boot-sequence/README.md
+✓ docs/analysis/README.md
+✓ docs/performance/README.md
+✓ docs/standards/README.md
+✓ docs/examples/README.md
+✓ docs/planning/README.md
+✓ docs/mcp/README.md (or index file)
+✓ whitepaper/README.md
+✓ whitepaper/essays/ (subdirectory)
+✓ modules/cpu-interface/README.md
+✓ modules/boot-sequence/README.md
+
+If any missing, create empty README.md files as placeholders.
+
+================================================================================
+MKDOCS.YML UPDATE REFERENCE
+================================================================================
+
+After renaming directories, update mkdocs.yml:
+
+BEFORE (with CamelCase):
+  nav:
+    - Home: index.md
+    - Analysis: Analysis/
+    - Architecture: Architecture/
+
+AFTER (with lowercase):
+  nav:
+    - Home: index.md
+    - Analysis: analysis/
+    - Architecture: architecture/
+
+Check all nav: references match new directory names (lowercase).
+
+================================================================================
+GIT WORKFLOW COMMANDS
+================================================================================
+
+Safe commands to use during reorganization:
+
+Move single file:
+  git mv old/path/file.md new/path/file.md
+
+Move directory:
+  git mv docs/Analysis docs/analysis
+
+Archive multiple files:
+  git mv PHASE-*.md archive/phase-reports/
+  [will move all matching files]
+
+Check what changed:
+  git status
+
+Preview changes:
+  git diff --cached
+
+Commit changes:
+  git add -A
+  git commit -m "docs: consolidate documentation organization"
+
+NEVER use (preserves broken history):
+  rm -rf docs/OldName
+  mv docs/NewName [wrong - loses git history]
+
+================================================================================
+VERIFICATION CHECKLIST (After completion)
+================================================================================
+
+Run these checks to confirm success:
+
+FILESYSTEM:
+  [ ] Root directory: ls *.md | wc -l
+      Should show: 5-8 files (was 40+)
+  
+  [ ] docs/ lowercase: ls docs/ | grep -E "^[a-z]" | wc -l
+      Should show: 8 directories (all lowercase)
+  
+  [ ] No CamelCase in docs/: ls docs/ | grep -E "[A-Z]" | wc -l
+      Should show: 0 (no uppercase)
+  
+  [ ] No duplicate dirs: ls -d docs/{whitepaper,whitepapers,arxiv*}
+      Should show: whitepaper/ only (if it exists)
+
+GIT:
+  [ ] History preserved: git log --follow docs/analysis/BOOT-SEQUENCE-ANALYSIS.md
+      Should show: all commits for that file (not a new file)
+  
+  [ ] No large changes: git log --oneline | head -5
+      Should show: one consolidation commit (not 40+ individual commits)
+
+MKDOCS:
+  [ ] Build succeeds: mkdocs build
+      Should show: zero errors
+  
+  [ ] No broken links: mkdocs serve
+      Then visit http://localhost:8000 and spot-check links
+  
+  [ ] Navigation works: Click through main navigation
+      All links should resolve (not 404)
+
+DOCUMENTATION:
+  [ ] Index complete: docs/index.md references all major sections
+  [ ] Index current: No dead links in index
+  [ ] READMEs present: Each major section has README.md
+
+SUCCESS CRITERIA MET:
+  [ ] 0 CamelCase directories in docs/
+  [ ] 0 duplicate directories
+  [ ] Root has 5-8 files (not 40+)
+  [ ] 0 broken links in index
+  [ ] mkdocs build succeeds
+  [ ] User can find any topic in ≤ 3 clicks
+
+================================================================================
+BEFORE & AFTER STATS
+================================================================================
+
+BEFORE:
+  Root .md files:       40+ (cluttered)
+  CamelCase dirs:       8 pairs (confusing)
+  Duplicate dirs:       4 (whitepaper+whitepapers, etc.)
+  Broken links:         13 in index
+  Case consistency:     50% (mixed)
+  User discoverability: ~65% (hard to find things)
+
+AFTER:
+  Root .md files:       5-8 (clean)
+  CamelCase dirs:       0 (unified lowercase)
+  Duplicate dirs:       0 (consolidated)
+  Broken links:         0 (all fixed)
+  Case consistency:     100% (all lowercase)
+  User discoverability: ~95% (easy to find things)
+
+TIME INVESTMENT: 5-7 hours
+PAYOFF: Massive improvement in usability
+ROI: 86% reduction in clutter + 30% improvement in discoverability
+
+================================================================================
+QUESTIONS? REFER TO THESE DETAILED DOCUMENTS
+================================================================================
+
+For comprehensive explanations, read:
+
+1. DOCUMENTATION-AUDIT-EXECUTIVE-SUMMARY-2025-11-01.md
+   → Why these changes matter
+   → How they solve user problems
+   → Git workflow & success criteria
+
+2. DOCUMENTATION-AUDIT-REPORT-2025-11-01.md
+   → Detailed analysis of each issue
+   → Recommendations section
+   → Full execution plan
+
+3. DOCUMENTATION-AUDIT-DETAILED-INVENTORY-2025-11-01.md
+   → File-by-file listing of all 231 files
+   → Current location of every file
+   → Cross-reference validation map
+
+================================================================================
+QUICK TROUBLESHOOTING
+================================================================================
+
+Q: I messed up a git mv command. Can I undo?
+A: git reset HEAD~1 (undo last commit and unstage changes)
+
+Q: Which directory should CPU analysis go in?
+A: docs/architecture/ (currently scattered; consolidate to one place)
+
+Q: Should I delete archive/deprecated/ files?
+A: NO! Archive is valuable for history. Keep it.
+
+Q: What if mkdocs build fails?
+A: Check mkdocs.yml for correct directory names in nav: section
+
+Q: Do I need to update CLAUDE.md?
+A: Update the docs reference in CLAUDE.md if you changed paths
+
+Q: Can I do this incrementally?
+A: Yes, but consolidation is easier in one session (5-7 hours)
+
+Q: Will this affect the actual software?
+A: No, only documentation. Code is unaffected.
+
+Q: Do I need to notify users?
+A: Yes, update CHANGELOG.md and CONTRIBUTING.md with new structure
+
+================================================================================
+END OF QUICK REFERENCE
+Print or bookmark this while executing the cleanup plan
+================================================================================

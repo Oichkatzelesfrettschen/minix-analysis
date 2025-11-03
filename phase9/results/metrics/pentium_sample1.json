@@ -1,0 +1,9 @@
+{
+    "cpu_type": "pentium",
+    "sample": 1,
+    "wall_clock_ms": 120007,
+    "boot_success": 1,
+    "serial_output_bytes": 7765,
+    "estimated_login_time_ms": 0,
+    "timestamp": "2025-11-02T03:33:55Z"
+}

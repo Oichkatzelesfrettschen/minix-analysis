@@ -1,0 +1,526 @@
+================================================================================
+QEMU TIMING ARCHITECTURE: VISUAL DIAGRAMS AND FLOW CHARTS
+================================================================================
+
+DIAGRAM 1: QEMU FOUR-CLOCK SYSTEM
+================================================================================
+
+Host System                     QEMU Emulation            Guest OS
+                               
+host_gettimeofday()           QEMU_CLOCK_REALTIME       [guest_time_of_day()]
+        |                              |
+        +-- synchronized to --> Host monotonic clock
+                                      |
+                                      |
+CPU instruction execution      QEMU_CLOCK_VIRTUAL  <--  [RDTSC in guest]
+        |                              |
+        +-- mapped by formula:   instruction_count << 3
+                                      |
+                                      |-- fires all device timers
+                                      |-- for TLA+ models
+                                      |-- in record/replay
+
+
+WALL-CLOCK TIME (host)         INSTRUCTION TIME (guest)
+    passes at                       determined by
+    host wall-clock rate            formula
+                                    (not correlated)
+
+
+================================================================================
+DIAGRAM 2: THE INSTRUCTION-TO-VIRTUAL-TIME MAPPING
+================================================================================
+
+Guest executes instruction:    1 instruction
+                                    |
+                                    V
+                    icount += 1  (increment counter)
+                                    |
+                                    V
+            QEMU_CLOCK_VIRTUAL = icount << 3
+                    (left shift by 3 = multiply by 8)
+                                    |
+                                    V
+                    1 instruction = 8 nanoseconds
+                                    |
+                                    V
+            Virtual time advances by 8ns
+                                    |
+                                    V
+        Device timer expires when:
+        instruction_count reaches expiry_icount
+                                    |
+                                    V
+        Interrupt fires at EXACT instruction boundary
+
+
+EXAMPLE TIMELINE:
+================================================================================
+
+Host wall-clock:     0s            1s              2s              3s
+                     |             |               |               |
+Guest executes:   0 instr    125M instr       250M instr          375M instr
+                     |             |               |               |
+Virtual time:      0ns          1s (1B ns)       2s                3s
+                     |             |               |               |
+Device timer       scheduled      FIRES!          ---             FIRES!
+(every 125M instr) at 125M instr
+
+
+KEY INSIGHT: Device timers depend on INSTRUCTION COUNT, not wall-clock time!
+             If you execute faster, timers fire early.
+             If you execute slower, timers fire late.
+             Both break the OS.
+
+
+================================================================================
+DIAGRAM 3: TRANSLATION BLOCK BUDGET SYSTEM
+================================================================================
+
+Main Execution Loop:
+
+    +-- START ITERATION
+    |
+    +-- Check: icount_decr.u32 < TB_instruction_count?
+    |      |
+    |      NO -> Execute TB
+    |      |       instruction_count += N
+    |      |       icount_decr -= N
+    |      |
+    |      YES -> REGENERATE TB with exact budget
+    |             (so icount_decr becomes exactly 0)
+    |      |
+    |      +-- Timer expires at end of TB
+    |
+    +-- Check: device I/O happened?
+    |      |
+    |      YES -> Freeze icount, dispatch I/O, unfreeze icount
+    |      |
+    |      NO -> Continue
+    |
+    +-- Loop back to START
+
+
+BUDGET SCENARIO: Device timer expires in 500 instructions
+================================================================================
+
+Next TB size: 1000 instructions
+
+Check:  icount_budget (1000) > timer_deadline (500)?
+        YES -> Would miss deadline
+
+Action: Regenerate TB with EXACTLY 500 instructions
+
+Result: Timer fires at precise instruction boundary
+
+    |-- 500 instructions --|   |-- 500 instructions --|
+    |                     |   |
+    Execute TB#1          Timer fires!
+    budget: 1000 -> 500
+
+    Check again:
+    icount_budget (500) < TB_size (1000)?
+    YES -> regenerate with 500 instructions
+
+
+================================================================================
+DIAGRAM 4: I/O OPERATION SYNCHRONIZATION
+================================================================================
+
+Guest code:
+    MOV EAX, [0xDEADBEEF]     <- Could be MMIO or RAM
+
+
+QEMU translation phase:
+    Does 0xDEADBEEF map to device?
+    
+    NO: emit regular RAM load instruction
+        no icount freeze needed
+    
+    YES: emit I/O sequence:
+        1. gen_io_start()     <- Freeze icount here
+        2. gen_mmio_read()    <- Do I/O with frozen icount
+        3. gen_io_end()       <- Unfreeze icount
+
+
+Device model view:
+    Device receives: read at 0xDEADBEEF
+    Device reads: icount (frozen at exact instruction)
+    Device returns: value + updated state
+    
+    Kernel expects: interrupt at icount + N
+    Device schedules: timer at exact icount + N
+
+
+Result: Perfect synchronization
+        Interrupt cannot arrive at wrong time
+        Device state always consistent
+
+
+WHY THIS MATTERS:
+    If icount freezing didn't happen:
+        - Multiple device reads might return inconsistent state
+        - Interrupts would pile up unexpectedly
+        - "Lost interrupt" bugs would occur
+        - Boot would hang or crash randomly
+
+
+================================================================================
+DIAGRAM 5: TIMER EXPIRY DETECTION FLOW
+================================================================================
+
+Timer scheduled at: icount = 1,000,000
+                    (device initialized to fire after 1M cycles)
+
+Execution continues:
+    TB#1: 100K instr  (icount: 100K)
+    TB#2: 200K instr  (icount: 300K)
+    TB#3: 300K instr  (icount: 600K)
+    TB#4: START (budget calculation)
+    
+Check: will TB#4 (size 500K) exceed deadline (1,000,000)?
+    600K + 500K = 1,100,000 > 1,000,000? YES
+    
+    Regenerate TB#4 with exactly 400,000 instructions
+    
+    TB#4: 400K instr  (icount: 1,000,000)
+    
+    [END OF TB#4]
+    [MAIN LOOP WAKES UP]
+    
+Check: are there pending timers?
+    YES -> icount == timer_deadline (1,000,000)
+    
+Execute: timer callback
+    device_timer_expired()
+    raise_interrupt(TIMER_IRQ)
+    
+Guest sees: IRQ at instruction 1,000,000 (CORRECT)
+            exactly when expected
+
+
+================================================================================
+DIAGRAM 6: WHY DECOUPLING FAILS
+================================================================================
+
+Current (COUPLED) ARCHITECTURE:
+================================
+
+vCPU executes:         1 instruction
+        |
+        V
+Increment icount:      icount += 1
+        |
+        V
+Calculate time:        virtual_time = icount << 3
+        |
+        V
+Check timers:          if (timer_deadline == icount)
+        |
+        +-- TIGHT LOOP: cannot decouple
+
+
+Hypothetical (DECOUPLED) ARCHITECTURE:
+======================================
+
+vCPU executes:         1 instruction (native speed!)
+        |
+        V
+[ASYNC QUEUE]
+        |
+        V (eventually, much later)
+Increment icount:      icount += 1 (stale value!)
+        |
+        V
+Check timers:          if (timer_deadline == icount)
+                           ... but vCPU already at icount+1000!
+        |
+        Problem: Timer check happens AFTER wrong instruction
+
+
+CONSEQUENCES OF DECOUPLING:
+===========================
+
+Scenario: Timer should fire at instruction 1,000,000
+         
+With coupling:
+    icount reaches 1,000,000
+    Timer fires immediately
+    IRQ delivered at correct point
+
+With decoupling:
+    icount=900,000: vCPU starts running ahead
+    icount=950,000: timer marked "pending" (too late!)
+    icount=1,000,000: [too late, vCPU past this point]
+    icount=1,200,000: timer finally fires (200K instructions too late!)
+    
+    Guest OS detects interrupt arrived late
+    Timing becomes non-deterministic
+    Record/replay fails
+    System unreliable
+
+
+================================================================================
+DIAGRAM 7: OVERHEAD BREAKDOWN
+================================================================================
+
+MINIX Boot 180 seconds total:
+
+100s ========== Translation Overhead ===========
+        JIT compilation, instruction lowering,
+        optimization with icount constraints,
+        translation caching management
+        (this is unavoidable with TCG)
+
+ 60s ===== Actual Instruction Execution ====
+        Host CPU executing emitted code
+        Limited by host CPU speed
+
+ 15s ====== Icount Management ======
+        Budget checks per TB
+        Timer expiry detection
+        I/O synchronization
+
+  5s == Device Model ==
+        MMIO emulation
+        Device state updates
+
+
+INSIGHT: Icount overhead is ~8% of total time, not the bottleneck!
+
+If you removed icount entirely:
+    Saving: ~15 seconds (icount management)
+    Result: 165 seconds (not much better!)
+    
+The real constraint is translation (60% of time).
+You cannot remove translation without losing binary compatibility.
+
+
+================================================================================
+DIAGRAM 8: SIMULATION SPEED TIERS
+================================================================================
+
+                        Speed        Slowdown    Cycle      Use Case
+                                                Accuracy
+                        |              |          |           |
+Functional simulation   1000+ MIPS     1x        None       Speed only
+(no cycle count)                                              (wrong timing)
+                        |              |          |           |
+QEMU with -icount      125 MIPS       ~7.2x     YES        Research
+(instruction-accurate)                                      profiling
+                        |              |          |           |
+Cycle-accurate         5-10 MIPS      ~100x     YES        Microarch
+(Gem5, micro-arch)                             (complete)   analysis
+
+
+                        |              |          |           |
+QEMU -replay           200+ MIPS      ~5x       YES        Debugging
+(deterministic replay)                          (replay)     exact bugs
+                        |              |          |           |
+
+
+POINT: You cannot have speed AND accuracy in profiling.
+       Choose one or accept the trade-off.
+       For cycle counting: must use 125 MIPS tier.
+
+
+================================================================================
+DIAGRAM 9: THE PARADOX VISUALIZED
+================================================================================
+
+Question: Can we execute faster while keeping cycle counts valid?
+
+
+Attempt 1: Faster execution, same cycle count
+===================================================
+Host wall-clock: 0.5 seconds (FASTER!)
+Instructions:    125M (SAME)
+Virtual time:    must be 1 second (by formula)
+Device timer:    fires at icount=125M (correct!)
+
+Result: Guest sees same virtual time
+        Wall-clock is irrelevant to guest
+        We saved ZERO wall-clock time!
+        (timers don't depend on wall-clock, they depend on icount)
+
+Conclusion: CANNOT SAVE WALL-CLOCK TIME THIS WAY
+
+
+Attempt 2: Faster execution, fewer cycles
+==============================================
+Host wall-clock: 0.5 seconds (FASTER!)
+Instructions:   62.5M (FEWER)
+Virtual time:    0.5 seconds (compressed)
+Device timer:    fires at icount=62.5M (TOO EARLY!)
+
+Result: Guest sees timer interrupt 0.5 seconds early
+        Device state: garbage
+        Kernel: "What? Timer fired but no 1 second passed!"
+        System: HANGS or CRASHES
+
+Conclusion: BREAKS DETERMINISM AND TIMING
+
+
+Attempt 3: Execute 125M instructions, pretend it's 62.5M
+=========================================================
+This is logically impossible.
+An executed instruction cannot be un-executed.
+Instruction count is immutable.
+
+Conclusion: CANNOT DO THIS EITHER
+
+
+================================================================================
+DIAGRAM 10: COMPARISON WITH OTHER VMS
+================================================================================
+
+VirtualBox                 KVM                        Xen
+========================  =======================    =====================
+Method: TSC sync           Method: Real TSC          Method: Paravirt clock
+        or emulated               (native CPU)                (synthetic)
+        
+Speed: 5-10x slower        Speed: ~0.5x               Speed: ~0.5-1x
+       (than native)              (native hardware)          (native hardware)
+
+Timing: drifts over        Timing: perfectly          Timing: controlled
+        time               synchronized                      by hypervisor
+
+Cycle accuracy: NO          Cycle accuracy: YES        Cycle accuracy: YES
+        (TSC varies                (real hardware)          (controlled)
+
+MINIX support: YES          MINIX support: NO          MINIX support: NO
+        (with drivers)           (needs KVM clock)        (needs Xen drivers)
+
+Profiling: medium           Profiling: hard            Profiling: medium
+           (skewed by              (hard to trace)          (needs porting)
+            translation)
+
+
+Result: QEMU -icount is BEST for cycle-accurate OS profiling,
+        but pays cost of software translation.
+
+
+================================================================================
+DIAGRAM 11: WALL-CLOCK vs VIRTUAL-TIME DECOUPLING
+================================================================================
+
+QEMU Design Philosophy:
+    "Virtual time is independent of wall-clock time"
+
+This allows:
+    1. Deterministic execution (instruction count = virtual time)
+    2. Record/replay (replay uses same icount)
+    3. Timing-independent profiling (wall-clock doesn't matter)
+
+But requires:
+    1. All timers based on icount
+    2. All device models based on icount
+    3. All interrupts synchronized to icount
+
+
+Example: PIT (Programmable Interval Timer) in QEMU
+
+    Guest kernel: "Fire interrupt every 1 second"
+    
+    What is "1 second" to guest?
+    Answer: 125 million instructions (by formula)
+    
+    PIT model: timer_mod(expiry_icount = current_icount + 125,000,000)
+    
+    Interrupt fires when: icount == expiry_icount
+    
+    If wall-clock runs slow: timer still fires at right icount
+    If wall-clock runs fast: timer still fires at right icount
+    
+    Wall-clock is IRRELEVANT
+
+
+This is why you cannot decouple:
+    Device models are written to fire on icount, not wall-clock.
+    If you try to decouple: device state breaks.
+
+
+================================================================================
+DIAGRAM 12: RECOMMENDED PROFILING APPROACHES
+================================================================================
+
+Approach A: Full Accuracy
+    Time: 180 seconds
+    Result: Exact cycle counts, deterministic
+    Use: Baseline measurements, bug reproduction
+    
+    qemu-system-i386 -icount 3 [system] 2>&1 | analyze
+    
+    Cost: High wall-clock time
+    Benefit: Perfect accuracy
+
+
+Approach B: Sampling
+    Time: 15-20 seconds
+    Result: ~0.1% statistical error
+    Use: Trend analysis, comparative profiling
+    
+    qemu-system-i386 -icount 3,shift=5 [system]
+    
+    Cost: Low wall-clock time
+    Benefit: Good accuracy for comparisons
+
+
+Approach C: Record/Replay
+    Time: 180s record + 10s replay x N
+    Result: Deterministic baseline for comparisons
+    Use: Debug exact timing, verify fixes
+    
+    qemu-system-i386 -icount 3 -record session.replay [system]
+    qemu-system-i386 -replay session.replay
+    
+    Cost: High initial cost, low for analysis
+    Benefit: Reproducible test cases
+
+
+Approach D: Hybrid Simulation
+    Time: 55 seconds total
+    Result: Accurate boot phase, approximate rest
+    Use: Focus on specific subsystems
+    
+    [Functional] Phase 1 (BIOS) 2s
+    [icount]     Phase 2 (drivers) 50s
+    [Functional] Phase 3 (userspace) 3s
+    
+    Cost: Medium wall-clock time
+    Benefit: Focus on important phase
+
+
+Approach E: Instrumentation
+    Time: 30-50 seconds
+    Result: Per-region cycle budgets
+    Use: Understand OS time distribution
+    
+    Manually insert get_uptime2() calls in MINIX kernel
+    Measure specific subsystems (IPC, scheduling, etc.)
+    
+    Cost: Low wall-clock time
+    Benefit: Targeted analysis
+
+
+Approach F: Native KVM
+    Time: 5 seconds
+    Result: Real CPU timing
+    Use: Performance testing, not profiling
+    
+    qemu-system-i386 -accel kvm [system]
+    (cannot use icount with KVM)
+    
+    Cost: Low wall-clock time
+    Benefit: Native speed
+    Trade: cannot instrument instruction-level
+
+
+================================================================================
+END DIAGRAMS
+================================================================================
+
+Visual reference for QEMU timing architecture analysis.
+Complements QEMU_TIMING_ARCHITECTURE_REPORT.md with diagrams.
+
+Generated: November 1, 2025

@@ -1,0 +1,129 @@
+# Generalized Path Configuration for minix-analysis
+# This allows flexible deployment across different systems and environments
+# All paths are relative to project root unless specified as absolute
+
+# Project root - auto-detected at runtime, override if needed
+project_root: ./
+
+# Source code and analysis directories
+paths:
+  source:
+    minix: ./minix-source
+    artifacts: ./artifacts
+    analysis: ./analysis
+  
+  # Docker and virtualization
+  docker:
+    root: ./docker
+    dockerfiles: ./docker/Dockerfile*
+    qemu: ./docker/qemu
+    builds: ./docker/build
+    compose: ./docker-compose.yml
+    compose_enhanced: ./docker-compose.enhanced.yml
+  
+  # Testing infrastructure
+  testing:
+    root: ./tests
+    qemu: ./tests/qemu
+    fixtures: ./tests/fixtures
+    unit: ./tests/unit
+    integration: ./tests/integration
+    scripts: ./tests/scripts
+  
+  # Documentation
+  docs:
+    root: ./docs
+    api: ./docs/api
+    architecture: ./docs/architecture
+    testing: ./docs/testing
+    deployment: ./docs/deployment
+  
+  # Build outputs
+  build:
+    root: ./build
+    output: ./build/output
+    logs: ./build/logs
+    artifacts: ./build/artifacts
+  
+  # QEMU and virtualization
+  vm:
+    images: ./docker
+    iso: ./docker/minix_R3.4.0rc6-d5e4fc0.iso
+    qcow2: ./docker/minix_installed.qcow2
+    snapshots: ./docker/snapshots
+  
+  # Logs and measurements
+  logs: ./logs
+  measurements: ./measurements
+  benchmarks: ./benchmarks
+  
+  # Tools and scripts
+  tools:
+    root: ./tools
+    qemu: ./tools/qemu
+    docker: ./tools/docker
+    testing: ./tools/testing
+    analysis: ./tools/analysis
+
+# Environment-specific overrides
+environments:
+  development:
+    docker_registry: localhost:5000
+    qemu_memory: 2G
+    qemu_cpus: 4
+  
+  ci:
+    docker_registry: ghcr.io/oaich
+    qemu_memory: 1G
+    qemu_cpus: 2
+  
+  production:
+    docker_registry: docker.io
+    qemu_memory: 4G
+    qemu_cpus: 8
+
+# Docker image names and tags
+docker:
+  minix_qemu:
+    name: minix-qemu
+    tag: latest
+    registry: localhost:5000
+  
+  minix_test:
+    name: minix-test
+    tag: latest
+    registry: localhost:5000
+  
+  analysis_toolkit:
+    name: minix-analysis
+    tag: latest
+    registry: localhost:5000
+
+# QEMU configuration defaults
+qemu:
+  arch: i386
+  machine: q35
+  memory: 2G
+  cpus: 4
+  disk_size: 10G
+  tap_interface: tap0
+  serial_port: /dev/pts/0
+  monitor_port: 55555
+  vnc_display: :0
+
+# Testing configuration
+testing:
+  timeout_qemu_boot: 60
+  timeout_integration: 300
+  timeout_full_suite: 600
+  max_retries: 3
+  fail_fast: false
+  coverage_minimum: 85
+  report_format: json
+
+# Logging configuration
+logging:
+  level: INFO
+  format: json
+  output: ./logs/minix-analysis.log
+  archive_days: 30

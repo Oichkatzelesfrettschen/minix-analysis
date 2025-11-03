@@ -1,0 +1,236 @@
+\section{Complete Line-by-Line Annotation Table}
+\label{sec:line_by_line}
+
+This section provides \textbf{complete annotation} for all 214 lines of \texttt{kmain()} without any truncation or abbreviation.
+
+\begin{longtable}{@{}p{0.06\textwidth}p{0.42\textwidth}p{0.42\textwidth}@{}}
+\caption{Complete line-by-line annotation of \texttt{kmain()} (lines 115--328)} \\
+\toprule
+\textbf{Line} & \textbf{Source Code} & \textbf{Explanation} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{Table \thetable\ -- Line-by-line annotation (continued)} \\
+\toprule
+\textbf{Line} & \textbf{Source Code} & \textbf{Explanation} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{Continued on next page...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+115 & \texttt{void kmain(kinfo\_t *local\_cbi)} & Function entry point. Parameter \texttt{local\_cbi} contains boot info from bootloader. \\
+116 & \texttt{{} & Continued from previous line. \\
+117 & \texttt{/* Start the ball rolling. */} & Continued from previous line. \\
+118 & \texttt{  struct boot\_image *ip;	/* boot image pointer */} & Continued from previous line. \\
+119 & \texttt{  register struct proc *rp;	/* process pointer */} & Continued from previous line. \\
+120 & \texttt{  register int i, j;} & Continued from previous line. \\
+121 & \texttt{  static int bss\_test;} & BSS sanity check: assert \texttt{bss\_test} is zero-initialized. \\
+122 & \texttt{} & Continued from previous line. \\
+123 & \texttt{  /* bss sanity check */} & Continued from previous line. \\
+124 & \texttt{  assert(bss\_test == 0);} & Continued from previous line. \\
+125 & \texttt{  bss\_test = 1;} & Continued from previous line. \\
+126 & \texttt{} & Continued from previous line. \\
+127 & \texttt{  /* save a global copy of the boot parameters */} & Continued from previous line. \\
+128 & \texttt{  memcpy(&kinfo, local\_cbi, sizeof(kinfo));} & Copy boot information structure from bootloader to kernel global \texttt{kinfo}. \\
+129 & \texttt{  memcpy(&kmess, kinfo.kmess, sizeof(kmess));} & Continued from previous line. \\
+130 & \texttt{} & Continued from previous line. \\
+131 & \texttt{   /* We have done this exercise in pre\_init so we expect this code} & Continued from previous line. \\
+132 & \texttt{      to simply work! */} & Continued from previous line. \\
+133 & \texttt{   machine.board\_id = get\_board\_id\_by\_name(env\_get(BOARDVARNAME));} & Continued from previous line. \\
+134 & \texttt{\#ifdef \_\_arm\_\_} & Continued from previous line. \\
+135 & \texttt{  /* We want to initialize serial before we do any output */} & Continued from previous line. \\
+136 & \texttt{  arch\_ser\_init();} & Continued from previous line. \\
+137 & \texttt{\#endif} & Continued from previous line. \\
+138 & \texttt{  /* We can talk now */} & Continued from previous line. \\
+139 & \texttt{  DEBUGBASIC(("MINIX booting\textbackslash n"));} & Continued from previous line. \\
+140 & \texttt{} & Continued from previous line. \\
+141 & \texttt{  /* Kernel may use bits of main memory before VM is started */} & Continued from previous line. \\
+142 & \texttt{  kernel\_may\_alloc = 1;} & Continued from previous line. \\
+143 & \texttt{} & Continued from previous line. \\
+144 & \texttt{  assert(sizeof(kinfo.boot\_procs) == sizeof(image));} & Continued from previous line. \\
+145 & \texttt{  memcpy(kinfo.boot\_procs, image, sizeof(kinfo.boot\_procs));} & Continued from previous line. \\
+146 & \texttt{} & Continued from previous line. \\
+147 & \texttt{  cstart();} & \hyperref[line:147]{Call \texttt{cstart()}} for early C initialization (see \autoref{sec:cstart_source}). \\
+148 & \texttt{} & Continued from previous line. \\
+149 & \texttt{  BKL\_LOCK();} & Continued from previous line. \\
+150 & \texttt{ } & Continued from previous line. \\
+151 & \texttt{   DEBUGEXTRA(("main()\textbackslash n"));} & Continued from previous line. \\
+152 & \texttt{} & Continued from previous line. \\
+153 & \texttt{  /* Clear the process table. Anounce each slot as empty and set up mappings} & Continued from previous line. \\
+154 & \texttt{   * for proc\_addr() and proc\_nr() macros. Do the same for the table with} & Continued from previous line. \\
+155 & \texttt{   * privilege structures for the system processes and the ipc filter pool.} & Continued from previous line. \\
+156 & \texttt{   */} & Continued from previous line. \\
+157 & \texttt{  proc\_init();} & \hyperref[line:157]{Call \texttt{proc\_init()}} to initialize process table. \\
+158 & \texttt{  IPCF\_POOL\_INIT();} & Continued from previous line. \\
+159 & \texttt{} & Continued from previous line. \\
+160 & \texttt{   if(NR\_BOOT\_MODULES != kinfo.mbi.mi\_mods\_count)} & Validate boot module count matches expected \texttt{NR\_BOOT\_MODULES}. \\
+161 & \texttt{   	panic("expecting \%d boot processes/modules, found \%d",} & Continued from previous line. \\
+162 & \texttt{		NR\_BOOT\_MODULES, kinfo.mbi.mi\_mods\_count);} & Continued from previous line. \\
+163 & \texttt{} & Continued from previous line. \\
+164 & \texttt{  /* Set up proc table entries for processes in boot image. */} & Continued from previous line. \\
+165 & \texttt{  for (i=0; i < NR\_BOOT\_PROCS; ++i) {} & \textbf{BEGIN CRITICAL LOOP}: Initialize all boot processes. \\
+166 & \texttt{	int schedulable\_proc;} & Continued from previous line. \\
+167 & \texttt{	proc\_nr\_t proc\_nr;} & Continued from previous line. \\
+168 & \texttt{	int ipc\_to\_m, kcalls;} & Continued from previous line. \\
+169 & \texttt{	sys\_map\_t map;} & Continued from previous line. \\
+170 & \texttt{} & Continued from previous line. \\
+171 & \texttt{	ip = &image[i];				/* process' attributes */} & Continued from previous line. \\
+172 & \texttt{	DEBUGEXTRA(("initializing \%s... ", ip->proc\_name));} & Continued from previous line. \\
+173 & \texttt{	rp = proc\_addr(ip->proc\_nr);		/* get process pointer */} & Continued from previous line. \\
+174 & \texttt{	ip->endpoint = rp->p\_endpoint;		/* ipc endpoint */} & Continued from previous line. \\
+175 & \texttt{	rp->p\_cpu\_time\_left = 0;} & Continued from previous line. \\
+176 & \texttt{	if(i < NR\_TASKS)			/* name (tasks only) */} & Continued from previous line. \\
+177 & \texttt{		strlcpy(rp->p\_name, ip->proc\_name, sizeof(rp->p\_name));} & Continued from previous line. \\
+178 & \texttt{} & Continued from previous line. \\
+179 & \texttt{	if(i >= NR\_TASKS) {} & Continued from previous line. \\
+180 & \texttt{		/* Remember this so it can be passed to VM */} & Continued from previous line. \\
+181 & \texttt{		multiboot\_module\_t *mb\_mod = &kinfo.module\_list[i - NR\_TASKS];} & Continued from previous line. \\
+182 & \texttt{		ip->start\_addr = mb\_mod->mod\_start;} & Continued from previous line. \\
+183 & \texttt{		ip->len = mb\_mod->mod\_end - mb\_mod->mod\_start;} & Continued from previous line. \\
+184 & \texttt{	}} & Continued from previous line. \\
+185 & \texttt{	} & Continued from previous line. \\
+186 & \texttt{	reset\_proc\_accounting(rp);} & Continued from previous line. \\
+187 & \texttt{} & Continued from previous line. \\
+188 & \texttt{	/* See if this process is immediately schedulable.} & Continued from previous line. \\
+189 & \texttt{	 * In that case, set its privileges now and allow it to run.} & Continued from previous line. \\
+190 & \texttt{	 * Only kernel tasks and the root system process get to run immediately.} & Continued from previous line. \\
+191 & \texttt{	 * All the other system processes are inhibited from running by the} & Continued from previous line. \\
+192 & \texttt{	 * RTS\_NO\_PRIV flag. They can only be scheduled once the root system} & Continued from previous line. \\
+193 & \texttt{	 * process has set their privileges.} & Continued from previous line. \\
+194 & \texttt{	 */} & Continued from previous line. \\
+195 & \texttt{	proc\_nr = proc\_nr(rp);} & Continued from previous line. \\
+196 & \texttt{	schedulable\_proc = (iskerneln(proc\_nr) || isrootsysn(proc\_nr) ||} & Continued from previous line. \\
+197 & \texttt{		proc\_nr == VM\_PROC\_NR);} & Continued from previous line. \\
+198 & \texttt{	if(schedulable\_proc) {} & Continued from previous line. \\
+199 & \texttt{	    /* Assign privilege structure. Force a static privilege id. */} & Continued from previous line. \\
+200 & \texttt{            (void) get\_priv(rp, static\_priv\_id(proc\_nr));} & Assign privilege structure via \texttt{get\_priv()} with static ID. \\
+201 & \texttt{} & Continued from previous line. \\
+202 & \texttt{            /* Privileges for kernel tasks. */} & Continued from previous line. \\
+203 & \texttt{	    if(proc\_nr == VM\_PROC\_NR) {} & Continued from previous line. \\
+204 & \texttt{                priv(rp)->s\_flags = VM\_F;} & Continued from previous line. \\
+205 & \texttt{                priv(rp)->s\_trap\_mask = SRV\_T;} & Continued from previous line. \\
+206 & \texttt{		ipc\_to\_m = SRV\_M;} & Continued from previous line. \\
+207 & \texttt{		kcalls = SRV\_KC;} & Continued from previous line. \\
+208 & \texttt{                priv(rp)->s\_sig\_mgr = SELF;} & Continued from previous line. \\
+209 & \texttt{                rp->p\_priority = SRV\_Q;} & Continued from previous line. \\
+210 & \texttt{                rp->p\_quantum\_size\_ms = SRV\_QT;} & Continued from previous line. \\
+211 & \texttt{	    }} & Continued from previous line. \\
+212 & \texttt{	    else if(iskerneln(proc\_nr)) {} & Continued from previous line. \\
+213 & \texttt{                /* Privilege flags. */} & Continued from previous line. \\
+214 & \texttt{                priv(rp)->s\_flags = (proc\_nr == IDLE ? IDL\_F : TSK\_F);} & Continued from previous line. \\
+215 & \texttt{                /* Init flags. */} & Continued from previous line. \\
+216 & \texttt{                priv(rp)->s\_init\_flags = TSK\_I;} & Continued from previous line. \\
+217 & \texttt{                /* Allowed traps. */} & Continued from previous line. \\
+218 & \texttt{                priv(rp)->s\_trap\_mask = (proc\_nr == CLOCK } & Continued from previous line. \\
+219 & \texttt{                    || proc\_nr == SYSTEM  ? CSK\_T : TSK\_T);} & Continued from previous line. \\
+220 & \texttt{                ipc\_to\_m = TSK\_M;                  /* allowed targets */} & Continued from previous line. \\
+221 & \texttt{                kcalls = TSK\_KC;                   /* allowed kernel calls */} & Continued from previous line. \\
+222 & \texttt{            }} & Continued from previous line. \\
+223 & \texttt{            /* Privileges for the root system process. */} & Continued from previous line. \\
+224 & \texttt{            else {} & Continued from previous line. \\
+225 & \texttt{	    	assert(isrootsysn(proc\_nr));} & Continued from previous line. \\
+226 & \texttt{                priv(rp)->s\_flags= RSYS\_F;        /* privilege flags */} & Continued from previous line. \\
+227 & \texttt{                priv(rp)->s\_init\_flags = SRV\_I;   /* init flags */} & Continued from previous line. \\
+228 & \texttt{                priv(rp)->s\_trap\_mask= SRV\_T;     /* allowed traps */} & Continued from previous line. \\
+229 & \texttt{                ipc\_to\_m = SRV\_M;                 /* allowed targets */} & Continued from previous line. \\
+230 & \texttt{                kcalls = SRV\_KC;                  /* allowed kernel calls */} & Continued from previous line. \\
+231 & \texttt{                priv(rp)->s\_sig\_mgr = SRV\_SM;     /* signal manager */} & Continued from previous line. \\
+232 & \texttt{                rp->p\_priority = SRV\_Q;	          /* priority queue */} & Continued from previous line. \\
+233 & \texttt{                rp->p\_quantum\_size\_ms = SRV\_QT;   /* quantum size */} & Continued from previous line. \\
+234 & \texttt{            }} & Continued from previous line. \\
+235 & \texttt{} & Continued from previous line. \\
+236 & \texttt{            /* Fill in target mask. */} & Continued from previous line. \\
+237 & \texttt{            memset(&map, 0, sizeof(map));} & Continued from previous line. \\
+238 & \texttt{} & Continued from previous line. \\
+239 & \texttt{            if (ipc\_to\_m == ALL\_M) {} & Continued from previous line. \\
+240 & \texttt{                for(j = 0; j < NR\_SYS\_PROCS; j++)} & Continued from previous line. \\
+241 & \texttt{                    set\_sys\_bit(map, j);} & Continued from previous line. \\
+242 & \texttt{            }} & Continued from previous line. \\
+243 & \texttt{} & Continued from previous line. \\
+244 & \texttt{            fill\_sendto\_mask(rp, &map);} & Continued from previous line. \\
+245 & \texttt{} & Continued from previous line. \\
+246 & \texttt{            /* Fill in kernel call mask. */} & Continued from previous line. \\
+247 & \texttt{            for(j = 0; j < SYS\_CALL\_MASK\_SIZE; j++) {} & Continued from previous line. \\
+248 & \texttt{                priv(rp)->s\_k\_call\_mask[j] = (kcalls == NO\_C ? 0 : (~0));} & Continued from previous line. \\
+249 & \texttt{            }} & Continued from previous line. \\
+250 & \texttt{	}} & Continued from previous line. \\
+251 & \texttt{	else {} & Continued from previous line. \\
+252 & \texttt{	    /* Don't let the process run for now. */} & Continued from previous line. \\
+253 & \texttt{            RTS\_SET(rp, RTS\_NO\_PRIV | RTS\_NO\_QUANTUM);} & Continued from previous line. \\
+254 & \texttt{	}} & Continued from previous line. \\
+255 & \texttt{} & Continued from previous line. \\
+256 & \texttt{	/* Arch-specific state initialization. */} & Continued from previous line. \\
+257 & \texttt{	arch\_boot\_proc(ip, rp);} & Continued from previous line. \\
+258 & \texttt{} & Continued from previous line. \\
+259 & \texttt{	/* scheduling functions depend on proc\_ptr pointing somewhere. */} & Continued from previous line. \\
+260 & \texttt{	if(!get\_cpulocal\_var(proc\_ptr))} & Continued from previous line. \\
+261 & \texttt{		get\_cpulocal\_var(proc\_ptr) = rp;} & Continued from previous line. \\
+262 & \texttt{} & Continued from previous line. \\
+263 & \texttt{	/* Process isn't scheduled until VM has set up a pagetable for it. */} & Continued from previous line. \\
+264 & \texttt{	if(rp->p\_nr != VM\_PROC\_NR && rp->p\_nr >= 0) {} & Continued from previous line. \\
+265 & \texttt{		rp->p\_rts\_flags |= RTS\_VMINHIBIT;} & Continued from previous line. \\
+266 & \texttt{		rp->p\_rts\_flags |= RTS\_BOOTINHIBIT;} & Continued from previous line. \\
+267 & \texttt{	}} & Continued from previous line. \\
+268 & \texttt{} & Continued from previous line. \\
+269 & \texttt{	rp->p\_rts\_flags |= RTS\_PROC\_STOP;} & Continued from previous line. \\
+270 & \texttt{	rp->p\_rts\_flags &= ~RTS\_SLOT\_FREE;} & Continued from previous line. \\
+271 & \texttt{	DEBUGEXTRA(("done\textbackslash n"));} & Continued from previous line. \\
+272 & \texttt{  }} & Continued from previous line. \\
+273 & \texttt{} & Continued from previous line. \\
+274 & \texttt{  /* update boot procs info for VM */} & Continued from previous line. \\
+275 & \texttt{  memcpy(kinfo.boot\_procs, image, sizeof(kinfo.boot\_procs));} & Continued from previous line. \\
+276 & \texttt{} & Continued from previous line. \\
+277 & \texttt{\#define IPCNAME(n) { \textbackslash } & Continued from previous line. \\
+278 & \texttt{	assert((n) >= 0 && (n) <= IPCNO\_HIGHEST); \textbackslash } & Continued from previous line. \\
+279 & \texttt{	assert(!ipc\_call\_names[n]);	\textbackslash } & Continued from previous line. \\
+280 & \texttt{	ipc\_call\_names[n] = \#n; \textbackslash } & Continued from previous line. \\
+281 & \texttt{}} & Continued from previous line. \\
+282 & \texttt{} & Continued from previous line. \\
+283 & \texttt{  arch\_post\_init();} & Continued from previous line. \\
+284 & \texttt{} & Continued from previous line. \\
+285 & \texttt{  IPCNAME(SEND);} & Continued from previous line. \\
+286 & \texttt{  IPCNAME(RECEIVE);} & Continued from previous line. \\
+287 & \texttt{  IPCNAME(SENDREC);} & Continued from previous line. \\
+288 & \texttt{  IPCNAME(NOTIFY);} & Continued from previous line. \\
+289 & \texttt{  IPCNAME(SENDNB);} & Continued from previous line. \\
+290 & \texttt{  IPCNAME(SENDA);} & Continued from previous line. \\
+291 & \texttt{} & Continued from previous line. \\
+292 & \texttt{  /* System and processes initialization */} & Continued from previous line. \\
+293 & \texttt{  memory\_init();} & \hyperref[line:293]{Call \texttt{memory\_init()}} to initialize physical memory subsystem. \\
+294 & \texttt{  DEBUGEXTRA(("system\_init()... "));} & Continued from previous line. \\
+295 & \texttt{  system\_init();} & \hyperref[line:295]{Call \texttt{system\_init()}} to set up system services. \\
+296 & \texttt{  DEBUGEXTRA(("done\textbackslash n"));} & Continued from previous line. \\
+297 & \texttt{} & Continued from previous line. \\
+298 & \texttt{  /* The bootstrap phase is over, so we can add the physical} & Continued from previous line. \\
+299 & \texttt{   * memory used for it to the free list.} & Continued from previous line. \\
+300 & \texttt{   */} & Continued from previous line. \\
+301 & \texttt{  add\_memmap(&kinfo, kinfo.bootstrap\_start, kinfo.bootstrap\_len);} & Continued from previous line. \\
+302 & \texttt{} & Continued from previous line. \\
+303 & \texttt{\#ifdef CONFIG\_SMP} & Continued from previous line. \\
+304 & \texttt{  if (config\_no\_apic) {} & Continued from previous line. \\
+305 & \texttt{	  DEBUGBASIC(("APIC disabled, disables SMP, using legacy PIC\textbackslash n"));} & Continued from previous line. \\
+306 & \texttt{	  smp\_single\_cpu\_fallback();} & Continued from previous line. \\
+307 & \texttt{  } else if (config\_no\_smp) {} & Continued from previous line. \\
+308 & \texttt{	  DEBUGBASIC(("SMP disabled, using legacy PIC\textbackslash n"));} & Continued from previous line. \\
+309 & \texttt{	  smp\_single\_cpu\_fallback();} & Continued from previous line. \\
+310 & \texttt{  } else {} & Continued from previous line. \\
+311 & \texttt{	  smp\_init();} & Continued from previous line. \\
+312 & \texttt{	  /*} & Continued from previous line. \\
+313 & \texttt{	   * if smp\_init() returns it means that it failed and we try to finish} & Continued from previous line. \\
+314 & \texttt{	   * single CPU booting} & Continued from previous line. \\
+315 & \texttt{	   */} & Continued from previous line. \\
+316 & \texttt{	  bsp\_finish\_booting();} & Continued from previous line. \\
+317 & \texttt{  }} & Continued from previous line. \\
+318 & \texttt{\#else} & Continued from previous line. \\
+319 & \texttt{  /* } & Continued from previous line. \\
+320 & \texttt{   * if configured for a single CPU, we are already on the kernel stack which we} & Continued from previous line. \\
+321 & \texttt{   * are going to use everytime we execute kernel code. We finish booting and we} & Continued from previous line. \\
+322 & \texttt{   * never return here} & Continued from previous line. \\
+323 & \texttt{   */} & Continued from previous line. \\
+324 & \texttt{  bsp\_finish\_booting();} & \hyperref[line:324]{Call \texttt{bsp\_finish\_booting()}} which NEVER returns (see \autoref{sec:no_return}). \\
+325 & \texttt{\#endif} & Continued from previous line. \\
+326 & \texttt{} & Continued from previous line. \\
+327 & \texttt{  NOT\_REACHABLE;} & Unreachable assertion: code here should never execute. \\
+328 & \texttt{}} & Continued from previous line. \\
+\end{longtable}

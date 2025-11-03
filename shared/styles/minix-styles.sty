@@ -1,0 +1,427 @@
+% minix-styles.sty
+% Unified TikZ/PGFPlots Style Package for MINIX Analysis Project
+% Imports colors and ArXiv compliance, defines diagram styles
+% Version: 2.0.0 (Modular Architecture)
+% Date: 2025-10-30
+%
+% Usage: \usepackage{minix-styles}
+
+\ProvidesPackage{minix-styles}[2025/10/30 v2.0.0 MINIX Analysis Unified Styles (Modular)]
+
+% =============================================================================
+% IMPORT MODULAR COMPONENTS
+% =============================================================================
+%
+% This package imports two sub-packages:
+% 1. minix-colors.sty - Unified color palette
+% 2. (minix-arxiv.sty is optional - only for full papers)
+%
+% For standalone diagrams, only minix-colors is needed.
+% For complete papers, load minix-arxiv BEFORE minix-styles.
+
+\RequirePackage{minix-colors}          % Unified color palette
+
+% =============================================================================
+% REQUIRED PACKAGES (Diagram Support)
+% =============================================================================
+
+\RequirePackage{tikz}                  % TikZ for diagrams
+\RequirePackage{pgfplots}              % PGFPlots for charts/graphs
+
+% TikZ libraries (comprehensive set for all diagram types)
+\usetikzlibrary{
+    shapes,                            % Rectangle, diamond, ellipse shapes
+    arrows,                            % Arrow styles
+    positioning,                       % Relative node positioning
+    calc,                              % Coordinate calculations
+    fit,                               % Fit nodes around others
+    backgrounds,                       % Background layers
+    decorations.pathreplacing,         % Braces, decorations
+    patterns,                          % Fill patterns (hatching, dots)
+    shadows,                           % Drop shadows
+    chains,                            % Node chains
+    matrix,                            % Matrix layouts
+    automata,                          % State machine diagrams
+    decorations.text,                  % Text along paths
+    decorations.markings               % Arrow markings
+}
+
+% Set PGFPlots compatibility version
+\pgfplotsset{compat=1.18}
+
+% =============================================================================
+% NODE STYLES (Unified Across All Diagram Types)
+% =============================================================================
+
+\tikzset{
+    % =========================================================================
+    % CPU INTERFACE DIAGRAMS (Flow Charts)
+    % =========================================================================
+
+    % Basic flow box (software operations)
+    box/.style={
+        rectangle,
+        draw=primaryblue,
+        fill=flowbox,
+        text width=5.5cm,
+        align=center,
+        minimum height=0.7cm,
+        font=\small,
+        rounded corners=2pt
+    },
+
+    % Hardware operation box
+    hw/.style={
+        rectangle,
+        draw=warningred,
+        fill=hardware,
+        text width=5.5cm,
+        align=center,
+        minimum height=0.7cm,
+        font=\small,
+        rounded corners=2pt
+    },
+
+    % Kernel operation box
+    kernelbox/.style={
+        rectangle,
+        draw=secondarygreen,
+        fill=kernel,
+        text width=5.5cm,
+        align=center,
+        minimum height=0.7cm,
+        font=\small,
+        rounded corners=2pt
+    },
+
+    % =========================================================================
+    % BOOT SEQUENCE DIAGRAMS (Process/Phase Flow)
+    % =========================================================================
+
+    % Process node (function call)
+    process/.style={
+        rectangle,
+        draw=primaryblue,
+        fill=primaryblue!20,
+        text width=3cm,
+        text centered,
+        rounded corners=3pt,
+        minimum height=1cm,
+        drop shadow={
+            shadow xshift=0.5pt,
+            shadow yshift=-0.5pt,
+            opacity=0.3
+        }
+    },
+
+    % Phase header/label
+    phase/.style={
+        rectangle,
+        draw=secondarygreen,
+        fill=secondarygreen!20,
+        text width=4cm,
+        text centered,
+        rounded corners=3pt,
+        minimum height=0.8cm,
+        drop shadow={
+            shadow xshift=0.5pt,
+            shadow yshift=-0.5pt,
+            opacity=0.3
+        }
+    },
+
+    % Critical path node (emphasized)
+    critical/.style={
+        rectangle,
+        draw=warningred,
+        line width=2pt,
+        fill=accentorange!20,
+        text width=3cm,
+        text centered,
+        rounded corners=3pt,
+        minimum height=1cm,
+        drop shadow={
+            shadow xshift=0.5pt,
+            shadow yshift=-0.5pt,
+            opacity=0.4
+        }
+    },
+
+    % =========================================================================
+    % CALL GRAPH / TREE DIAGRAMS
+    % =========================================================================
+
+    % Function node (internal function)
+    func/.style={
+        rectangle,
+        draw=primaryblue,
+        fill=primaryblue!15,
+        rounded corners=2pt,
+        minimum width=2.5cm,
+        minimum height=0.7cm,
+        font=\footnotesize
+    },
+
+    % External function (outside current file)
+    extfunc/.style={
+        rectangle,
+        draw=mediumgray,
+        fill=lightgray,
+        rounded corners=2pt,
+        minimum width=2.5cm,
+        minimum height=0.7cm,
+        dashed,
+        font=\footnotesize
+    },
+
+    % =========================================================================
+    % SPECIAL PURPOSE NODES
+    % =========================================================================
+
+    % Decision diamond (if/switch)
+    decision/.style={
+        diamond,
+        draw=accentorange,
+        fill=accentorange!20,
+        text width=2cm,
+        text centered,
+        inner sep=0pt
+    },
+
+    % Termination node (never returns, exit)
+    terminate/.style={
+        rectangle,
+        draw=warningred,
+        line width=2pt,
+        fill=warningred!20,
+        text width=3cm,
+        text centered,
+        rounded corners=3pt,
+        minimum height=1cm
+    },
+
+    % Annotation text box
+    annotation/.style={
+        font=\tiny,
+        text width=2.5cm,
+        align=left
+    },
+
+    % Information box (side notes, metrics)
+    infobox/.style={
+        draw=darkgray,
+        fill=lightgray,
+        text width=3cm,
+        rounded corners=3pt,
+        font=\small
+    },
+
+    % =========================================================================
+    % ARROW/EDGE STYLES
+    % =========================================================================
+
+    % Standard arrow (normal flow)
+    arrow/.style={
+        ->,
+        >=stealth,
+        thick,
+        draw=primaryblue
+    },
+
+    % Critical path arrow (emphasized)
+    critarrow/.style={
+        ->,
+        >=stealth,
+        line width=2pt,
+        draw=warningred
+    },
+
+    % Dashed arrow (conditional, optional flow)
+    dasharrow/.style={
+        ->,
+        >=stealth,
+        thick,
+        dashed,
+        draw=mediumgray
+    },
+
+    % Tree edge (call graph)
+    edge from parent/.style={
+        draw,
+        -latex,
+        thick,
+        primaryblue
+    },
+}
+
+% =============================================================================
+% PGFPLOTS STYLES (Charts and Performance Graphs)
+% =============================================================================
+
+\pgfplotsset{
+    % =========================================================================
+    % Default Axis Style
+    % =========================================================================
+    minix axis/.style={
+        grid=major,
+        grid style={line width=0.2pt, draw=lightgray},
+        axis line style={line width=0.5pt, draw=darkgray},
+        tick style={line width=0.3pt, draw=darkgray},
+        xlabel style={font=\small},
+        ylabel style={font=\small},
+        title style={font=\large\bfseries},
+        legend style={font=\footnotesize},
+    },
+
+    % =========================================================================
+    % Bar Chart Style (Syscall Performance, Timing)
+    % =========================================================================
+    minix bar/.style={
+        ybar,
+        bar width=0.8cm,
+        nodes near coords,
+        nodes near coords style={font=\footnotesize},
+        fill=primaryblue!70,
+        draw=primaryblue
+    },
+
+    % =========================================================================
+    % Line Plot Style (Time Series, Metrics)
+    % =========================================================================
+    minix line/.style={
+        thick,
+        mark=*,
+        mark size=2pt
+    },
+}
+
+% =============================================================================
+% CUSTOM COMMANDS (Diagram Helpers)
+% =============================================================================
+
+% Cycle cost annotation (CPU performance diagrams)
+% Usage: \cyclecost{(x,y)}{1772 cycles}
+\newcommand{\cyclecost}[2]{%
+    \node[font=\scriptsize, fill=annotationbg, draw=accentorange, text width=3cm, align=center, rounded corners=2pt] #1 {%
+        \textbf{Cost: #2}\\
+        (estimated)%
+    };
+}
+
+% Phase header (boot sequence diagrams)
+% Usage: \phaseheader{(x,y)}{Phase 1: Early Init}
+\newcommand{\phaseheader}[2]{%
+    \node[font=\Large\bfseries, text=primaryblue] #1 {#2};
+}
+
+% Metric box (both CPU and boot diagrams)
+% Usage: \metricbox{(x,y)}{4cm}{Metric: 85ms}
+\newcommand{\metricbox}[3]{%
+    \node[draw=darkgray, fill=lightgray, rounded corners=3pt, text width=#2, font=\small] #1 {#3};
+}
+
+% =============================================================================
+% DIAGRAM-SPECIFIC PRESETS (Environment Configurations)
+% =============================================================================
+
+% CPU flow diagram environment
+% Usage: \begin{tikzpicture}[cpu flow] ... \end{tikzpicture}
+\tikzset{
+    cpu flow/.style={
+        node distance=0.8cm,
+        every node/.style={font=\small},
+    }
+}
+
+% Boot topology diagram environment
+% Usage: \begin{tikzpicture}[boot topology] ... \end{tikzpicture}
+\tikzset{
+    boot topology/.style={
+        node distance=2cm,
+        every node/.style={font=\small},
+    }
+}
+
+% Call graph tree environment
+% Usage: \begin{tikzpicture}[call graph] ... \end{tikzpicture}
+\tikzset{
+    call graph/.style={
+        level 1/.style={sibling distance=4cm, level distance=2cm},
+        level 2/.style={sibling distance=2cm, level distance=2cm},
+        level 3/.style={sibling distance=1.5cm, level distance=2cm},
+    }
+}
+
+% =============================================================================
+% STANDALONE COMPATIBILITY
+% =============================================================================
+%
+% Detect if we're compiling a standalone diagram vs. full paper.
+% Adjust font sizes accordingly.
+
+\@ifclassloaded{standalone}{%
+    % Standalone document (individual diagram PDF)
+    \tikzset{
+        every picture/.style={
+            font=\normalsize,
+        }
+    }
+}{%
+    % Article/report document (multi-diagram paper)
+    \tikzset{
+        every picture/.style={
+            font=\small,
+        }
+    }
+}
+
+% =============================================================================
+% BACKWARD COMPATIBILITY LAYER
+% =============================================================================
+%
+% Provide legacy color names for existing diagrams.
+% These allow old CPU diagrams to compile without changes.
+% TODO: Remove after full migration to minix-colors.sty semantic names.
+
+\colorlet{blue10}{cpubox}              % Old: fill=blue!10
+\colorlet{red20}{hwbox}                % Old: fill=red!20
+\colorlet{yellow30}{annotationbg}      % Old: fill=yellow!30
+
+% =============================================================================
+% USAGE EXAMPLES
+% =============================================================================
+%
+% FULL PAPER (with ArXiv compliance):
+%
+% \documentclass[11pt,a4paper]{article}
+% \usepackage{minix-arxiv}     % ArXiv compliance (includes minix-colors)
+% \usepackage{tikz}
+% \usepackage{pgfplots}
+% \usepackage{minix-styles}    % Diagram styles (imports minix-colors)
+%
+% \begin{document}
+% \begin{tikzpicture}[cpu flow]
+%   \node[box] (A) {User Space};
+%   \node[hw, below=of A] (B) {INT 0x33};
+%   \draw[arrow] (A) -- (B);
+% \end{tikzpicture}
+% \end{document}
+%
+%
+% STANDALONE DIAGRAM (no ArXiv):
+%
+% \documentclass{standalone}
+% \usepackage{minix-colors}    % Colors only
+% \usepackage{tikz}
+% \usepackage{minix-styles}    % Diagram styles
+%
+% \begin{document}
+% \begin{tikzpicture}[boot topology]
+%   \node[process] (A) {kmain()};
+%   \node[critical, below=of A] (B) {switch\_to\_user()};
+%   \draw[critarrow] (A) -- (B);
+% \end{tikzpicture}
+% \end{document}
+
+\endinput
+% End of minix-styles.sty

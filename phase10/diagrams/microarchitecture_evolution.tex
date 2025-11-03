@@ -1,0 +1,63 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+
+\begin{document}
+
+\begin{tikzpicture}[scale=1.0]
+  % Title
+  \node[font=\LARGE\bfseries, anchor=north] at (7, 10) {
+    Microarchitectural Independence of MINIX 3.4 RC6 Boot
+  };
+
+  % Create a simple comparison table as TikZ nodes
+  \def\arraystretch{1.5}
+  \begin{scope}[every node/.style={draw, text centered, font=\small}]
+
+    % Header row
+    \node[fill=gray!30, text width=2.5cm] at (1, 9) {Feature};
+    \node[fill=gray!30, text width=2.5cm] at (4, 9) {486 (1989)};
+    \node[fill=gray!30, text width=2.5cm] at (7, 9) {P5 (1993)};
+    \node[fill=gray!30, text width=2.5cm] at (10, 9) {Core 2 Duo (2006)};
+    \node[fill=gray!30, text width=2.5cm] at (13, 9) {Impact on Boot};
+
+    % Instruction Set row
+    \node[text width=2.5cm, anchor=north] at (1, 8.5) {Instruction Set};
+    \node[text width=2.5cm, anchor=north] at (4, 8.5) {i386};
+    \node[text width=2.5cm, anchor=north] at (7, 8.5) {i386 + extras};
+    \node[text width=2.5cm, anchor=north] at (10, 8.5) {x86-64 (32-bit)};
+    \node[text width=2.5cm, anchor=north] at (13, 8.5) {None};
+
+    % Cache row
+    \node[text width=2.5cm, anchor=north] at (1, 7.5) {L1 Cache};
+    \node[text width=2.5cm, anchor=north] at (4, 7.5) {None};
+    \node[text width=2.5cm, anchor=north] at (7, 7.5) {8 KB};
+    \node[text width=2.5cm, anchor=north] at (10, 7.5) {256 KB};
+    \node[text width=2.5cm, anchor=north] at (13, 7.5) {None};
+
+    % Pipeline row
+    \node[text width=2.5cm, anchor=north] at (1, 6.5) {Pipeline Depth};
+    \node[text width=2.5cm, anchor=north] at (4, 6.5) {5-stage};
+    \node[text width=2.5cm, anchor=north] at (7, 6.5) {5-stage};
+    \node[text width=2.5cm, anchor=north] at (10, 6.5) {14-stage};
+    \node[text width=2.5cm, anchor=north] at (13, 6.5) {None};
+
+    % Boot Output row
+    \node[fill=lightgreen, text width=2.5cm, anchor=north] at (1, 5.5) {Boot Output};
+    \node[fill=lightgreen, text width=2.5cm, anchor=north] at (4, 5.5) {7762 bytes};
+    \node[fill=lightgreen, text width=2.5cm, anchor=north] at (7, 5.5) {7763 bytes};
+    \node[fill=lightgreen, text width=2.5cm, anchor=north] at (10, 5.5) {7762 bytes};
+    \node[fill=lightgreen, text width=2.5cm, anchor=north] at (13, 5.5) {Identical};
+
+  \end{scope}
+
+  % Conclusion
+  \node[font=\large\itshape, anchor=north, align=center] at (7, 4.5) {
+    Despite 17 years of microarchitectural evolution,\\
+    MINIX 3.4 RC6 boot output remains deterministic and unchanged.
+  };
+
+\end{tikzpicture}
+
+\end{document}

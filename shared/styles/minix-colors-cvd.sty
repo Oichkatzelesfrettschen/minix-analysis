@@ -1,0 +1,303 @@
+% minix-colors-cvd.sty
+% Colorblind-Safe (CVD) Palette Extension for MINIX Analysis
+% Based on brandpalette.sty from ~/Playground/Colorblindness
+% Version: 1.0.0
+% Date: 2025-10-30
+%
+% Usage:
+%   \usepackage{minix-colors}      % Base colors
+%   \usepackage{minix-colors-cvd}  % CVD-safe variants
+%   \cvdsetup[variant=protan]      % or deutan|tritan|mono|default
+%   \cvdapplyplotstyles            % Apply to PGFPlots
+
+\ProvidesPackage{minix-colors-cvd}[2025/10/30 v1.0.0 MINIX Analysis CVD-Safe Colors]
+
+\RequirePackage{pgfplots}
+\RequirePackage{tikz}
+\RequirePackage{minix-colors}  % Base MINIX color palette
+\usetikzlibrary{patterns,arrows.meta}
+
+% =============================================================================
+% CVD-SAFE COLOR VARIANTS
+% =============================================================================
+%
+% Color Vision Deficiency (CVD) safe variants for:
+% - Protanopia (red-blind): 1% males, 0.01% females
+% - Deuteranopia (green-blind): 1% males, 0.01% females
+% - Tritanopia (blue-blind): 0.001% population
+% - Monochromacy (total colorblind): 0.00003% population
+%
+% Based on research from:
+% - Okabe & Ito (2008): "Color Universal Design"
+% - Wong (2011): "Points of view: Color blindness"
+% - Colorbrewer 2.0: Qualitative schemes
+
+% -----------------------------------------------------------------------------
+% DEFAULT VARIANT (Standard MINIX colors)
+% -----------------------------------------------------------------------------
+% Uses existing primaryblue, secondarygreen, accentorange, warningred
+
+% -----------------------------------------------------------------------------
+% PROTANOPIA VARIANT (Red-Blind)
+% -----------------------------------------------------------------------------
+% Strategy: Darker blues, warmer/brighter magentas (avoid red-green confusion)
+
+\definecolor{protanBlue700}{HTML}{2E2AA1}      % Darker indigo
+\definecolor{protanBlue600}{HTML}{3D35C8}      % Medium indigo
+\definecolor{protanBlue500}{HTML}{5A5FEF}      % Bright indigo
+\definecolor{protanMagenta700}{HTML}{B12179}   % Deep magenta
+\definecolor{protanMagenta600}{HTML}{D62A8A}   % Vibrant magenta
+\definecolor{protanMagenta400}{HTML}{EC6FB1}   % Light magenta
+\definecolor{protanOrange}{HTML}{FF9500}       % Warmer orange
+\definecolor{protanGreen}{HTML}{34C759}        % Vibrant green
+
+% -----------------------------------------------------------------------------
+% DEUTERANOPIA VARIANT (Green-Blind)
+% -----------------------------------------------------------------------------
+% Strategy: Similar to protan (most common form of colorblindness)
+
+\definecolor{deutanBlue700}{HTML}{2E2AA1}      % Darker indigo
+\definecolor{deutanBlue600}{HTML}{3F38C5}      % Medium indigo
+\definecolor{deutanBlue500}{HTML}{5D60EE}      % Bright indigo
+\definecolor{deutanMagenta700}{HTML}{A81E7B}   % Deep magenta
+\definecolor{deutanMagenta600}{HTML}{D02C8C}   % Vibrant magenta
+\definecolor{deutanMagenta400}{HTML}{F07BC0}   % Light magenta
+\definecolor{deutanOrange}{HTML}{FF9F0A}       % Amber orange
+\definecolor{deutanGreen}{HTML}{30D158}        % Lime green
+
+% -----------------------------------------------------------------------------
+% TRITANOPIA VARIANT (Blue-Blind)
+% -----------------------------------------------------------------------------
+% Strategy: Shift blues toward violet, magentas slightly redder
+
+\definecolor{tritanBlue700}{HTML}{5B33BF}      % Violet-blue
+\definecolor{tritanBlue600}{HTML}{6940D6}      % Purple-blue
+\definecolor{tritanBlue500}{HTML}{7E5AEE}      % Light purple
+\definecolor{tritanMagenta700}{HTML}{A9156E}   % Crimson
+\definecolor{tritanMagenta600}{HTML}{C81A78}   % Pink-red
+\definecolor{tritanMagenta400}{HTML}{E05C9F}   % Rose
+\definecolor{tritanOrange}{HTML}{FF6B00}       % Red-orange
+\definecolor{tritanGreen}{HTML}{00C853}        % Emerald
+
+% -----------------------------------------------------------------------------
+% MONOCHROMACY VARIANT (Grayscale Only)
+% -----------------------------------------------------------------------------
+% Strategy: Distinct grayscale values with maximum contrast
+
+\definecolor{monoBlue700}{HTML}{1E293B}        % Very dark gray
+\definecolor{monoBlue600}{HTML}{334155}        % Dark gray
+\definecolor{monoBlue500}{HTML}{475569}        % Medium-dark gray
+\definecolor{monoMagenta700}{HTML}{4B5563}     % Medium gray
+\definecolor{monoMagenta600}{HTML}{6B7280}     % Medium-light gray
+\definecolor{monoMagenta400}{HTML}{9CA3AF}     % Light gray
+\definecolor{monoOrange}{HTML}{64748B}         % Slate gray
+\definecolor{monoGreen}{HTML}{94A3B8}          % Lighter slate
+
+% =============================================================================
+% CURRENT EFFECTIVE COLORS (Aliases Updated by \cvdsetup)
+% =============================================================================
+%
+% These aliases are updated when you call \cvdsetup[variant=protan] etc.
+% Use these in your diagrams instead of raw color names for CVD support.
+
+\colorlet{cvdBlue700}{primaryblue}             % Maps to current variant's blue
+\colorlet{cvdBlue600}{primaryblue}
+\colorlet{cvdBlue500}{primaryblue!70}
+\colorlet{cvdMagenta700}{warningred!80!black}
+\colorlet{cvdMagenta600}{warningred}
+\colorlet{cvdMagenta400}{warningred!60}
+\colorlet{cvdOrange}{accentorange}
+\colorlet{cvdGreen}{secondarygreen}
+
+\colorlet{cvdGray900}{darkgray}
+\colorlet{cvdGray700}{darkgray!80}
+\colorlet{cvdGray300}{lightgray}
+\colorlet{cvdGray100}{lightgray!50}
+
+% =============================================================================
+% PGF KEYS FOR VARIANT SELECTION
+% =============================================================================
+
+\pgfkeys{/cvd/.is family}
+\pgfkeys{/cvd,
+  variant/.estore in=\cvd@variant,
+}
+\def\cvd@variant{default}
+
+% =============================================================================
+% APPLY VARIANT (\cvdsetup[variant=protan])
+% =============================================================================
+
+\newcommand{\cvdsetup}[1][]{%
+  \pgfkeys{/cvd, variant=default}% default
+  \pgfkeys{/cvd,#1}% parse user options
+  \expandafter\csname cvd@setcolors@\cvd@variant\endcsname
+}
+
+% -----------------------------------------------------------------------------
+% Variant Color Setters
+% -----------------------------------------------------------------------------
+
+\newcommand{\cvd@setcolors@default}{%
+  \colorlet{cvdBlue700}{primaryblue}
+  \colorlet{cvdBlue600}{primaryblue}
+  \colorlet{cvdBlue500}{primaryblue!70}
+  \colorlet{cvdMagenta700}{warningred!80!black}
+  \colorlet{cvdMagenta600}{warningred}
+  \colorlet{cvdMagenta400}{warningred!60}
+  \colorlet{cvdOrange}{accentorange}
+  \colorlet{cvdGreen}{secondarygreen}
+  \colorlet{cvdGray900}{darkgray}
+  \colorlet{cvdGray700}{darkgray!80}
+  \colorlet{cvdGray300}{lightgray}
+  \colorlet{cvdGray100}{lightgray!50}
+}
+
+\newcommand{\cvd@setcolors@protan}{%
+  \colorlet{cvdBlue700}{protanBlue700}
+  \colorlet{cvdBlue600}{protanBlue600}
+  \colorlet{cvdBlue500}{protanBlue500}
+  \colorlet{cvdMagenta700}{protanMagenta700}
+  \colorlet{cvdMagenta600}{protanMagenta600}
+  \colorlet{cvdMagenta400}{protanMagenta400}
+  \colorlet{cvdOrange}{protanOrange}
+  \colorlet{cvdGreen}{protanGreen}
+  \colorlet{cvdGray900}{darkgray}
+  \colorlet{cvdGray700}{darkgray!80}
+  \colorlet{cvdGray300}{lightgray}
+  \colorlet{cvdGray100}{lightgray!50}
+}
+
+\newcommand{\cvd@setcolors@deutan}{%
+  \colorlet{cvdBlue700}{deutanBlue700}
+  \colorlet{cvdBlue600}{deutanBlue600}
+  \colorlet{cvdBlue500}{deutanBlue500}
+  \colorlet{cvdMagenta700}{deutanMagenta700}
+  \colorlet{cvdMagenta600}{deutanMagenta600}
+  \colorlet{cvdMagenta400}{deutanMagenta400}
+  \colorlet{cvdOrange}{deutanOrange}
+  \colorlet{cvdGreen}{deutanGreen}
+  \colorlet{cvdGray900}{darkgray}
+  \colorlet{cvdGray700}{darkgray!80}
+  \colorlet{cvdGray300}{lightgray}
+  \colorlet{cvdGray100}{lightgray!50}
+}
+
+\newcommand{\cvd@setcolors@tritan}{%
+  \colorlet{cvdBlue700}{tritanBlue700}
+  \colorlet{cvdBlue600}{tritanBlue600}
+  \colorlet{cvdBlue500}{tritanBlue500}
+  \colorlet{cvdMagenta700}{tritanMagenta700}
+  \colorlet{cvdMagenta600}{tritanMagenta600}
+  \colorlet{cvdMagenta400}{tritanMagenta400}
+  \colorlet{cvdOrange}{tritanOrange}
+  \colorlet{cvdGreen}{tritanGreen}
+  \colorlet{cvdGray900}{darkgray}
+  \colorlet{cvdGray700}{darkgray!80}
+  \colorlet{cvdGray300}{lightgray}
+  \colorlet{cvdGray100}{lightgray!50}
+}
+
+\newcommand{\cvd@setcolors@mono}{%
+  \colorlet{cvdBlue700}{monoBlue700}
+  \colorlet{cvdBlue600}{monoBlue600}
+  \colorlet{cvdBlue500}{monoBlue500}
+  \colorlet{cvdMagenta700}{monoMagenta700}
+  \colorlet{cvdMagenta600}{monoMagenta600}
+  \colorlet{cvdMagenta400}{monoMagenta400}
+  \colorlet{cvdOrange}{monoOrange}
+  \colorlet{cvdGreen}{monoGreen}
+  \colorlet{cvdGray900}{darkgray}
+  \colorlet{cvdGray700}{darkgray!80}
+  \colorlet{cvdGray300}{lightgray}
+  \colorlet{cvdGray100}{lightgray!50}
+}
+
+% =============================================================================
+% PGFPLOTS CYCLE LIST (CVD-Safe with Markers and Dashes)
+% =============================================================================
+%
+% This cycle list uses:
+% - Distinct colors (even for CVD)
+% - Different markers (*, triangle*, square*, diamond*)
+% - Different line styles (solid, dashed, dotted, dash-dot)
+% - Increasing line width for emphasis
+%
+% This ensures data series are distinguishable even in grayscale printouts.
+
+\pgfplotscreateplotcyclelist{minix-cvd}{%
+  {every mark/.append style={solid,fill=cvdBlue700}, color=cvdBlue700,   mark=*,        line width=1.2pt},
+  {every mark/.append style={solid,fill=cvdMagenta600}, color=cvdMagenta600, mark=triangle*, dash pattern=on 6pt off 3pt, line width=1.0pt},
+  {every mark/.append style={solid,fill=cvdBlue500}, color=cvdBlue500,   mark=square*,  dotted, line width=1.0pt},
+  {every mark/.append style={solid,fill=cvdGray700},   color=cvdGray700,     mark=diamond*, dash dot, line width=1.0pt},
+  {every mark/.append style={solid,fill=cvdOrange}, color=cvdOrange,   mark=triangle, dash pattern=on 4pt off 2pt, line width=1.0pt},
+  {every mark/.append style={solid,fill=cvdMagenta400}, color=cvdMagenta400, mark=square,   solid, line width=1.6pt}
+}
+
+% =============================================================================
+% BAR/AREA HATCH STYLES (CVD-Safe)
+% =============================================================================
+%
+% Patterns ensure distinction even in black-and-white printing.
+
+\tikzset{cvdbarA/.style={pattern=north east lines, pattern color=cvdBlue600, draw=cvdBlue700}}
+\tikzset{cvdbarB/.style={pattern=dots,             pattern color=cvdMagenta600, draw=cvdMagenta700}}
+\tikzset{cvdbarC/.style={pattern=crosshatch,       pattern color=cvdGray700,   draw=cvdGray700}}
+\tikzset{cvdbarD/.style={pattern=horizontal lines, pattern color=cvdOrange,    draw=cvdOrange!80!black}}
+\tikzset{cvdbarE/.style={pattern=vertical lines,   pattern color=cvdGreen,     draw=cvdGreen!80!black}}
+
+% =============================================================================
+% AXES AND GRID STYLING (CVD-Safe)
+% =============================================================================
+
+\pgfplotsset{cvdaxis/.style={
+    axis line style={cvdGray700},
+    tick style={cvdGray700},
+    label style={text=cvdGray900},
+    ticklabel style={text=cvdGray900},
+    grid=both,
+    minor grid style={draw=cvdGray300!50},
+    major grid style={draw=cvdGray300}
+}}
+
+% =============================================================================
+% APPLY CVD PLOT STYLES
+% =============================================================================
+
+\newcommand{\cvdapplyplotstyles}{%
+  \pgfplotsset{cycle list name=minix-cvd}
+}
+
+% =============================================================================
+% USAGE EXAMPLES
+% =============================================================================
+%
+% BASIC USAGE (Default colors):
+%
+% \usepackage{minix-colors-cvd}
+% \cvdsetup[variant=default]
+% \cvdapplyplotstyles
+%
+% PROTANOPIA-SAFE:
+%
+% \usepackage{minix-colors-cvd}
+% \cvdsetup[variant=protan]
+% \cvdapplyplotstyles
+%
+% \begin{tikzpicture}
+% \begin{axis}[cvdaxis]
+%   \addplot[color=cvdBlue700, mark=*] coordinates {(1,2) (2,3) (3,4)};
+%   \addplot[color=cvdMagenta600, mark=triangle*] coordinates {(1,1) (2,2) (3,3)};
+% \end{axis}
+% \end{tikzpicture}
+%
+% GRAYSCALE (Monochromacy):
+%
+% \usepackage{minix-colors-cvd}
+% \cvdsetup[variant=mono]
+% \cvdapplyplotstyles
+%
+% All cvdBlue*, cvdMagenta* will map to distinct grayscale values.
+
+\endinput
+% End of minix-colors-cvd.sty

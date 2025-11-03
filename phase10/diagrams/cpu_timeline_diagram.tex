@@ -1,0 +1,46 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+
+\begin{document}
+
+\begin{tikzpicture}[scale=1.2]
+  \begin{axis}[
+    title={CPU Architecture Evolution and MINIX 3.4 RC6 Boot Success},
+    xlabel={Year},
+    ylabel={Boot Success Rate (\%)},
+    xmin=1988, xmax=2008,
+    ymin=90, ymax=105,
+    width=14cm,
+    height=8cm,
+    grid=major,
+    legend pos=lower right,
+    ylabel style={font=\large},
+    xlabel style={font=\large},
+    title style={font=\Large, font=\bfseries},
+    ]
+
+    % CPU Timeline with 100% success on all supported architectures
+    \addplot[mark=*, mark size=12pt, color=green!70!black, line width=3pt]
+      coordinates {
+        (1989, 100)  % 486
+        (1993, 100)  % Pentium P5
+        (1998, 100)  % Pentium II P6
+        (1999, 100)  % Pentium III P6+
+        (2006, 100)  % Core 2 Duo
+      };
+    \addlegendentry{Supported CPUs (100\% Pass)};
+
+    % Unsupported architectures (would fail in QEMU TCG)
+    \addplot[mark=o, mark size=10pt, color=red!70!black, line width=2pt, dashed]
+      coordinates {
+        (2004, 0)   % Pentium 4
+        (2008, 0)   % Nehalem/Westmere
+      };
+    \addlegendentry{Unsupported (Pre-compiled ISO limit)};
+
+  \end{axis}
+\end{tikzpicture}
+
+\end{document}

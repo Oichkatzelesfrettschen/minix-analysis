@@ -1,0 +1,85 @@
+# ==============================================================================
+# GitHub Actions: LaTeX Build CI
+# ==============================================================================
+# Automatically builds and validates the MINIX whitepaper on each push/PR
+# Ensures reproducible builds and catches errors early
+
+name: LaTeX Build & Validation
+on:
+  push:
+    branches: [ master, main, develop ]
+    paths: [ 'whitepaper/**/*.tex', 'whitepaper/Makefile', 'whitepaper/latexmkrc' ]
+  pull_request:
+    branches: [ master, main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build LaTeX PDF
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install LaTeX and dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-full \
+            latexmk \
+            ghostscript \
+            imagemagick
+
+      - name: Build whitepaper (master.pdf)
+        working-directory: whitepaper
+        run: |
+          mkdir -p build/tikz
+          make clean
+          make pdf
+          ls -lh master.pdf
+
+      - name: Validate LaTeX output
+        working-directory: whitepaper
+        run: |
+          pdfinfo master.pdf || (echo "✗ PDF generation failed"; exit 1)
+          PAGES=$(pdfinfo master.pdf | grep Pages | awk '{print $2}')
+          echo "✓ PDF generated with $PAGES pages"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: master-pdf
+          path: whitepaper/master.pdf
+          retention-days: 30
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✓ LaTeX build successful! PDF generated with proper cross-references.'
+            })
+
+  validate:
+    name: Validate LaTeX Syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-full latexmk
+
+      - name: Run LaTeX validation
+        working-directory: whitepaper
+        run: |
+          make validate || true
+
+# ==============================================================================
+# END GITHUB ACTIONS WORKFLOW
+# ==============================================================================

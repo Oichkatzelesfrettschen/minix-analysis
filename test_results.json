@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-10-31T14:13:22.323241",
+  "passed": 9,
+  "failed": 1,
+  "tests": [
+    {
+      "name": "Module Imports",
+      "status": "PASS",
+      "duration": 0.38043665885925293
+    },
+    {
+      "name": "Analyzer Creation",
+      "status": "PASS",
+      "duration": 3.337860107421875e-05
+    },
+    {
+      "name": "Data Extraction",
+      "status": "PASS",
+      "duration": 1.7881393432617188e-05
+    },
+    {
+      "name": "Parallel Execution",
+      "status": "FAIL",
+      "duration": 0.008638381958007812
+    },
+    {
+      "name": "Caching Mechanism",
+      "status": "PASS",
+      "duration": 4.315376281738281e-05
+    },
+    {
+      "name": "TikZ Generation",
+      "status": "PASS",
+      "duration": 6.556510925292969e-05
+    },
+    {
+      "name": "JSON Export",
+      "status": "PASS",
+      "duration": 0.0002899169921875
+    },
+    {
+      "name": "CLI Help",
+      "status": "PASS",
+      "duration": 0.4520101547241211
+    },
+    {
+      "name": "CLI Analysis",
+      "status": "PASS",
+      "duration": 0.4825921058654785
+    },
+    {
+      "name": "Dashboard Creation",
+      "status": "PASS",
+      "duration": 0.009275436401367188
+    }
+  ]
+}

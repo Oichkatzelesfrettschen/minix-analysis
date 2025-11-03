@@ -1,0 +1,324 @@
+{
+  "SYS_FORK": {
+    "number": 0,
+    "comment": "sys_fork()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_fork.c",
+    "lines": 137,
+    "complexity": 11
+  },
+  "SYS_EXEC": {
+    "number": 1,
+    "comment": "sys_exec()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_exec.c",
+    "lines": 61,
+    "complexity": 5
+  },
+  "SYS_CLEAR": {
+    "number": 2,
+    "comment": "sys_clear()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_clear.c",
+    "lines": 81,
+    "complexity": 10
+  },
+  "SYS_SCHEDULE": {
+    "number": 3,
+    "comment": "sys_schedule()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_schedule.c",
+    "lines": 31,
+    "complexity": 2
+  },
+  "SYS_PRIVCTL": {
+    "number": 4,
+    "comment": "sys_privctl()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_privctl.c",
+    "lines": 372,
+    "complexity": 49
+  },
+  "SYS_TRACE": {
+    "number": 5,
+    "comment": "sys_trace()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_trace.c",
+    "lines": 209,
+    "complexity": 16
+  },
+  "SYS_KILL": {
+    "number": 6,
+    "comment": "sys_kill()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_kill.c",
+    "lines": 42,
+    "complexity": 8
+  },
+  "SYS_GETKSIG": {
+    "number": 7,
+    "comment": "sys_getsig()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_getksig.c",
+    "lines": 44,
+    "complexity": 6
+  },
+  "SYS_ENDKSIG": {
+    "number": 8,
+    "comment": "sys_endsig()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_endksig.c",
+    "lines": 42,
+    "complexity": 7
+  },
+  "SYS_SIGSEND": {
+    "number": 9,
+    "comment": "sys_sigsend()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_sigsend.c",
+    "lines": 167,
+    "complexity": 15
+  },
+  "SYS_SIGRETURN": {
+    "number": 10,
+    "comment": "sys_sigreturn()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_sigreturn.c",
+    "lines": 99,
+    "complexity": 11
+  },
+  "SYS_MEMSET": {
+    "number": 13,
+    "comment": "sys_memset()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_memset.c",
+    "lines": 29,
+    "complexity": 3
+  },
+  "SYS_UMAP": {
+    "number": 14,
+    "comment": "sys_umap()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_umap.c",
+    "lines": 40,
+    "complexity": 5
+  },
+  "SYS_VIRCOPY": {
+    "number": 15,
+    "comment": "sys_vircopy()",
+    "implementation": null,
+    "lines": 0,
+    "complexity": 0
+  },
+  "SYS_PHYSCOPY": {
+    "number": 16,
+    "comment": "sys_physcopy()",
+    "implementation": null,
+    "lines": 0,
+    "complexity": 0
+  },
+  "SYS_UMAP_REMOTE": {
+    "number": 17,
+    "comment": "sys_umap_remote()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_umap_remote.c",
+    "lines": 123,
+    "complexity": 9
+  },
+  "SYS_VUMAP": {
+    "number": 18,
+    "comment": "sys_vumap()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_vumap.c",
+    "lines": 132,
+    "complexity": 18
+  },
+  "SYS_IRQCTL": {
+    "number": 19,
+    "comment": "sys_irqctl()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_irqctl.c",
+    "lines": 175,
+    "complexity": 29
+  },
+  "SYS_DEVIO": {
+    "number": 21,
+    "comment": "sys_devio()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_devio.c",
+    "lines": 108,
+    "complexity": 14
+  },
+  "SYS_SDEVIO": {
+    "number": 22,
+    "comment": "sys_sdevio()",
+    "implementation": null,
+    "lines": 0,
+    "complexity": 0
+  },
+  "SYS_VDEVIO": {
+    "number": 23,
+    "comment": "sys_vdevio()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_vdevio.c",
+    "lines": 166,
+    "complexity": 35
+  },
+  "SYS_SETALARM": {
+    "number": 24,
+    "comment": "sys_setalarm()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_setalarm.c",
+    "lines": 79,
+    "complexity": 12
+  },
+  "SYS_TIMES": {
+    "number": 25,
+    "comment": "sys_times()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_times.c",
+    "lines": 47,
+    "complexity": 5
+  },
+  "SYS_GETINFO": {
+    "number": 26,
+    "comment": "sys_getinfo()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_getinfo.c",
+    "lines": 229,
+    "complexity": 9
+  },
+  "SYS_ABORT": {
+    "number": 27,
+    "comment": "sys_abort()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_abort.c",
+    "lines": 30,
+    "complexity": 3
+  },
+  "SYS_IOPENABLE": {
+    "number": 28,
+    "comment": "sys_enable_iop()",
+    "implementation": null,
+    "lines": 0,
+    "complexity": 0
+  },
+  "SYS_SAFECOPYFROM": {
+    "number": 31,
+    "comment": "sys_safecopyfrom()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_safecopy.c",
+    "lines": 449,
+    "complexity": 21
+  },
+  "SYS_SAFECOPYTO": {
+    "number": 32,
+    "comment": "sys_safecopyto()",
+    "implementation": null,
+    "lines": 0,
+    "complexity": 0
+  },
+  "SYS_VSAFECOPY": {
+    "number": 33,
+    "comment": "sys_vsafecopy()",
+    "implementation": null,
+    "lines": 0,
+    "complexity": 0
+  },
+  "SYS_SETGRANT": {
+    "number": 34,
+    "comment": "sys_setgrant()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_setgrant.c",
+    "lines": 31,
+    "complexity": 2
+  },
+  "SYS_READBIOS": {
+    "number": 35,
+    "comment": "sys_readbios()",
+    "implementation": null,
+    "lines": 0,
+    "complexity": 0
+  },
+  "SYS_SPROF": {
+    "number": 36,
+    "comment": "sys_sprof()",
+    "implementation": null,
+    "lines": 0,
+    "complexity": 0
+  },
+  "SYS_STIME": {
+    "number": 39,
+    "comment": "sys_stime()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_stime.c",
+    "lines": 20,
+    "complexity": 1
+  },
+  "SYS_SETTIME": {
+    "number": 40,
+    "comment": "sys_settime()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_settime.c",
+    "lines": 59,
+    "complexity": 5
+  },
+  "SYS_VMCTL": {
+    "number": 43,
+    "comment": "sys_vmctl()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_vmctl.c",
+    "lines": 174,
+    "complexity": 11
+  },
+  "SYS_DIAGCTL": {
+    "number": 44,
+    "comment": "sys_diagctl()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_diagctl.c",
+    "lines": 69,
+    "complexity": 7
+  },
+  "SYS_VTIMER": {
+    "number": 45,
+    "comment": "sys_vtimer()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_vtimer.c",
+    "lines": 104,
+    "complexity": 15
+  },
+  "SYS_RUNCTL": {
+    "number": 46,
+    "comment": "sys_runctl()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_runctl.c",
+    "lines": 77,
+    "complexity": 15
+  },
+  "SYS_GETMCONTEXT": {
+    "number": 50,
+    "comment": "sys_getmcontext()",
+    "implementation": null,
+    "lines": 0,
+    "complexity": 0
+  },
+  "SYS_SETMCONTEXT": {
+    "number": 51,
+    "comment": "sys_setmcontext()",
+    "implementation": null,
+    "lines": 0,
+    "complexity": 0
+  },
+  "SYS_UPDATE": {
+    "number": 52,
+    "comment": "sys_update()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_update.c",
+    "lines": 341,
+    "complexity": 18
+  },
+  "SYS_EXIT": {
+    "number": 53,
+    "comment": "sys_exit()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_exit.c",
+    "lines": 28,
+    "complexity": 2
+  },
+  "SYS_SCHEDCTL": {
+    "number": 54,
+    "comment": "sys_schedctl()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_schedctl.c",
+    "lines": 47,
+    "complexity": 3
+  },
+  "SYS_STATECTL": {
+    "number": 55,
+    "comment": "sys_statectl()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_statectl.c",
+    "lines": 54,
+    "complexity": 8
+  },
+  "SYS_SAFEMEMSET": {
+    "number": 56,
+    "comment": "sys_safememset()",
+    "implementation": "/home/eirikr/Playground/minix/minix/kernel/system/do_safememset.c",
+    "lines": 58,
+    "complexity": 5
+  },
+  "SYS_PADCONF": {
+    "number": 57,
+    "comment": "sys_padconf()",
+    "implementation": null,
+    "lines": 0,
+    "complexity": 0
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "486": {
+    "wall_clock_ms": 120008,
+    "vs_baseline_percent": 0.0,
+    "improvement": "N/A"
+  },
+  "pentium": {
+    "wall_clock_ms": 120006.33,
+    "vs_baseline_percent": -0.0,
+    "improvement": "Faster by 0.0%"
+  },
+  "pentium2": {
+    "wall_clock_ms": 120006,
+    "vs_baseline_percent": -0.0,
+    "improvement": "Faster by 0.0%"
+  },
+  "pentium3": {
+    "wall_clock_ms": 120007,
+    "vs_baseline_percent": -0.0,
+    "improvement": "Faster by 0.0%"
+  },
+  "core2duo": {
+    "wall_clock_ms": 120006.33,
+    "vs_baseline_percent": -0.0,
+    "improvement": "Faster by 0.0%"
+  }
+}

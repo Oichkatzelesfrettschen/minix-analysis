@@ -1,0 +1,302 @@
+# Maintainer: Oaich <eirikr@local>
+# MINIX Assembly Code Analyzer
+
+pkgname=minix-asm-analyzer
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Specialized assembly analysis tools for MINIX boot and kernel CPU interactions"
+arch=('x86_64')
+url="https://github.com/eirikr/minix-analysis"
+license=('MIT')
+
+depends=(
+  'base'
+  'binutils'          # objdump, nm, readelf
+  'llvm'              # llvm-objdump, llvm-nm
+  'python'
+  'python-capstone'   # disassembly library
+)
+
+optdepends=(
+  'python-unicorn: CPU emulation for state tracing'
+  'radare2: Advanced binary analysis'
+  'angr: Binary analysis and symbolic execution'
+)
+
+makedepends=(
+  'make'
+  'python-pip'
+)
+
+checkdepends=(
+  'python-pytest'
+)
+
+backup=()
+source=()
+sha256sums=()
+
+prepare() {
+  :
+}
+
+build() {
+  :
+}
+
+check() {
+  echo "Verifying assembly analysis tools..."
+  
+  local tools=(
+    'objdump'
+    'llvm-objdump'
+    'nm'
+    'readelf'
+  )
+  
+  for tool in "${tools[@]}"; do
+    if command -v "$tool" &>/dev/null; then
+      echo "OK: $tool"
+    else
+      echo "WARNING: $tool not found"
+    fi
+  done
+  
+  # Check Python libraries
+  python -c "import capstone" 2>/dev/null && echo "OK: capstone" || echo "WARNING: capstone not installed"
+}
+
+package() {
+  install -dm755 "${pkgdir}/usr/share/doc/${pkgname}"
+  install -dm755 "${pkgdir}/usr/local/bin"
+  
+  # Assembly analysis helper scripts
+  
+  cat > "${pkgdir}/usr/local/bin/minix-disasm" << 'SCRIPT'
+#!/bin/sh
+# MINIX Disassembler - wrapper for objdump with optimized output
+# Usage: minix-disasm <kernel-image> [section]
+
+set -e
+
+if [ $# -lt 1 ]; then
+  echo "Usage: minix-disasm <kernel-image> [section]"
+  echo "Examples:"
+  echo "  minix-disasm minix.elf .text"
+  echo "  minix-disasm minix.elf kmain"
+  exit 1
+fi
+
+KERNEL="$1"
+SECTION="${2:-.text}"
+
+if [ ! -f "$KERNEL" ]; then
+  echo "ERROR: Kernel not found: $KERNEL"
+  exit 1
+fi
+
+echo "Disassembling $KERNEL (section: $SECTION)"
+echo "==========================================="
+
+# Disassemble with full context
+objdump -d \
+  --section="$SECTION" \
+  --show-raw-insn \
+  --disassemble-all \
+  --line-numbers \
+  "$KERNEL"
+SCRIPT
+  
+  chmod 755 "${pkgdir}/usr/local/bin/minix-disasm"
+  
+  cat > "${pkgdir}/usr/local/bin/minix-symbols" << 'SCRIPT'
+#!/bin/sh
+# Extract and analyze MINIX kernel symbols
+
+set -e
+
+if [ $# -lt 1 ]; then
+  echo "Usage: minix-symbols <kernel-image>"
+  exit 1
+fi
+
+KERNEL="$1"
+
+if [ ! -f "$KERNEL" ]; then
+  echo "ERROR: Kernel not found: $KERNEL"
+  exit 1
+fi
+
+echo "Symbol Analysis: $KERNEL"
+echo "======================="
+echo ""
+echo "Functions (text segment):"
+nm -C --defined-only --print-size "$KERNEL" | grep -E "^[0-9a-f]+ T " | sort -k2
+echo ""
+echo "Data Symbols (data segment):"
+nm -C --defined-only --print-size "$KERNEL" | grep -E "^[0-9a-f]+ [Dd] " | sort -k2
+echo ""
+echo "Total symbols:"
+nm "$KERNEL" | wc -l
+SCRIPT
+  
+  chmod 755 "${pkgdir}/usr/local/bin/minix-symbols"
+  
+  cat > "${pkgdir}/usr/local/bin/minix-addr2line" << 'SCRIPT'
+#!/bin/sh
+# Resolve addresses to source code locations
+
+set -e
+
+if [ $# -lt 2 ]; then
+  echo "Usage: minix-addr2line <kernel-image> <address> [address...]"
+  echo "Example: minix-addr2line minix.elf 0x1000 0x1020"
+  exit 1
+fi
+
+KERNEL="$1"
+shift
+
+if [ ! -f "$KERNEL" ]; then
+  echo "ERROR: Kernel not found: $KERNEL"
+  exit 1
+fi
+
+for addr in "$@"; do
+  echo "$addr:"
+  addr2line -e "$KERNEL" "$addr"
+done
+SCRIPT
+  
+  chmod 755 "${pkgdir}/usr/local/bin/minix-addr2line"
+  
+  cat > "${pkgdir}/usr/share/doc/${pkgname}/ASM-ANALYSIS-GUIDE.txt" << 'EOF'
+MINIX ASSEMBLY ANALYSIS GUIDE
+=============================
+
+Overview:
+  Assembly analysis traces CPU-level kernel behavior:
+  - Register state transitions
+  - Stack frame setup/teardown
+  - Privilege level changes (Ring 0/3)
+  - Interrupt/exception handling
+  - System call entry/exit sequences
+
+Tools:
+
+  1. DISASSEMBLY:
+     objdump -d kernel.elf > kernel.asm
+     llvm-objdump -d kernel.elf  (alternative)
+
+  2. SYMBOL RESOLUTION:
+     nm -C kernel.elf            (C++ demangling)
+     readelf -s kernel.elf       (detailed symbol info)
+
+  3. ADDRESS-TO-SOURCE:
+     addr2line -e kernel.elf 0x1000
+     objdump --source kernel.elf (if debug symbols present)
+
+  4. SECTION ANALYSIS:
+     readelf -S kernel.elf       (section headers)
+     objdump -h kernel.elf       (section info)
+
+  5. RELOCATION INFO:
+     readelf -r kernel.elf       (relocations)
+     objdump -R kernel.elf
+
+Key MINIX Assembly Sequences:
+
+  A. BOOTLOADER ENTRY (head.S):
+     - Multiboot header setup
+     - Stack initialization
+     - GDT/IDT loading
+     - Protected mode entry
+     - Paging enable
+     - Jump to C code (kmain)
+
+  B. KERNEL ENTRY POINT (main.c/kmain):
+     - Stack setup (rsp = k_initial_stktop)
+     - Memory initialization
+     - Process table setup
+     - Interrupt vector setup
+     - First process scheduling
+
+  C. CONTEXT SWITCH:
+     - Save current process context (SAVE_PROCESS_CTX macro)
+     - Switch ESP to new process stack
+     - Restore new process registers
+     - IRET or SYSEXIT to user mode
+
+  D. INTERRUPT HANDLING:
+     - CPU automatically pushes EFLAGS, CS, EIP
+     - Jump to IDT entry (hwintXX)
+     - Save full context
+     - Call C interrupt handler
+     - Send EOI to PIC
+     - Jump to switch_to_user
+
+  E. SYSTEM CALL (INT/SYSENTER/SYSCALL):
+     - User-mode instruction (INT 0x33 / SYSENTER / SYSCALL)
+     - Hardware privilege transition
+     - Kernel stack setup
+     - Save context
+     - Call handler
+     - Restore context
+     - Return to user mode
+
+Critical Assembly Patterns:
+
+  1. Stack Frame Setup:
+     push %rbp
+     mov %rsp, %rbp
+     sub $0x100, %rsp  # allocate locals
+
+  2. Function Prologue:
+     push %rbp
+     push %rbx
+     push %r12
+
+  3. Context Save (MINIX specific):
+     SAVE_PROCESS_CTX macro expands to:
+     - mov registers to proc table slots
+     - Store segment selectors
+     - Store EIP, ESP, EFLAGS
+
+  4. Privilege Transition:
+     iret      # return from interrupt (Ring 0 -> Ring 3)
+     sysret    # return from syscall (Ring 0 -> Ring 3)
+     sysexit   # return from sysenter (Ring 0 -> Ring 3)
+
+Analysis Workflow:
+
+  1. Extract disassembly:
+     minix-disasm kernel.elf > kernel.asm
+
+  2. Extract symbols:
+     minix-symbols kernel.elf > kernel_symbols.txt
+
+  3. Search for entry points:
+     grep -n "^[0-9a-f]* <kmain>:" kernel.asm
+
+  4. Trace boot sequence:
+     grep -E "<kmain>:|call|jmp" kernel.asm | head -50
+
+  5. Find context switch code:
+     grep -n "switch_to_user\|SAVE_PROCESS_CTX" kernel.asm
+
+  6. Analyze system call paths:
+     grep -n "ipc_entry_softint\|ipc_entry_sysenter" kernel.asm
+
+  7. Resolve addresses:
+     grep "0x1234567" kernel.asm
+     addr2line -e kernel.elf 0x1234567
+EOF
+  
+  chmod 644 "${pkgdir}/usr/share/doc/${pkgname}/ASM-ANALYSIS-GUIDE.txt"
+}
+
+post_install() {
+  echo "MINIX assembly analyzer installed"
+  echo "Commands: minix-disasm, minix-symbols, minix-addr2line"
+  echo "Guide: /usr/share/doc/minix-asm-analyzer/ASM-ANALYSIS-GUIDE.txt"
+}

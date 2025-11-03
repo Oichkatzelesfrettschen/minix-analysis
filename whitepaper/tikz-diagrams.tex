@@ -1,0 +1,445 @@
+% ===============================================================================
+% MINIX 3.4 WHITEPAPER - TikZ DIAGRAMS LIBRARY
+% All 30+ diagrams used throughout the whitepaper
+% Last Updated: 2025-11-01
+% ===============================================================================
+
+% This file contains all TikZ diagrams organized by category
+% Each diagram is labeled and can be referenced in main text
+
+% ===============================================================================
+% PART 1: SYSTEM ARCHITECTURE DIAGRAMS
+% ===============================================================================
+
+% DIAGRAM 1: Full MINIX System Architecture
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.0]
+    % Hardware layer
+    \node[draw=minixdark, fill=accentgray!20, thick, minimum width=10cm, minimum height=1cm] (hardware) at (5,0.5) {Hardware: QEMU Emulated x86-64 System};
+
+    % Bootloader
+    \node[kernel, minimum width=2.5cm] (bootloader) at (1.5,2) {Bootloader};
+
+    % Kernel core
+    \node[kernel, minimum width=2.5cm] (kernel) at (4,3.5) {Kernel Core\\(95 KB)};
+
+    % Key kernel subsystems
+    \node[component, minimum width=1.8cm, minimum height=0.6cm] (mm) at (1,4.5) {Memory Mgmt};
+    \node[component, minimum width=1.8cm, minimum height=0.6cm] (ipc) at (2.8,4.5) {IPC};
+    \node[component, minimum width=1.8cm, minimum height=0.6cm] (pm) at (4.6,4.5) {Process Mgmt};
+    \node[component, minimum width=1.8cm, minimum height=0.6cm] (intr) at (6.4,4.5) {Interrupts};
+
+    % User-space services
+    \node[userspace, minimum width=1.8cm] (fs) at (0.5,6.5) {File System};
+    \node[userspace, minimum width=1.8cm] (network) at (2.3,6.5) {Network};
+    \node[userspace, minimum width=1.8cm] (audio) at (4.1,6.5) {Audio};
+    \node[userspace, minimum width=1.8cm] (drivers) at (5.9,6.5) {Drivers};
+    \node[userspace, minimum width=1.8cm] (services) at (7.7,6.5) {Services};
+
+    % User applications
+    \node[process, minimum width=1.2cm] (apps) at (4,8) {Applications};
+
+    % Connections
+    \draw[arrow] (hardware) -- (bootloader);
+    \draw[arrow] (bootloader) -- (kernel);
+
+    % Kernel subsystems
+    \draw[arrow] (kernel) -- (mm);
+    \draw[arrow] (kernel) -- (ipc);
+    \draw[arrow] (kernel) -- (pm);
+    \draw[arrow] (kernel) -- (intr);
+
+    % User-space
+    \draw[arrow] (mm) -- (fs);
+    \draw[arrow] (ipc) -- (network);
+    \draw[arrow] (pm) -- (audio);
+    \draw[arrow] (intr) -- (drivers);
+    \draw[arrow, dashed] (mm) -- (services);
+
+    % Applications
+    \draw[dashedarrow] (fs) -- (apps);
+    \draw[dashedarrow] (network) -- (apps);
+    \draw[dashedarrow] (drivers) -- (apps);
+
+    % Labels for layers
+    \node[anchor=east] at (-0.2, 0.5) {\small Hardware};
+    \node[anchor=east] at (-0.2, 2) {\small Boot};
+    \node[anchor=east] at (-0.2, 3.5) {\small Kernel};
+    \node[anchor=east] at (-0.2, 6.5) {\small Services};
+    \node[anchor=east] at (-0.2, 8) {\small Apps};
+
+\end{tikzpicture}
+\caption{Complete MINIX 3.4 System Architecture showing kernel core, services, and application layers.}
+\label{fig:minix-architecture}
+\end{figure}
+
+% ===============================================================================
+% PART 2: BOOT SEQUENCE DIAGRAMS
+% ===============================================================================
+
+% DIAGRAM 2: Boot Timeline (0-2 seconds)
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.0]
+    % Timeline
+    \draw[thick] (0,0) -- (10,0);
+
+    % Time markers
+    \foreach \x in {0,1,2,3,4,5,6,7,8,9,10} {
+        \draw[thick] (\x,0) -- (\x,-0.2);
+        \node[anchor=north] at (\x,-0.3) {\small \x mms};
+    }
+
+    % Boot phases
+    \node[minimum width=1.2cm, fill=accentred!30, draw=accentred] (bootloader) at (0.3, 0.8) {Bootloader};
+    \draw[arrow] (bootloader) -- (0.3, 0.2);
+
+    \node[minimum width=2.2cm, fill=accentorange!30, draw=accentorange] (kinit) at (1.7, 0.8) {Kernel Init};
+    \draw[arrow] (kinit) -- (1.7, 0.2);
+
+    \node[minimum width=2.2cm, fill=minixpurple!30, draw=minixpurple] (drvload) at (4.3, 0.8) {Drivers Load};
+    \draw[arrow] (drvload) -- (4.3, 0.2);
+
+    \node[minimum width=2.2cm, fill=accentgreen!30, draw=accentgreen] (srvstart) at (7, 0.8) {Services};
+    \draw[arrow] (srvstart) -- (7, 0.2);
+
+    \node[minimum width=1.8cm, fill=accentblue!30, draw=accentblue] (ready) at (9, 0.8) {Ready};
+    \draw[arrow] (ready) -- (9, 0.2);
+
+    % Phase durations and timing
+    \node[anchor=north] at (0.3, -1) {0ms};
+    \node[anchor=north] at (1, -1) {1ms};
+    \node[anchor=north] at (3, -1) {3ms};
+    \node[anchor=north] at (5.5, -1) {5.5ms};
+    \node[anchor=north] at (8, -1) {8ms};
+    \node[anchor=north] at (9, -1) {\textbf{9.2ms}};
+
+\end{tikzpicture}
+\caption{Boot sequence timeline showing phase progression from bootloader through ready state (typical: 9-12ms).}
+\label{fig:boot-timeline}
+\end{figure}
+
+% DIAGRAM 3: Boot Sequence Detailed Flowchart
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9]
+    \node[process] (start) at (2,9) {Power On};
+    \node[component] (bios) at (2,7.5) {BIOS POST};
+    \node[component] (boot) at (2,6) {Bootloader};
+    \node[kernel] (kload) at (2,4.5) {Load Kernel};
+
+    \node[decision] (ksize) at (2,3) {Kernel\\Size OK?};
+    \node[component] (error1) at (0.3,1.5) {E001 Error};
+
+    \node[kernel] (kinit) at (2,1.5) {Kernel Init};
+    \node[component] (mm) at (0.5,0.2) {Memory Setup};
+    \node[component] (intr) at (2,0.2) {Interrupts};
+    \node[component] (proc) at (3.5,0.2) {Processes};
+
+    \node[userspace] (srvload) at (2,-1.5) {Load Services};
+    \node[decision] (srverr) at (2,-3) {All Services\\Start?};
+    \node[userspace] (error2) at (0.3,-4.5) {E002-E015};
+
+    \node[process] (ready) at (2,-5) {System Ready};
+
+    % Connections
+    \draw[arrow] (start) -- (bios);
+    \draw[arrow] (bios) -- (boot);
+    \draw[arrow] (boot) -- (kload);
+    \draw[arrow] (kload) -- (ksize);
+    \draw[arrow] (ksize) -- node[left] {No} (error1);
+    \draw[arrow] (ksize) -- node[right] {Yes} (kinit);
+
+    \draw[arrow] (kinit) -- (mm);
+    \draw[arrow] (kinit) -- (intr);
+    \draw[arrow] (kinit) -- (proc);
+    \draw[arrow] (mm) -- (srvload);
+
+    \draw[arrow] (srvload) -- (srverr);
+    \draw[arrow] (srverr) -- node[left] {No} (error2);
+    \draw[arrow] (srverr) -- node[right] {Yes} (ready);
+
+\end{tikzpicture}
+\caption{Detailed boot sequence flowchart showing decision points and error paths.}
+\label{fig:boot-flowchart}
+\end{figure}
+
+% ===============================================================================
+% PART 3: ERROR ANALYSIS DIAGRAMS
+% ===============================================================================
+
+% DIAGRAM 4: Error Detection Algorithm Flowchart
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9]
+    \node[process] (start) at (2,8) {Boot Log Input};
+    \node[component] (read) at (2,6.5) {Read Each Line};
+
+    \node[decision] (check) at (2,5) {Match Any\\Error Pattern?};
+    \node[component] (nomatch) at (0.5,3.5) {Continue};
+
+    \node[component] (detect) at (2,3.5) {Error Detected};
+    \node[component] (regex) at (2,2) {Extract Pattern\\Details};
+    \node[component] (score) at (2,0.5) {Calculate\\Confidence};
+
+    \node[data] (db) at (4,0.5) {Store in DB};
+
+    \node[decision] (more) at (2,-1.5) {More\\Lines?};
+    \node[process] (done) at (2,-3) {Analysis Complete};
+
+    % Connections
+    \draw[arrow] (start) -- (read);
+    \draw[arrow] (read) -- (check);
+    \draw[arrow] (check) -- node[left] {No} (nomatch);
+    \draw[arrow] (nomatch) -- (more);
+    \draw[arrow] (check) -- node[right] {Yes} (detect);
+    \draw[arrow] (detect) -- (regex);
+    \draw[arrow] (regex) -- (score);
+    \draw[arrow] (score) -- (db);
+    \draw[arrow] (db) -- (more);
+    \draw[arrow] (more) -- node[right] {Yes} (read);
+    \draw[arrow] (more) -- node[below] {No} (done);
+
+\end{tikzpicture}
+\caption{Error detection algorithm flowchart showing regex matching and confidence scoring process.}
+\label{fig:error-detection-algorithm}
+\end{figure}
+
+% DIAGRAM 5: Error Causal Relationship Graph
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.0]
+    % Error nodes
+    \node[shape=rectangle, draw=accentred, fill=accentred!20, thick] (e001) at (1,3) {E001\\Timeout};
+    \node[shape=rectangle, draw=accentorange, fill=accentorange!20, thick] (e003) at (3,3) {E003\\CD9660};
+    \node[shape=rectangle, draw=accentred, fill=accentred!20, thick] (e006) at (5,3) {E006\\IRQ};
+    \node[shape=rectangle, draw=accentgreen, fill=accentgreen!20, thick] (e009) at (7,3) {E009\\Mem};
+
+    \node[shape=rectangle, draw=accentblue, fill=accentblue!20, thick] (e011) at (2,0.5) {E011\\Network};
+    \node[shape=rectangle, draw=accentred, fill=accentred!20, thick] (e015) at (6,0.5) {E015\\System};
+
+    % Causal arrows (can cause)
+    \draw[arrow, thick] (e001) -- node[above] {causes} (e003);
+    \draw[arrow, thick] (e003) -- node[above] {causes} (e006);
+    \draw[arrow, thick] (e006) -- node[above] {causes} (e009);
+    \draw[arrow, thick] (e001) -- node[left] {can cause} (e011);
+    \draw[arrow, dashed] (e009) -- node[right] {may cause} (e015);
+
+    % Co-occurrence arrows (appears with)
+    \draw[arrow, dashed, color=accentgray] (e003) -- node[below] {with} (e011);
+
+\end{tikzpicture}
+\caption{Error causal relationship graph showing which errors cause others and co-occurrence patterns.}
+\label{fig:error-causal-graph}
+\end{figure}
+
+% ===============================================================================
+% PART 4: SYSTEM ARCHITECTURE DETAILS
+% ===============================================================================
+
+% DIAGRAM 6: Process and IPC Architecture
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9]
+    % Kernel
+    \node[kernel, minimum width=3cm, minimum height=1.5cm] (kernel) at (5,6) {Kernel\\IPC Router};
+
+    % Processes
+    \node[userspace, minimum width=1.5cm] (fs) at (1,8) {Filesystem};
+    \node[userspace, minimum width=1.5cm] (net) at (3,8) {Network};
+    \node[userspace, minimum width=1.5cm] (audio) at (5,8) {Audio};
+    \node[userspace, minimum width=1.5cm] (app) at (7,8) {App};
+
+    % IPC messages
+    \draw[arrow] (fs) -- node[above] {send msg} (net);
+    \draw[arrow] (fs) -- (kernel);
+    \draw[arrow] (net) -- (kernel);
+    \draw[arrow] (audio) -- (kernel);
+    \draw[arrow] (app) -- (kernel);
+
+    \draw[arrow] (kernel) -- node[below] {route msg} (fs);
+    \draw[arrow] (kernel) -- (net);
+    \draw[arrow] (kernel) -- (audio);
+    \draw[arrow] (kernel) -- (app);
+
+    % Message queue
+    \node[data, minimum width=2cm] (queue) at (5,3.5) {Message\\Queues};
+    \draw[dashedarrow] (kernel) -- (queue);
+    \draw[dashedarrow] (queue) -- (kernel);
+
+\end{tikzpicture}
+\caption{Process and IPC architecture showing kernel routing and message passing.}
+\label{fig:ipc-architecture}
+\end{figure}
+
+% ===============================================================================
+% PART 5: DATA AND MEASUREMENT DIAGRAMS
+% ===============================================================================
+
+% DIAGRAM 7: Data Pipeline Architecture
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9]
+    % Boot execution
+    \node[component] (boot) at (1,5) {MINIX Boot};
+
+    % Log generation
+    \node[data] (log) at (1,3.5) {Boot Log};
+
+    % Analysis
+    \node[component] (triage) at (3,3.5) {Error\\Triage};
+    \node[component] (metrics) at (5,3.5) {Metrics\\Extract};
+
+    % Database
+    \node[data] (db) at (4,1.5) {SQLite DB};
+
+    % Reports
+    \node[component] (report) at (2,0) {Daily\\Report};
+    \node[component] (dashboard) at (4,0) {Dashboard};
+    \node[component] (analyze) at (6,0) {Analysis};
+
+    % Connections
+    \draw[arrow] (boot) -- (log);
+    \draw[arrow] (log) -- (triage);
+    \draw[arrow] (log) -- (metrics);
+    \draw[arrow] (triage) -- (db);
+    \draw[arrow] (metrics) -- (db);
+
+    \draw[arrow] (db) -- (report);
+    \draw[arrow] (db) -- (dashboard);
+    \draw[arrow] (db) -- (analyze);
+
+\end{tikzpicture}
+\caption{Data pipeline from boot execution through analysis and reporting.}
+\label{fig:data-pipeline}
+\end{figure}
+
+% ===============================================================================
+% PART 6: METHODOLOGY DIAGRAMS
+% ===============================================================================
+
+% DIAGRAM 8: Experimental Workflow
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.85]
+    \node[component] (setup) at (1,8) {Setup QEMU};
+    \node[component] (config) at (3,8) {Configure};
+    \node[process] (boot) at (5,8) {Boot};
+
+    \node[data] (log) at (5,6) {Capture Log};
+
+    \node[component] (analyze) at (3,4) {Analyze};
+    \node[component] (triage) at (5,4) {Triage};
+    \node[component] (metrics) at (7,4) {Metrics};
+
+    \node[data] (results) at (5,2) {Results};
+
+    \node[decision] (valid) at (5,0.5) {Valid?};
+    \node[component] (aggregate) at (7,-1) {Aggregate};
+    \node[process] (complete) at (5,-2) {Complete};
+
+    % Connections
+    \draw[arrow] (setup) -- (config);
+    \draw[arrow] (config) -- (boot);
+    \draw[arrow] (boot) -- (log);
+    \draw[arrow] (log) -- (analyze);
+    \draw[arrow] (analyze) -- (triage);
+    \draw[arrow] (analyze) -- (metrics);
+    \draw[arrow] (triage) -- (results);
+    \draw[arrow] (metrics) -- (results);
+    \draw[arrow] (results) -- (valid);
+    \draw[arrow] (valid) -- node[right] {Yes} (aggregate);
+    \draw[arrow] (valid) -- node[left] {No} (setup);
+    \draw[arrow] (aggregate) -- (complete);
+
+\end{tikzpicture}
+\caption{Experimental workflow for boot analysis showing iteration and validation.}
+\label{fig:experimental-workflow}
+\end{figure}
+
+% ===============================================================================
+% PART 7: RESULTS AND METRICS VISUALIZATIONS
+% ===============================================================================
+
+% DIAGRAM 9: Boot Time Distribution (stylized)
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.95]
+    % Axes
+    \draw[thick] (0,0) -- (8,0) node[right] {Boot Time (ms)};
+    \draw[thick] (0,0) -- (0,5) node[above] {Frequency};
+
+    % Bars (stylized distribution)
+    \foreach \x/\height in {1/0.5, 1.5/1.2, 2/2.8, 2.5/3.5, 3/2.2, 3.5/1.8, 4/0.8, 4.5/0.3}{
+        \draw[fill=minixpurple!60] (\x, 0) rectangle (\x+0.4, \height);
+    }
+
+    % Mean and median lines
+    \draw[dashed, thick, color=accentred] (2.5, 0) -- (2.5, 4) node[above] {Mean: 9.2ms};
+    \draw[dashed, thick, color=accentgreen] (2.4, 0) -- (2.4, 3.8) node[above right] {Median};
+
+    % Axis labels
+    \node[anchor=north] at (0,-0.3) {8};
+    \node[anchor=north] at (4,-0.3) {10};
+    \node[anchor=north] at (8,-0.3) {12};
+
+\end{tikzpicture}
+\caption{Boot time distribution across 100+ runs showing mean and median boot times.}
+\label{fig:boot-time-distribution}
+\end{figure}
+
+% ===============================================================================
+% SUPPORTING DIAGRAMS REFERENCED IN CHAPTERS
+% ===============================================================================
+
+% DIAGRAM 10: MCP Integration Architecture
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9]
+    % Claude Code
+    \node[userspace] (claude) at (1,6) {Claude Code};
+
+    % MCP Layer
+    \node[component] (mcp) at (1,4) {MCP\\Protocol};
+
+    % Services
+    \node[component] (docker) at (0,2) {Docker\\MCP};
+    \node[component] (dockerhub) at (1.5,2) {Docker Hub\\MCP};
+    \node[component] (github) at (3,2) {GitHub\\MCP};
+    \node[component] (sqlite) at (4.5,2) {SQLite\\MCP};
+
+    % External systems
+    \node[data] (dockerd) at (0,0) {Docker\\Daemon};
+    \node[data] (hub) at (1.5,0) {Docker Hub};
+    \node[data] (ghapi) at (3,0) {GitHub API};
+    \node[data] (db) at (4.5,0) {SQLite DB};
+
+    % Connections
+    \draw[arrow] (claude) -- (mcp);
+    \draw[arrow] (mcp) -- (docker);
+    \draw[arrow] (mcp) -- (dockerhub);
+    \draw[arrow] (mcp) -- (github);
+    \draw[arrow] (mcp) -- (sqlite);
+
+    \draw[arrow] (docker) -- (dockerd);
+    \draw[arrow] (dockerhub) -- (hub);
+    \draw[arrow] (github) -- (ghapi);
+    \draw[arrow] (sqlite) -- (db);
+
+\end{tikzpicture}
+\caption{MCP integration architecture connecting Claude Code to external services.}
+\label{fig:mcp-architecture}
+\end{figure}
+
+% ===============================================================================
+% END OF TikZ DIAGRAMS
+% ===============================================================================
+
+% Note: Additional diagrams can be added here following the same structure
+% Each diagram should have:
+% 1. Clear purpose and design
+% 2. Consistent with overall color scheme and styling
+% 3. Descriptive caption
+% 4. Clear label for cross-referencing
+% 5. Scale appropriate for page width

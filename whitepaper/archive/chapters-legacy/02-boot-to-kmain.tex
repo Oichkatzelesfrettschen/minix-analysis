@@ -1,0 +1,381 @@
+\subsection{Boot to kmain(): Virtual Memory Initialization}
+
+\subsubsection{Overview}
+
+After the bootloader transfers control to the \texttt{MINIX} label and \texttt{multiboot\_init}
+sets up the initial stack and registers, execution reaches the C-level \texttt{pre\_init()} function.
+This chapter traces the virtual memory initialization and protection setup that occurs between
+the low-level assembly bootstrap and the high-level kernel orchestration in \texttt{kmain()}.
+
+\textbf{Key phases}:
+\begin{enumerate}
+\item \textbf{Extract Multiboot Info}: Parse bootloader-provided memory map and modules
+\item \textbf{Initialize Page Tables}: Create identity mapping for early code execution
+\item \textbf{Map Kernel High}: Establish mapping to kernel's final virtual address (0x80000000+)
+\item \textbf{Enable Paging}: Set CR0.PG bit to activate MMU
+\item \textbf{Enter kmain()}: Execute kernel orchestration in high-memory mode
+\end{enumerate}
+
+\section{WHAT: Actions from pre\_init() to kmain()}
+
+\subsection{High-Level Sequence}
+
+At entry to \texttt{pre\_init(u32\_t magic, u32\_t ebx)}:
+
+\begin{enumerate}
+\item \textbf{Validate Magic Number}: Assert \texttt{magic == 0x2BADB002}
+\item \textbf{Extract Boot Parameters}: Read Multiboot info struct from physical memory
+\item \textbf{Parse Memory Map}: Enumerate available RAM ranges from bootloader
+\item \textbf{Set Up Page Tables}: Create 1:1 identity mapping for current code location
+\item \textbf{Map Kernel Virtual}: Establish mapping from 0x80000000 to kernel physical base
+\item \textbf{Load Page Directory}: Write CR3 with page directory physical address
+\item \textbf{Enable Virtual Memory}: Set CR0.PG bit to activate paging
+\item \textbf{Return Boot Info}: Return \texttt{\&kinfo} structure to be passed to \texttt{kmain()}
+\end{enumerate}
+
+\section{WHEN: Execution Timing and Boot Phases}
+
+\textbf{Time relative to power-on}: $t_0 + \Delta t_{\text{firmware}} + \Delta t_{\text{bootloader}} + 1\text{-}5\text{ ms}$
+
+Boot phase timeline:
+
+\begin{table}[h!]
+\centering
+\caption{Boot Phases: Entry Point through Paging Enable}
+\begin{tabular}{lrr}
+\toprule
+Phase & Duration & Cumulative \\
+\midrule
+BIOS/UEFI & 100-500ms & 100-500ms \\
+Bootloader (GRUB/QEMU) & 50-200ms & 150-700ms \\
+Kernel Entry (MINIX label) & 0.5-1ms & \textbf{150-701ms} \\
+Assembly Setup (multiboot\_init) & 0.1-0.5ms & \textbf{150.1-701.5ms} \\
+pre\_init() Page Table Init & 2-5ms & \textbf{152.1-706.5ms} \\
+Paging Enable (CR0.PG) & 10-20 cycles & \textbf{152.1-706.5ms} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\what{At the moment paging is enabled (CR0.PG set), the CPU must synchronize the TLB with
+the new page tables. This transition is critical: the next instruction fetch must hit the new
+virtual address translation, or a page fault occurs.}
+
+\section{WHY: Architectural Decisions}
+
+\subsection{Two-Stage Page Table Setup}
+
+MINIX uses a two-stage approach:
+
+\textbf{Stage 1: Identity Mapping} (pg\_identity):
+The bootloader placed the kernel at a physical address (typically 0x100000 or higher).
+The first page table creates a 1:1 mapping (virtual address = physical address) so that
+\texttt{pre\_init()} code executes correctly without the kernel being at its final address.
+
+\textbf{Stage 2: Kernel Mapping} (pg\_mapkernel):
+While the identity mapping is active, a second mapping is established. Virtual addresses
+in the range 0x80000000-0xffffffff (kernel space) point to the kernel's physical base.
+This separation allows the kernel to load itself into high memory without interfering with
+user-space addresses.
+
+\why{This design prevents a common bootstrap problem: if the kernel is loaded at 0x100000
+physically but expects to be at 0x80000000 virtually, code cannot execute at both addresses
+simultaneously. The identity mapping allows \texttt{pre\_init()} to function; the dual mapping
+allows the transition to kernel-high execution.}
+
+\subsection{Paging as Hardware-Enforced Isolation}
+
+Once paging is enabled (CR0.PG=1), the MMU translates every memory access. This achieves:
+
+\begin{itemize}
+\item \textbf{Privilege Isolation}: Supervisor-only pages cause faults from ring 3 (user mode)
+\item \textbf{Address Translation}: Kernel and user processes can share the same virtual addresses
+\item \textbf{Fault Recovery}: Page faults become exceptions, allowing kernel intervention
+\end{itemize}
+
+\why{Hardware-enforced isolation is more secure and efficient than software checks.
+A misbehaving process cannot bypass the MMU via CPU bugs (unless a privilege escalation
+vulnerability exists in the kernel).}
+
+\section{HOW: Instruction-Level Execution}
+
+\subsection{Source Code: pre\_init.c (Lines ~114-174)}
+
+The complete pre\_init function:
+
+\begin{lstlisting}[style=cstyle,caption={pre\_init() Function Entry and Exit}]
+kinfo_t *pre_init(u32_t magic, u32_t ebx)
+{
+  assert(magic == MULTIBOOT_INFO_MAGIC);
+
+  /* Get our own copy boot params pointed to by ebx.
+   * Here we find out whether we should do serial output.
+   */
+  get_parameters(ebx, &kinfo);
+
+  /* Make and load a pagetable that will map the kernel
+   * to where it should be; but first a 1:1 mapping so
+   * this code stays where it should be.
+   */
+  pg_clear();
+  pg_identity(&kinfo);
+  kinfo.freepde_start = pg_mapkernel();
+  pg_load();
+  vm_enable_paging();
+
+  /* Done, return boot info so it can be passed to kmain(). */
+  return &kinfo;
+}
+\end{lstlisting}
+
+\subsubsection{get\_parameters(ebx, \&kinfo): Extract Boot Information}
+
+\how{
+\begin{enumerate}
+\item \textbf{Input}: EBX register contains physical address of multiboot info structure
+\item \textbf{Operation}: Copy multiboot\_info\_t structure from physical memory at EBX
+  \begin{verbatim}
+  Reads from memory:
+    EBX+0:   Flags (indicates which fields are valid)
+    EBX+4:   Memory info (lower/upper memory sizes if MMAP not present)
+    EBX+8:   Boot device
+    ... (11 total fields)
+  \end{verbatim}
+\item \textbf{Effect}: kinfo structure now contains:
+  \begin{itemize}
+    \item Memory map entries (or computed lower/upper memory bounds)
+    \item Module list pointer and count (for user-space servers)
+    \item Boot command line (kernel parameters)
+    \item Kernel base addresses (from linker symbols \_kern\_phys\_base, etc.)
+  \end{itemize}
+\item \textbf{CPU State}: No register changes (pure data copy)
+\item \textbf{Timing}: 0.5-1 \textmu s (memory read operations)
+\end{enumerate}
+}
+
+\subsubsection{pg\_clear(): Initialize Page Table Memory}
+
+\how{
+\begin{enumerate}
+\item \textbf{Operation}: Allocate page table memory from BSS and zero it
+  \begin{verbatim}
+  Page directory: 1 page (4 KB), 1024 entries (4 bytes each)
+  Page tables: multiple pages, one per 4 MB of address space
+  \end{verbatim}
+\item \textbf{Effect}: All page directory and page table entries set to 0
+  (valid bit = 0, meaning no physical page mapped)
+\item \textbf{Memory}: Page tables reside in kernel BSS (no physical allocation needed)
+\item \textbf{Timing}: 1-2 \textmu s (memory write operations for initialization)
+\end{enumerate}
+}
+
+\subsubsection{pg\_identity(\&kinfo): Create 1:1 Mapping}
+
+\how{
+\begin{enumerate}
+\item \textbf{Purpose}: Map virtual 0x00000000 $\rightarrow$ physical 0x00000000, etc.
+\item \textbf{Operation}:
+  \begin{enumerate}
+    \item Calculate kernel physical base from kinfo->mbi.mod\_start (or linker symbol)
+    \item For each page in kernel: set PDE and PTE to create 1:1 mapping
+    \item PTE entries: Physical base | flags (Present=1, RW=1, Supervisor=1)
+  \end{enumerate}
+\item \textbf{Effect}: Virtual addresses 0x00000000-0xffffffff may still use bootloader mapping
+  (identity ensures code at physical X executes correctly)
+\item \textbf{x86 Instruction Detail}: Each PTE write is a single MOV or MOVL:
+  \begin{verbatim}
+  mov    $page_table_addr, %eax
+  mov    $(phys_base | flags), (%eax, %ecx, 4)  ; 4-byte write to PTE
+  \end{verbatim}
+\item \textbf{Timing}: $O(n)$ where $n$ = number of pages in kernel
+  (typically 20-50 pages, so 0.1-0.5 \textmu s)
+\end{enumerate}
+}
+
+\subsubsection{pg\_mapkernel(): Map Kernel to High Memory}
+
+\how{
+\begin{enumerate}
+\item \textbf{Purpose}: Create mapping virtual 0x80000000+ $\rightarrow$ kernel physical base
+\item \textbf{Operation}:
+  \begin{enumerate}
+    \item Calculate page directory entries needed for high memory (PDEs 512-1023)
+    \item Allocate page tables for kernel space
+    \item Set PTE entries: Virtual (0x80000000+N) $\rightarrow$ Physical (kernel\_base+N)
+  \end{enumerate}
+\item \textbf{x86 Detail}: On i386 with 4KB pages:
+  \begin{verbatim}
+  PDE index for 0x80000000: 0x80000000 / (4MB per PDE) = 512
+  Kernel occupies PDEs 512-1023 (upper half of 4GB space)
+  \end{verbatim}
+\item \textbf{Effect}: After pg\_mapkernel(), both mappings active:
+  \begin{itemize}
+    \item Virtual 0x00X... $\rightarrow$ Physical 0x00X... (identity, for now)
+    \item Virtual 0x80X... $\rightarrow$ Physical kernel\_base+X (target mapping)
+  \end{itemize}
+\item \textbf{Timing}: Similar to pg\_identity(), $O(n)$ page table updates
+\end{enumerate}
+}
+
+\subsubsection{pg\_load(): Load Page Directory into CR3}
+
+\how{
+\begin{enumerate}
+\item \textbf{Instruction}: MOV with CR3 (Control Register 3)
+  \begin{verbatim}
+  mov    $page_dir_phys, %eax
+  mov    %eax, %cr3      ; Load page directory address
+  \end{verbatim}
+\item \textbf{Effect}: CR3 now contains physical address of page directory
+  \begin{verbatim}
+  CR3 = 0x00100000 (example: kernel page directory at 1 MB)
+  CR3 bits 31-12 = page directory address
+  CR3 bits 11-0  = TLB flush flags (PCD, PWT)
+  \end{verbatim}
+\item \textbf{CPU Action}: Immediate effect on TLB state
+  \begin{itemize}
+    \item Writing CR3 flushes all TLB entries (unless PCID enabled, which MINIX 3.4 does not use)
+    \item Next virtual address translation must fetch page tables from new directory
+  \end{itemize}
+\item \textbf{Timing}: 10-50 CPU cycles (CR3 write is expensive; TLB flush occurs)
+\end{enumerate}
+}
+
+\subsubsection{vm\_enable\_paging(): Set CR0.PG Bit}
+
+\how{
+\begin{enumerate}
+\item \textbf{Instruction}: Read-modify-write to CR0
+  \begin{verbatim}
+  mov    %cr0, %eax
+  orl    $(1 << 31), %eax    ; Set PG bit (bit 31)
+  mov    %eax, %cr0
+  \end{verbatim}
+\item \textbf{Effect}: CPU MMU is activated
+  \begin{verbatim}
+  Before: CR0.PG = 0, all addresses are physical
+  After:  CR0.PG = 1, all addresses are virtual (translated via page tables)
+  \end{verbatim}
+\item \textbf{Critical Detail}: The next instruction MUST be at a valid virtual address
+  \begin{itemize}
+    \item Code currently executing at physical X (identity mapping)
+    \item After CR0.PG=1, EIP (now a virtual address) must match page tables
+    \item If page tables do not map EIP, a page fault occurs (bootstrap failure)
+  \end{itemize}
+\item \textbf{Timing}: 20-100 CPU cycles (mode switch, pipeline stall)
+\item \textbf{TLB Synchronization}:
+  \begin{enumerate}
+    \item CR3 load flushes TLB (step 4 above)
+    \item CR0.PG activation initiates MMU
+    \item First instruction after CR0.PG causes TLB miss; page tables fetched from CR3
+  \end{enumerate}
+\end{enumerate}
+}
+
+\subsection{CPU State Summary After paging Enable}
+
+\begin{table}[h!]
+\centering
+\caption{CPU State After vm\_enable\_paging() and Before kmain()}
+\begin{tabular}{lll}
+\toprule
+Register & Value & Status \\
+\midrule
+CR0 & PE=1, PG=1 & Protected mode, paging active \\
+CR3 & page\_dir\_phys & Page directory base address \\
+CR4 & PSE=(maybe), PAE=0 & PSE for 4MB pages (optional) \\
+EFLAGS & IF=0 & Interrupts still disabled \\
+EIP & (virtual now) & Points to next instruction in kernel code \\
+ESP & load\_stack\_start & Stack valid (in kernel space) \\
+EBP & 0 & Still zero (root frame) \\
+CS:SS & (seg selectors) & Ring 0 (supervisor) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Transition: From pre\_init() to kmain()}
+
+\subsection{Stack Frame at kmain() Entry}
+
+The assembly code at the end of multiboot\_init calls \texttt{pre\_init()} and later \texttt{kmain()}.
+The calling convention is x86 cdecl:
+
+\begin{verbatim}
+Before kmain() call:
+  ESP -> [return address (to multiboot_init+X)]
+         [kinfo pointer (from pre_init return value)]
+         [padding if needed]
+
+Inside kmain(kinfo_t *local_cbi):
+  EAX = return address (caller's responsibility)
+  [ESP+4] = local_cbi pointer
+\end{verbatim}
+
+\subsection{First Instructions of kmain()}
+
+From main.c line 115:
+
+\begin{lstlisting}[style=cstyle,caption={kmain() Entry and Initialization}]
+void kmain(kinfo_t *local_cbi)
+{
+  struct boot_image *ip;
+  register struct proc *rp;
+  register int i, j;
+  static int bss_test;
+
+  /* bss sanity check */
+  assert(bss_test == 0);
+  bss_test = 1;
+
+  /* save a global copy of the boot parameters */
+  memcpy(&kinfo, local_cbi, sizeof(kinfo));
+  memcpy(&kmess, kinfo.kmess, sizeof(kmess));
+
+  /* Set board info */
+  machine.board_id = get_board_id_by_name(env_get(BOARDVARNAME));
+
+  /* Architecture-specific serial init */
+#ifdef __arm__
+  arch_ser_init();
+#endif
+
+  DEBUGBASIC(("MINIX booting\n"));
+
+  kernel_may_alloc = 1;
+
+  assert(sizeof(kinfo.boot_procs) == sizeof(image));
+  memcpy(kinfo.boot_procs, image, sizeof(kinfo.boot_procs));
+
+  cstart();
+  BKL_LOCK();
+
+  DEBUGEXTRA(("main()\n"));
+
+  proc_init();
+  IPCF_POOL_INIT();
+  ...
+}
+\end{lstlisting}
+
+\how{
+\begin{enumerate}
+\item \textbf{BSS Sanity Check}: Verify BSS section was zeroed (static int bss\_test should be 0)
+\item \textbf{Copy Boot Info}: Memcpy kinfo\_t structure (60-100 bytes) from stack to global \.kinfo
+\item \textbf{Call cstart()}: Architecture-specific CPU setup (see Chapter 10)
+\item \textbf{Call proc\_init()}: Initialize process table structures
+\item \textbf{Effect}: Kernel now fully operational in high memory, ready to start processes
+\end{enumerate}
+}
+
+\section{Summary: Boot to kmain Responsibilities}
+
+\begin{enumerate}
+\item \textbf{Bootloader Contract Enforcement}: Assert magic number, extract parameters
+\item \textbf{Memory Setup}: Parse bootloader memory map, configure page tables
+\item \textbf{Virtual Address Activation}: Enable paging, transition to high-memory mode
+\item \textbf{Kernel Isolation}: Establish kernel/user address space separation via paging
+\item \textbf{CPU State Preparation}: All prerequisites for C-level kernel execution
+\item \textbf{Hand-off to Orchestration}: Return to kmain() for process initialization
+\end{enumerate}
+
+The completion of this phase marks the end of bare-metal bootstrap and the beginning of
+higher-level kernel initialization (Chapter 3: kmain() Orchestration).

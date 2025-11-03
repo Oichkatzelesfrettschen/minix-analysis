@@ -1,0 +1,80 @@
+
+======================================================================
+PHASE 7.5 BOOT PROFILING REPORT
+======================================================================
+Generated: 2025-10-31T22:09:53.281023
+ISO: minix_R3.4.0rc6-d5e4fc0.iso
+
+
+----------------------------------------------------------------------
+Configuration: 1 vCPU
+----------------------------------------------------------------------
+  Mean:        18 ms
+  Median:      18 ms
+  Min:         18 ms
+  Max:         18 ms
+  Stdev:        0 ms
+
+  Whitepaper Estimate: 65 ms
+  Measured Average:    18 ms
+  Error:               72.3%
+  Status:              NEEDS_VALIDATION
+
+----------------------------------------------------------------------
+Configuration: 2 vCPU
+----------------------------------------------------------------------
+  Mean:        17 ms
+  Median:      17 ms
+  Min:         17 ms
+  Max:         17 ms
+  Stdev:        0 ms
+
+  Whitepaper Estimate: 65 ms
+  Measured Average:    17 ms
+  Error:               73.8%
+  Status:              NEEDS_VALIDATION
+
+----------------------------------------------------------------------
+Configuration: 4 vCPU
+----------------------------------------------------------------------
+  Mean:        17 ms
+  Median:      17 ms
+  Min:         17 ms
+  Max:         17 ms
+  Stdev:        0 ms
+
+  Whitepaper Estimate: 65 ms
+  Measured Average:    17 ms
+  Error:               73.8%
+  Status:              NEEDS_VALIDATION
+
+----------------------------------------------------------------------
+Configuration: 8 vCPU
+----------------------------------------------------------------------
+  Mean:        17 ms
+  Median:      17 ms
+  Min:         17 ms
+  Max:         17 ms
+  Stdev:        0 ms
+
+  Whitepaper Estimate: 65 ms
+  Measured Average:    17 ms
+  Error:               73.8%
+  Status:              NEEDS_VALIDATION
+
+======================================================================
+KEY FINDINGS
+======================================================================
+
+Boot Time by CPU Count:
+  1 CPU:      18 ms
+  2 CPU:      17 ms
+  4 CPU:      17 ms
+  8 CPU:      17 ms
+
+Scaling Efficiency (relative to 1 CPU):
+  2 CPU: 1.06x speedup (53% efficiency)
+  4 CPU: 1.06x speedup (26% efficiency)
+  8 CPU: 1.06x speedup (13% efficiency)
+
+======================================================================

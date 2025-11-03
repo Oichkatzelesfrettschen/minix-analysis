@@ -1,0 +1,38 @@
+================================================================================
+PHASE 9: PERFORMANCE METRICS COMPARISON MATRIX
+================================================================================
+
+CPU Type          | Avg Boot Time (ms) | Success Rate | Samples | Notes
+------------------|-------------------|--------------|---------|--------
+486               | TBD               | TBD          | 3       | Baseline
+Pentium P5        | TBD               | TBD          | 3       | MMU + FPU
+Pentium II P6     | TBD               | TBD          | 3       | MMX added
+Pentium III P6+   | TBD               | TBD          | 3       | SSE added
+Core 2 Duo        | TBD               | TBD          | 3       | Dual core
+                  |                   |              |         |
+
+================================================================================
+PERFORMANCE ANALYSIS
+================================================================================
+
+Boot Time Trends:
+  - 486: Baseline reference point
+  - P5/P6/P6+: Expected 5-10% improvement due to architectural enhancements
+  - Core2Duo: May show similar or slightly slower boot due to dual-core overhead
+
+Efficiency Metrics:
+  - Instructions per second estimated from serial output patterns
+  - System call frequency and distribution
+  - Memory access patterns (if discernible from output)
+
+Cache Behavior:
+  - (Limited visibility in QEMU TCG mode without instrumentation)
+  - Estimated from boot sequence reliability and timing consistency
+
+Bottlenecks Identified:
+  - (Will be filled after metrics collection)
+
+Optimization Opportunities:
+  - (Will be identified from variance analysis)
+
+================================================================================

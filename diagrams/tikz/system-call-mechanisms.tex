@@ -1,0 +1,220 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathmorphing,backgrounds,shadows}
+
+% Define colors following MINIX style guide
+\definecolor{primaryblue}{RGB}{0,102,204}
+\definecolor{secondarygreen}{RGB}{46,204,113}
+\definecolor{accentorange}{RGB}{255,127,0}
+\definecolor{warningred}{RGB}{231,76,60}
+\definecolor{lightgray}{RGB}{236,240,241}
+\definecolor{darkgray}{RGB}{52,73,94}
+
+\begin{document}
+\begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=2pt, draw=primaryblue, fill=primaryblue!15, minimum width=5.5cm, minimum height=0.7cm, font=\small, align=center},
+    hw/.style={rectangle, rounded corners=2pt, draw=warningred, fill=warningred!20, minimum width=5.5cm, minimum height=0.7cm, font=\small, align=center},
+    kernelbox/.style={rectangle, rounded corners=2pt, draw=secondarygreen, fill=secondarygreen!15, minimum width=5.5cm, minimum height=0.7cm, font=\small, align=center},
+    arrow/.style={->, >=stealth, thick},
+    flow/.style={arrow, primaryblue},
+    hwflow/.style={arrow, warningred},
+    timeline/.style={dashed, darkgray},
+    label/.style={font=\footnotesize},
+    section/.style={font=\bfseries\large}
+]
+
+% Title
+\node[section] at (9, 14) {MINIX System Call Entry Mechanisms};
+\node[font=\normalsize] at (9, 13.5) {Three CPU-level paths: INT (legacy) vs SYSENTER (Intel) vs SYSCALL (AMD)};
+
+%% LEFT COLUMN: INT 0x33 (Legacy)
+\node[section, font=\bfseries] at (3, 12.5) {INT 0x33 (Software Trap)};
+
+% User space
+\node[box] (int_user1) at (3, 11.5) {User: INT 0x33};
+\node[label, text width=5cm, align=left] at (7.5, 11.5) {
+    EAX = call type\\
+    EBX = message ptr
+};
+
+% Hardware actions
+\node[hw] (int_hw1) at (3, 10.5) {CPU: Lookup IDT[0x33]};
+\node[hw] (int_hw2) at (3, 9.7) {CPU: Push SS, ESP};
+\node[hw] (int_hw3) at (3, 8.9) {CPU: Push EFLAGS, CS, EIP};
+\node[hw] (int_hw4) at (3, 8.1) {CPU: Load CS:EIP from IDT};
+\node[hw] (int_hw5) at (3, 7.3) {CPU: ESP ← TSS.ESP0};
+\node[hw] (int_hw6) at (3, 6.5) {CPU: Clear IF (disable irq)};
+
+% Kernel entry
+\node[kernelbox] (int_kern1) at (3, 5.5) {Kernel: ipc\_entry\_softint\_orig};
+\node[kernelbox] (int_kern2) at (3, 4.7) {Kernel: SAVE\_PROCESS\_CTX};
+\node[kernelbox] (int_kern3) at (3, 3.9) {Kernel: do\_ipc()};
+
+% Return path
+\node[kernelbox] (int_ret1) at (3, 3.0) {Kernel: restore context};
+\node[hw] (int_ret2) at (3, 2.2) {CPU: IRET instruction};
+\node[hw] (int_ret3) at (3, 1.4) {CPU: Pop EIP, CS, EFLAGS};
+\node[hw] (int_ret4) at (3, 0.6) {CPU: Pop ESP, SS};
+\node[box] (int_ret5) at (3, -0.2) {User: Resume after INT};
+
+% Arrows
+\draw[flow] (int_user1) -- (int_hw1);
+\draw[hwflow] (int_hw1) -- (int_hw2);
+\draw[hwflow] (int_hw2) -- (int_hw3);
+\draw[hwflow] (int_hw3) -- (int_hw4);
+\draw[hwflow] (int_hw4) -- (int_hw5);
+\draw[hwflow] (int_hw5) -- (int_hw6);
+\draw[hwflow] (int_hw6) -- (int_kern1);
+\draw[flow] (int_kern1) -- (int_kern2);
+\draw[flow] (int_kern2) -- (int_kern3);
+\draw[flow] (int_kern3) -- (int_ret1);
+\draw[flow] (int_ret1) -- (int_ret2);
+\draw[hwflow] (int_ret2) -- (int_ret3);
+\draw[hwflow] (int_ret3) -- (int_ret4);
+\draw[hwflow] (int_ret4) -- (int_ret5);
+
+% Cost annotations
+\node[label, warningred] at (0.5, 10.5) {~80 cycles};
+\node[label, warningred] at (0.5, 2.2) {~120 cycles};
+\node[label, font=\footnotesize\bfseries, warningred] at (0.5, 0.2) {Total: ~200 cycles};
+
+%% MIDDLE COLUMN: SYSENTER (Intel Fast)
+\node[section, font=\bfseries] at (9, 12.5) {SYSENTER (Intel Fast)};
+
+% User space
+\node[box] (sys_user1) at (9, 11.5) {User: Save ESP→ESI, EIP→EDX};
+\node[box] (sys_user2) at (9, 10.8) {User: SYSENTER instruction};
+\node[label, text width=5cm, align=left] at (13.5, 11.2) {
+    User saves return state\\
+    (no hardware save)
+};
+
+% Hardware actions
+\node[hw] (sys_hw1) at (9, 10.0) {CPU: Load CS from MSR};
+\node[hw] (sys_hw2) at (9, 9.3) {CPU: Load EIP from MSR};
+\node[hw] (sys_hw3) at (9, 8.6) {CPU: Load ESP from MSR};
+\node[hw] (sys_hw4) at (9, 7.9) {CPU: No stack push!};
+
+% Kernel entry
+\node[kernelbox] (sys_kern1) at (9, 7.0) {Kernel: ipc\_entry\_sysenter};
+\node[kernelbox] (sys_kern2) at (9, 6.2) {Kernel: SAVE\_PROCESS\_CTX};
+\node[kernelbox] (sys_kern3) at (9, 5.4) {Kernel: do\_ipc()};
+
+% Return path
+\node[kernelbox] (sys_ret1) at (9, 4.5) {Kernel: restore context};
+\node[kernelbox] (sys_ret2) at (9, 3.7) {Kernel: Load EDX←EIP, ECX←ESP};
+\node[kernelbox] (sys_ret3) at (9, 2.9) {Kernel: STI (enable interrupts)};
+\node[hw] (sys_ret4) at (9, 2.1) {CPU: SYSEXIT instruction};
+\node[hw] (sys_ret5) at (9, 1.3) {CPU: CS←MSR+16, EIP←EDX};
+\node[hw] (sys_ret6) at (9, 0.5) {CPU: SS←MSR+24, ESP←ECX};
+\node[box] (sys_ret7) at (9, -0.3) {User: Resume (registers restored)};
+
+% Arrows
+\draw[flow] (sys_user1) -- (sys_user2);
+\draw[flow] (sys_user2) -- (sys_hw1);
+\draw[hwflow] (sys_hw1) -- (sys_hw2);
+\draw[hwflow] (sys_hw2) -- (sys_hw3);
+\draw[hwflow] (sys_hw3) -- (sys_hw4);
+\draw[hwflow] (sys_hw4) -- (sys_kern1);
+\draw[flow] (sys_kern1) -- (sys_kern2);
+\draw[flow] (sys_kern2) -- (sys_kern3);
+\draw[flow] (sys_kern3) -- (sys_ret1);
+\draw[flow] (sys_ret1) -- (sys_ret2);
+\draw[flow] (sys_ret2) -- (sys_ret3);
+\draw[flow] (sys_ret3) -- (sys_ret4);
+\draw[hwflow] (sys_ret4) -- (sys_ret5);
+\draw[hwflow] (sys_ret5) -- (sys_ret6);
+\draw[hwflow] (sys_ret6) -- (sys_ret7);
+
+% Cost annotations
+\node[label, secondarygreen] at (6.3, 10.0) {~5 cycles};
+\node[label, secondarygreen] at (6.3, 2.1) {~5 cycles};
+\node[label, font=\footnotesize\bfseries, secondarygreen] at (6.3, -0.3) {Total: ~40 cycles};
+
+%% RIGHT COLUMN: SYSCALL (AMD Fast)
+\node[section, font=\bfseries] at (15, 12.5) {SYSCALL (AMD Fast)};
+
+% User space
+\node[box] (amd_user1) at (15, 11.5) {User: Setup ECX=return\_EIP};
+\node[box] (amd_user2) at (15, 10.8) {User: SYSCALL instruction};
+
+% Hardware actions
+\node[hw] (amd_hw1) at (15, 10.0) {CPU: ECX ← EIP};
+\node[hw] (amd_hw2) at (15, 9.3) {CPU: R11 ← EFLAGS};
+\node[hw] (amd_hw3) at (15, 8.6) {CPU: Load CS from STAR MSR};
+\node[hw] (amd_hw4) at (15, 7.9) {CPU: Load EIP from LSTAR};
+\node[hw] (amd_hw5) at (15, 7.2) {CPU: Mask EFLAGS};
+
+% Kernel entry
+\node[kernelbox] (amd_kern1) at (15, 6.3) {Kernel: ipc\_entry\_syscall\_cpu*};
+\node[kernelbox] (amd_kern2) at (15, 5.5) {Kernel: swap ECX↔EDX};
+\node[kernelbox] (amd_kern3) at (15, 4.7) {Kernel: SAVE\_PROCESS\_CTX};
+\node[kernelbox] (amd_kern4) at (15, 3.9) {Kernel: do\_ipc()};
+
+% Return path
+\node[kernelbox] (amd_ret1) at (15, 3.0) {Kernel: restore context};
+\node[kernelbox] (amd_ret2) at (15, 2.2) {Kernel: swap EDX↔ECX (restore)};
+\node[hw] (amd_ret3) at (15, 1.4) {CPU: SYSRET instruction};
+\node[hw] (amd_ret4) at (15, 0.6) {CPU: EIP←ECX, EFLAGS←R11};
+\node[box] (amd_ret5) at (15, -0.2) {User: Resume};
+
+% Arrows
+\draw[flow] (amd_user1) -- (amd_user2);
+\draw[flow] (amd_user2) -- (amd_hw1);
+\draw[hwflow] (amd_hw1) -- (amd_hw2);
+\draw[hwflow] (amd_hw2) -- (amd_hw3);
+\draw[hwflow] (amd_hw3) -- (amd_hw4);
+\draw[hwflow] (amd_hw4) -- (amd_hw5);
+\draw[hwflow] (amd_hw5) -- (amd_kern1);
+\draw[flow] (amd_kern1) -- (amd_kern2);
+\draw[flow] (amd_kern2) -- (amd_kern3);
+\draw[flow] (amd_kern3) -- (amd_kern4);
+\draw[flow] (amd_kern4) -- (amd_ret1);
+\draw[flow] (amd_ret1) -- (amd_ret2);
+\draw[flow] (amd_ret2) -- (amd_ret3);
+\draw[hwflow] (amd_ret3) -- (amd_ret4);
+\draw[hwflow] (amd_ret4) -- (amd_ret5);
+
+% Cost annotations
+\node[label, secondarygreen] at (12.3, 10.0) {~5 cycles};
+\node[label, secondarygreen] at (12.3, 1.4) {~5 cycles};
+\node[label, font=\footnotesize\bfseries, secondarygreen] at (12.3, -0.2) {Total: ~35 cycles};
+
+% Legend
+\begin{scope}[on background layer]
+    \fill[primaryblue!5] (-0.5, 12) rectangle (18, -1);
+\end{scope}
+
+\node[font=\footnotesize\bfseries] at (1, -1.2) {Legend:};
+\node[box, minimum width=2cm] at (3, -1.2) {User Space};
+\node[hw, minimum width=2cm] at (6, -1.2) {CPU Hardware};
+\node[kernelbox, minimum width=2cm] at (9.5, -1.2) {Kernel Space};
+
+% Key differences box
+\node[rectangle, draw=accentorange, fill=accentorange!10, text width=10cm, align=left, font=\footnotesize] at (14.5, -2.2) {
+\textbf{Key Differences:}\\
+• INT: Full state save by hardware (slow but simple)\\
+• SYSENTER: No state save, user manages (fast, Intel-specific)\\
+• SYSCALL: Minimal state save to registers (fast, AMD/modern)\\
+• INT uses IDT, fast calls use MSRs (Model-Specific Registers)\\
+• SYSENTER requires STI before SYSEXIT (quirk)
+};
+
+% File references
+\node[font=\footnotesize, text=darkgray, align=left] at (3, -3.5) {
+\texttt{mpx.S:265} - INT entry\\
+\texttt{mpx.S:459} - IRET return
+};
+
+\node[font=\footnotesize, text=darkgray, align=left] at (9, -3.5) {
+\texttt{mpx.S:220} - SYSENTER entry\\
+\texttt{mpx.S:391-412} - SYSEXIT return
+};
+
+\node[font=\footnotesize, text=darkgray, align=left] at (15, -3.5) {
+\texttt{mpx.S:202-209} - SYSCALL entry\\
+\texttt{mpx.S:414-432} - SYSRET return
+};
+
+\end{tikzpicture}
+\end{document}

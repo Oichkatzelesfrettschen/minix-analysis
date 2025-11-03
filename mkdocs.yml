@@ -1,0 +1,239 @@
+# MkDocs Configuration for MINIX Analysis (CPU + Boot)
+# Project: MINIX CPU Interface Analysis + Boot Sequence Analysis
+# Version: 1.0.0
+# Date: 2025-10-30
+
+# Site Information
+site_name: MINIX Analysis Project
+site_description: Comprehensive documentation of MINIX 3.4.0-RC6 i386 architecture, CPU interface, system call mechanisms, boot sequence, and performance analysis
+site_author: Oaich (eirikr)
+site_url: https://eirikr.github.io/minix-analysis/
+
+# Repository
+repo_name: minix-cpu-analysis
+repo_url: https://github.com/eirikr/minix-cpu-analysis
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 Oaich. MINIX is a trademark of Vrije Universiteit Amsterdam.
+
+# Theme Configuration
+theme:
+  name: material
+  language: en
+
+  # Color Scheme (matches minix-styles.sty)
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  # Features
+  features:
+    - navigation.instant        # Instant loading (SPA)
+    - navigation.tracking       # Anchor tracking
+    - navigation.tabs           # Top-level tabs
+    - navigation.tabs.sticky    # Sticky tabs
+    - navigation.sections       # Sections in sidebar
+    - navigation.expand         # Expand sections by default
+    - navigation.indexes        # Section index pages
+    - navigation.top            # Back to top button
+    - search.suggest            # Search suggestions
+    - search.highlight          # Highlight search terms
+    - search.share              # Share search results
+    - toc.follow                # TOC follows scroll
+    - toc.integrate             # TOC integrated in sidebar
+    - content.code.copy         # Copy code button
+    - content.code.annotate     # Code annotations
+    - content.tabs.link         # Link content tabs
+
+  # Icons
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/chip
+
+# Plugins
+plugins:
+  - search:
+      lang: en
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+
+# Markdown Extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - meta
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+  # PyMdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      auto_append:
+        - includes/abbreviations.md
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+# Extra
+extra:
+  version:
+    provider: mike
+    default: latest
+
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/eirikr
+      name: GitHub Profile
+
+  analytics:
+    provider: google
+    property: !ENV [GOOGLE_ANALYTICS_KEY, ""]
+
+# Extra CSS/JS
+extra_css:
+  - stylesheets/extra.css
+  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css
+
+extra_javascript:
+  - javascripts/extra.js
+  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js
+  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js
+
+# Navigation Structure (Phase 2D: Updated for lowercase directories)
+nav:
+  - Home:
+      - index.md
+      - docs/index.md
+
+  - Documentation:
+      - Architecture: docs/architecture/README.md
+      - Analysis: docs/analysis/README.md
+      - Performance: docs/performance/README.md
+      - Examples: docs/examples/README.md
+      - MCP Tools: docs/mcp/README.md
+      - Audits: docs/audits/README.md
+      - Planning: docs/planning/README.md
+      - Standards: docs/standards/README.md
+
+  - CPU Interface Analysis:
+      - architecture/index.md
+      - i386 Architecture:
+          - architecture/i386/index.md
+          - Register Set: architecture/i386/registers.md
+          - Segmentation: architecture/i386/segmentation.md
+          - Privilege Levels: architecture/i386/privilege.md
+      - System Calls:
+          - architecture/syscalls/index.md
+          - INT (Legacy): architecture/syscalls/int.md
+          - SYSENTER (Intel): architecture/syscalls/sysenter.md
+          - SYSCALL (AMD): architecture/syscalls/syscall.md
+          - Performance Comparison: architecture/syscalls/comparison.md
+      - Memory Management:
+          - architecture/memory/index.md
+          - Virtual Addressing: architecture/memory/virtual-address.md
+          - 2-Level Paging: architecture/memory/paging.md
+          - Page Structures: architecture/memory/page-structures.md
+          - PSE & PAE: architecture/memory/pse-pae.md
+      - TLB Architecture:
+          - architecture/tlb/index.md
+          - TLB Types: architecture/tlb/types.md
+          - Operations: architecture/tlb/operations.md
+          - Context Switch Impact: architecture/tlb/context-switch.md
+
+  - Boot Sequence Analysis:
+      - boot/index.md
+      - Overview:
+          - boot/topology/index.md
+          - Hub-and-Spoke: boot/topology/hub-and-spoke.md
+          - DAG Structure: boot/topology/dag.md
+      - Boot Phases:
+          - boot/phases/index.md
+          - Phase 1 - Early Init: boot/phases/phase1-cstart.md
+          - Phase 2 - Process Init: boot/phases/phase2-proc.md
+          - Phase 3 - Memory Init: boot/phases/phase3-memory.md
+          - Phase 4 - System Init: boot/phases/phase4-system.md
+          - Phase 5 - Usermode: boot/phases/phase5-usermode.md
+      - Critical Path:
+          - boot/critical-path.md
+          - Timeline Analysis: boot/timeline.md
+          - Never-Return Functions: boot/never-return.md
+      - Metrics & Analysis:
+          - boot/metrics/index.md
+          - Call Graph Stats: boot/metrics/call-graph.md
+          - Performance: boot/metrics/performance.md
+      - Myths Debunked:
+          - boot/myths.md
+
+  - Diagrams:
+      - diagrams/index.md
+      - CPU Flow Diagrams:
+          - diagrams/cpu-flows.md
+          - Syscall Comparison: diagrams/syscall-comparison.md
+      - Memory Diagrams:
+          - diagrams/memory-arch.md
+          - Page Tables: diagrams/page-tables.md
+          - TLB Architecture: diagrams/tlb.md
+      - Performance Charts:
+          - diagrams/performance.md
+      - Boot Diagrams:
+          - diagrams/boot-topology.md
+          - diagrams/boot-phases.md
+
+  - Tutorials:
+      - tutorials/index.md
+      - Building MINIX: tutorials/building.md
+      - Debugging Syscalls: tutorials/debugging.md
+      - Using MCP Tools: tutorials/mcp.md
+      - Contributing: tutorials/contributing.md
+
+  - Reference:
+      - reference/index.md
+      - i386 Instructions: reference/instructions.md
+      - MSR Reference: reference/msrs.md
+      - Control Registers: reference/control-registers.md
+      - Glossary: reference/glossary.md

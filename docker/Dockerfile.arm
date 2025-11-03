@@ -1,0 +1,45 @@
+FROM ubuntu:22.04
+
+LABEL description="MINIX 3.4.0-RC6 ARM (earm) in Docker with QEMU"
+LABEL maintainer="MINIX Analysis Project"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install QEMU ARM and dependencies
+RUN apt-get update && apt-get install -y \
+    qemu-system-arm \
+    qemu-utils \
+    qemu-efi-arm \
+    curl \
+    wget \
+    openssh-client \
+    socat \
+    netcat-openbsd \
+    strace \
+    python3 \
+    python3-pip \
+    u-boot-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /minix-runtime
+
+RUN mkdir -p /measurements /data
+
+# For ARM, we'll need to either:
+# 1. Build MINIX ARM from source, or
+# 2. Use pre-built kernel/rootfs images
+# This is a placeholder that can be populated with ARM MINIX artifacts
+
+COPY run-qemu-arm.sh /minix-runtime/ 2>/dev/null || true
+RUN if [ -f /minix-runtime/run-qemu-arm.sh ]; then chmod +x /minix-runtime/run-qemu-arm.sh; fi
+
+COPY boot-profiler.py /minix-runtime/
+RUN chmod +x /minix-runtime/boot-profiler.py
+
+EXPOSE 5900 2222 9000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD qemu-system-arm --version || exit 1
+
+ENTRYPOINT ["/minix-runtime/run-qemu-arm.sh"]
+CMD []

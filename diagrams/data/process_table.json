@@ -1,0 +1,204 @@
+{
+  "process_states": [
+    {
+      "state": "RTS_SLOT_FREE",
+      "description": "process slot is free"
+    },
+    {
+      "state": "RTS_PROC_STOP",
+      "description": "process has been stopped"
+    },
+    {
+      "state": "RTS_SENDING",
+      "description": "process blocked trying to send"
+    },
+    {
+      "state": "RTS_RECEIVING",
+      "description": "process blocked trying to receive"
+    },
+    {
+      "state": "RTS_SIGNALED",
+      "description": "set when new kernel signal arrives"
+    },
+    {
+      "state": "RTS_SIG_PENDING",
+      "description": "unready while signal being processed"
+    },
+    {
+      "state": "RTS_P_STOP",
+      "description": "set when process is being traced"
+    },
+    {
+      "state": "RTS_NO_PRIV",
+      "description": "keep forked system process from running"
+    },
+    {
+      "state": "RTS_NO_ENDPOINT",
+      "description": "process cannot send or receive messages"
+    },
+    {
+      "state": "RTS_VMINHIBIT",
+      "description": "not scheduled until pagetable set by VM"
+    },
+    {
+      "state": "RTS_PAGEFAULT",
+      "description": "process has unhandled pagefault"
+    },
+    {
+      "state": "RTS_VMREQUEST",
+      "description": "originator of vm memory request"
+    },
+    {
+      "state": "RTS_VMREQTARGET",
+      "description": "target of vm memory request"
+    },
+    {
+      "state": "RTS_BOOTINHIBIT",
+      "description": "not ready until VM has made it"
+    }
+  ],
+  "process_fields": [
+    {
+      "type": "proc_nr_t",
+      "name": "p_nr"
+    },
+    {
+      "type": "char",
+      "name": "p_priority"
+    },
+    {
+      "type": "u64_t",
+      "name": "p_cpu_time_left"
+    },
+    {
+      "type": "unsigned",
+      "name": "p_quantum_size_ms"
+    },
+    {
+      "type": "unsigned",
+      "name": "p_cpu"
+    },
+    {
+      "type": "bitchunk_t",
+      "name": "p_cpu_mask"
+    },
+    {
+      "type": "bitchunk_t",
+      "name": "p_stale_tlb"
+    },
+    {
+      "type": "u64_t",
+      "name": "enter_queue"
+    },
+    {
+      "type": "u64_t",
+      "name": "time_in_queue"
+    },
+    {
+      "type": "clock_t",
+      "name": "p_dequeued"
+    },
+    {
+      "type": "clock_t",
+      "name": "p_user_time"
+    },
+    {
+      "type": "clock_t",
+      "name": "p_sys_time"
+    },
+    {
+      "type": "clock_t",
+      "name": "p_virt_left"
+    },
+    {
+      "type": "clock_t",
+      "name": "p_prof_left"
+    },
+    {
+      "type": "u64_t",
+      "name": "p_cycles"
+    },
+    {
+      "type": "u64_t",
+      "name": "p_kcall_cycles"
+    },
+    {
+      "type": "u64_t",
+      "name": "p_kipc_cycles"
+    },
+    {
+      "type": "u64_t",
+      "name": "p_tick_cycles"
+    },
+    {
+      "type": "endpoint_t",
+      "name": "p_getfrom_e"
+    },
+    {
+      "type": "endpoint_t",
+      "name": "p_sendto_e"
+    },
+    {
+      "type": "sigset_t",
+      "name": "p_pending"
+    },
+    {
+      "type": "char",
+      "name": "p_name"
+    },
+    {
+      "type": "endpoint_t",
+      "name": "p_endpoint"
+    },
+    {
+      "type": "message",
+      "name": "p_sendmsg"
+    },
+    {
+      "type": "message",
+      "name": "p_delivermsg"
+    },
+    {
+      "type": "vir_bytes",
+      "name": "p_delivermsg_vir"
+    },
+    {
+      "type": "int",
+      "name": "type"
+    },
+    {
+      "type": "message",
+      "name": "reqmsg"
+    },
+    {
+      "type": "int",
+      "name": "req_type"
+    },
+    {
+      "type": "endpoint_t",
+      "name": "target"
+    },
+    {
+      "type": "u8_t",
+      "name": "writeflag"
+    },
+    {
+      "type": "int",
+      "name": "vmresult"
+    },
+    {
+      "type": "int",
+      "name": "p_found"
+    },
+    {
+      "type": "int",
+      "name": "p_magic"
+    },
+    {
+      "type": "int",
+      "name": "p_schedules"
+    }
+  ],
+  "max_processes": null,
+  "scheduling_queues": []
+}

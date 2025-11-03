@@ -1,0 +1,195 @@
+% ===============================================================================
+% VISUAL ENHANCEMENT STYLES - COMPREHENSIVE DIAGRAM LIBRARY
+% ===============================================================================
+% Enhanced TikZ styles and diagram templates for comprehensive visualization
+% This file supplements preamble-unified.tex with expanded visual capabilities
+
+% ==============================================================================
+% ADDITIONAL TIKZ STYLES (Enhanced sizing and spacing)
+% ==============================================================================
+
+% Large component (for primary elements)
+\tikzstyle{largecomponent}=[
+    rectangle,
+    draw=minixpurple,
+    fill=minixpurple!15,
+    thick,
+    minimum width=3cm,
+    minimum height=1.5cm,
+    align=center,
+    text centered,
+    font=\small\bfseries,
+]
+
+% System boundary (enclosure)
+\tikzstyle{boundary}=[
+    rectangle,
+    draw=minixdark,
+    dashed,
+    thick,
+    fill=white,
+    text centered,
+]
+
+% Hardware component
+\tikzstyle{hardware}=[
+    rectangle,
+    draw=minixred,
+    fill=minixred!15,
+    thick,
+    minimum width=2.5cm,
+    minimum height=1.2cm,
+    align=center,
+    text centered,
+]
+
+% Memory layout
+\tikzstyle{memory}=[
+    rectangle,
+    draw=minixblue,
+    fill=minixblue!10,
+    thick,
+    minimum width=2cm,
+    minimum height=0.8cm,
+    align=center,
+    text centered,
+]
+
+% Active state
+\tikzstyle{active}=[
+    rectangle,
+    draw=accentgreen,
+    fill=accentgreen!25,
+    very thick,
+    line width=2pt,
+    minimum width=2.2cm,
+    minimum height=1.1cm,
+    align=center,
+    text centered,
+]
+
+% Inactive state
+\tikzstyle{inactive}=[
+    rectangle,
+    draw=accentgray,
+    fill=accentgray!15,
+    thick,
+    minimum width=2.2cm,
+    minimum height=1.1cm,
+    align=center,
+    text centered,
+]
+
+% Transition/action
+\tikzstyle{action}=[
+    rectangle,
+    draw=accentorange,
+    fill=accentorange!20,
+    thick,
+    minimum width=2cm,
+    minimum height=0.9cm,
+    rounded corners=3pt,
+    align=center,
+    text centered,
+]
+
+% Critical error
+\tikzstyle{error}=[
+    rectangle,
+    draw=minixred,
+    fill=minixred!25,
+    very thick,
+    minimum width=2cm,
+    minimum height=0.9cm,
+    align=center,
+    text centered,
+]
+
+% Warning state
+\tikzstyle{warning}=[
+    rectangle,
+    draw=accentorange,
+    fill=accentorange!25,
+    thick,
+    minimum width=2cm,
+    minimum height=0.9cm,
+    align=center,
+    text centered,
+]
+
+% Double arrow
+\tikzstyle{doublearrow}=[
+    thick,
+    <->,
+    >=stealth,
+    color=minixdark,
+]
+
+% Return/feedback arrow
+\tikzstyle{returnarrow}=[
+    thick,
+    <-,
+    >=stealth,
+    color=accentblue,
+    dashed,
+]
+
+% Thick connection
+\tikzstyle{thick-arrow}=[
+    very thick,
+    ->,
+    >=stealth,
+    color=minixdark,
+]
+
+% Cloud shape
+\tikzstyle{cloud}=[
+    cloud,
+    cloud puffs=10,
+    draw=minixblue,
+    fill=minixblue!20,
+    thick,
+    minimum width=2cm,
+    minimum height=1.5cm,
+]
+
+% ==============================================================================
+% REUSABLE DIAGRAM COMPONENTS (as macros)
+% ==============================================================================
+
+% CPU register diagram macro
+\newcommand{\drawCPURegister}[5]{
+    % #1: x position, #2: y position, #3: register name, #4: size, #5: content
+    \draw[black, thick] (#1,#2) rectangle (#1+#4,#2+0.6);
+    \node[anchor=west, inner sep=2pt] at (#1,#2+0.3) {{\scriptsize #3}};
+    \node[anchor=east, inner sep=2pt] at (#1+#4-2pt,#2+0.3) {{\tiny #5}};
+}
+
+% Memory block diagram macro
+\newcommand{\drawMemoryBlock}[6]{
+    % #1: x, #2: y, #3: height, #4: label, #5: color, #6: fill
+    \draw[#5, thick] (#1,#2) rectangle (#1+1.5,#2+#3);
+    \node[anchor=center] at (#1+0.75,#2+#3/2) {{\tiny #4}};
+    \fill[#6, opacity=0.3] (#1,#2) rectangle (#1+1.5,#2+#3);
+}
+
+% Process box macro
+\newcommand{\drawProcessBox}[4]{
+    % #1: x, #2: y, #3: name, #4: PID
+    \node[largecomponent] at (#1,#2) {#3 (PID: #4)};
+}
+
+% ==============================================================================
+% CAPTION STYLE ENHANCEMENTS
+% ==============================================================================
+
+\DeclareCaptionFormat{myformat}{%
+    \begin{minipage}{\textwidth}%
+    {\small\textbf{Figure \thefigure:} #3}%
+    \end{minipage}%
+}
+\captionsetup{format=myformat, margin=10pt}
+
+% ==============================================================================
+% END VISUAL ENHANCEMENT STYLES
+% ==============================================================================

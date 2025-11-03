@@ -1,0 +1,322 @@
+% minix-arxiv.sty
+% ArXiv Compliance Package for MINIX Analysis Papers
+% Ensures LaTeX documents meet ArXiv submission requirements
+% Version: 1.0.0
+% Date: 2025-10-30
+%
+% Usage: \usepackage{minix-arxiv}
+
+\ProvidesPackage{minix-arxiv}[2025/10/30 v1.0.0 MINIX Analysis ArXiv Compliance]
+
+% =============================================================================
+% ARXIV REQUIREMENTS
+% =============================================================================
+%
+% This package configures LaTeX documents to meet ArXiv standards:
+% 1. TeX Live 2023 compatibility
+% 2. Hyperlinks with colorlinks=true (REQUIRED by ArXiv)
+% 3. PDF metadata (title, author, keywords)
+% 4. Code listing styles
+% 5. Bibliography setup (use .bbl, not .bib)
+% 6. Figure formats (PDF only, no .eps)
+%
+% See ARXIV-STANDARDS.md for complete compliance guide.
+
+% =============================================================================
+% REQUIRED PACKAGES (ArXiv-Compatible)
+% =============================================================================
+
+% Font and encoding
+\RequirePackage[utf8]{inputenc}         % UTF-8 input encoding
+\RequirePackage[T1]{fontenc}            % T1 font encoding (better than OT1)
+
+% Optional: Modern fonts with fontspec (requires LuaLaTeX/XeLaTeX)
+% Uncomment and use lualatex or xelatex for custom fonts:
+%
+% \RequirePackage{fontspec}
+% \setmainfont{Spline Sans}[...]
+% \setsansfont{Spline Sans}[...]
+% \setmonofont{Spline Sans Mono}[...]
+% \RequirePackage{unicode-math}
+% \setmathfont{Latin Modern Math}
+%
+% For pdflatex (default), use Latin Modern fonts (high quality, built-in)
+\RequirePackage{lmodern}                % Latin Modern fonts (Computer Modern successor)
+
+% Page layout
+\RequirePackage[margin=1in]{geometry}   % Standard 1-inch margins
+
+% Mathematics
+\RequirePackage{amsmath}                % AMS math environments
+\RequirePackage{amssymb}                % AMS math symbols
+\RequirePackage{amsthm}                 % Theorem environments
+
+% Tables and lists
+\RequirePackage{booktabs}               % Professional table rules
+\RequirePackage{array}                  % Enhanced table columns
+\RequirePackage{multirow}               % Multi-row table cells
+\RequirePackage{longtable}              % Multi-page tables
+\RequirePackage{enumitem}               % Enhanced lists
+
+% Graphics and colors
+\RequirePackage{graphicx}               % Include graphics (PDF only!)
+\RequirePackage{xcolor}                 % Color support
+\RequirePackage{float}                  % Enhanced float placement
+
+% Cross-references
+\RequirePackage{cleveref}               % Intelligent cross-references
+
+% =============================================================================
+% HYPERLINKS (REQUIRED BY ARXIV)
+% =============================================================================
+%
+% ArXiv REQUIRES colorlinks=true. This is non-negotiable.
+% Color boxes around links are not acceptable.
+
+\RequirePackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,                    % REQUIRED: colored text, not boxes
+    linkcolor=blue,                     % Internal links (sections, equations)
+    citecolor=blue,                     % Citation links ([1], [2])
+    urlcolor=blue,                      % URLs (http://, mailto:)
+    filecolor=blue,                     % File links
+    pdfborder={0 0 0},                  % No border around links
+    breaklinks=true,                    % Allow links to break across lines
+    bookmarksnumbered=true,             % Number bookmarks in PDF viewer
+    pdfstartview=FitH,                  % Fit width when opening PDF
+    pdfpagemode=UseOutlines,            % Show bookmarks panel
+}
+
+% PDF metadata (should be set in main document with \hypersetup{pdftitle=...})
+% Example:
+% \hypersetup{
+%     pdftitle={MINIX CPU Interface Analysis},
+%     pdfauthor={Oaich},
+%     pdfsubject={Operating Systems, Microkernel Architecture},
+%     pdfkeywords={MINIX, i386, system calls, boot sequence}
+% }
+
+% =============================================================================
+% CODE LISTING STYLE (MINIX C Code)
+% =============================================================================
+
+\RequirePackage{listings}              % Source code listings
+
+% Define MINIX C code style
+\lstdefinestyle{minixcode}{
+    language=C,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black}\itshape,
+    stringstyle=\color{red},
+    identifierstyle=\color{black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=false,
+    frame=single,
+    rulecolor=\color{black!30},
+    backgroundcolor=\color{gray!5},
+    captionpos=b,
+    tabsize=4,
+    escapeinside={(*@}{@*)},            % LaTeX escape in code: (*@\textbf{foo}@*)
+    morekeywords={                      % MINIX-specific keywords
+        assert,
+        register,
+        EXTERN,
+        PRIVATE,
+        PUBLIC,
+        FORWARD,
+        endpoint_t,
+        vir_bytes,
+        phys_bytes
+    },
+    literate=                           % Pretty-print special characters
+        {->}{$\rightarrow$}{2}
+        {<-}{$\leftarrow$}{2}
+        {=>}{$\Rightarrow$}{2}
+}
+
+% Default code listing style
+\lstset{style=minixcode}
+
+% Assembly code style (for mpx.S, klib.S)
+\lstdefinestyle{minixasm}{
+    language=[x86masm]Assembler,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black}\itshape,
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{black!30},
+    backgroundcolor=\color{gray!5},
+    captionpos=b,
+    tabsize=8,
+    morekeywords={                      % i386 instructions
+        movl,
+        pushl,
+        popl,
+        iret,
+        sysenter,
+        sysexit,
+        syscall,
+        sysret,
+        lgdt,
+        lidt,
+        ltr,
+        invlpg,
+        sti,
+        cli,
+        hlt
+    }
+}
+
+% =============================================================================
+% ALGORITHM STYLE
+% =============================================================================
+
+\RequirePackage{algorithm}              % Algorithm float environment
+\RequirePackage{algpseudocode}          % Pseudocode typesetting
+
+% Configure algorithm appearance
+\algrenewcommand\algorithmicrequire{\textbf{Input:}}
+\algrenewcommand\algorithmicensure{\textbf{Output:}}
+
+% =============================================================================
+% BIBLIOGRAPHY SETUP
+% =============================================================================
+%
+% CRITICAL: ArXiv does NOT run BibTeX.
+% You must include the .bbl file, NOT the .bib file!
+%
+% Workflow:
+% 1. Write references in .bib file (locally)
+% 2. Compile: pdflatex -> bibtex -> pdflatex -> pdflatex
+% 3. This generates .bbl file
+% 4. Include .bbl in ArXiv submission, NOT .bib
+% 5. ArXiv will \input{main.bbl} directly
+%
+% See ARXIV-STANDARDS.md Section 3.2 for details.
+
+% Use natbib for citation management (ArXiv compatible)
+\RequirePackage[numbers,sort&compress]{natbib}
+
+% Bibliography style (choose one):
+% \bibliographystyle{plain}       % Basic numeric [1], [2]
+% \bibliographystyle{alpha}       % Author-year [Tan06]
+% \bibliographystyle{ieeetr}      % IEEE Transactions
+\bibliographystyle{plainnat}      % Plain with natbib support (recommended)
+
+% =============================================================================
+% FIGURE REQUIREMENTS
+% =============================================================================
+%
+% CRITICAL: ArXiv accepts PDF figures ONLY (no .eps).
+% Convert .eps to .pdf using epstopdf before submission.
+%
+% Example:
+% \includegraphics{figures/syscall-flow.pdf}  % Good
+% \includegraphics{figures/syscall-flow.eps}  % Bad (ArXiv rejects)
+%
+% Conversion:
+% $ epstopdf figures/syscall-flow.eps
+%
+% See ARXIV-STANDARDS.md Section 3.3 for details.
+
+% Set default graphics path (optional)
+% \graphicspath{{figures/}{plots/}}
+
+% =============================================================================
+% THEOREM ENVIRONMENTS
+% =============================================================================
+
+% Define common theorem-like environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{note}[theorem]{Note}
+
+% =============================================================================
+% DOCUMENT METADATA HELPER
+% =============================================================================
+
+% Command to easily set PDF metadata in main document
+\newcommand{\setpdfmetadata}[4]{%
+    \hypersetup{
+        pdftitle={#1},
+        pdfauthor={#2},
+        pdfsubject={#3},
+        pdfkeywords={#4}
+    }
+}
+
+% Usage in main document:
+% \setpdfmetadata{MINIX CPU Interface Analysis}{Oaich}{Operating Systems}{MINIX, i386, syscalls}
+
+% =============================================================================
+% ARXIV COMPLIANCE CHECKLIST
+% =============================================================================
+%
+% Before submitting to ArXiv, verify:
+%
+% [✓] 1. Document compiles with TeX Live 2023
+% [✓] 2. colorlinks=true in hyperref (this package enforces it)
+% [✓] 3. .bbl file included (NOT .bib)
+% [✓] 4. All figures are PDF (NOT .eps)
+% [✓] 5. Main .tex file at root of submission
+% [✓] 6. All style files (.sty) included
+% [✓] 7. No spaces in filenames
+% [✓] 8. No absolute paths in \includegraphics
+% [✓] 9. All fonts embedded (TeX Live default)
+% [✓] 10. PDF metadata set
+%
+% See ARXIV-STANDARDS.md for complete checklist.
+
+% =============================================================================
+% USAGE NOTES
+% =============================================================================
+%
+% To use this package in your MINIX analysis paper:
+%
+% \documentclass[11pt,a4paper]{article}
+% \usepackage{minix-colors}    % Load colors first
+% \usepackage{minix-arxiv}     % Then ArXiv compliance
+% \usepackage{tikz}            % TikZ for diagrams
+% \usepackage{pgfplots}        % PGFPlots for charts
+% \usepackage{minix-styles}    % Finally, MINIX diagram styles
+%
+% \setpdfmetadata{Your Title}{Your Name}{Subject}{Keywords}
+%
+% \begin{document}
+% ...
+% \end{document}
+%
+% Compile:
+% $ pdflatex paper.tex
+% $ bibtex paper
+% $ pdflatex paper.tex
+% $ pdflatex paper.tex
+%
+% For ArXiv:
+% $ ./scripts/create-arxiv-package.sh cpu-interface
+
+\endinput
+% End of minix-arxiv.sty

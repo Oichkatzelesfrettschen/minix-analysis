@@ -1,0 +1,257 @@
+{
+  "486": {
+    "cpu_type": "486",
+    "samples_count": 3,
+    "samples": [
+      {
+        "sample": 1,
+        "wall_clock_ms": 120011,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:27:55Z"
+      },
+      {
+        "sample": 2,
+        "wall_clock_ms": 120007,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:29:55Z"
+      },
+      {
+        "sample": 3,
+        "wall_clock_ms": 120006,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:31:55Z"
+      }
+    ],
+    "boot_success_rate": 1.0,
+    "wall_clock_ms": {
+      "values": [
+        120011,
+        120007,
+        120006
+      ],
+      "mean": 120008,
+      "stdev": 2.65,
+      "min": 120006,
+      "max": 120011
+    },
+    "serial_output_bytes": {
+      "values": [
+        7762,
+        7762,
+        7762
+      ],
+      "mean": 7762,
+      "stdev": 0.0,
+      "min": 7762,
+      "max": 7762,
+      "variance_percent": 0.0
+    }
+  },
+  "pentium": {
+    "cpu_type": "pentium",
+    "samples_count": 3,
+    "samples": [
+      {
+        "sample": 1,
+        "wall_clock_ms": 120007,
+        "serial_output_bytes": 7765,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:33:55Z"
+      },
+      {
+        "sample": 2,
+        "wall_clock_ms": 120006,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:35:55Z"
+      },
+      {
+        "sample": 3,
+        "wall_clock_ms": 120006,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:37:55Z"
+      }
+    ],
+    "boot_success_rate": 1.0,
+    "wall_clock_ms": {
+      "values": [
+        120007,
+        120006,
+        120006
+      ],
+      "mean": 120006.33,
+      "stdev": 0.58,
+      "min": 120006,
+      "max": 120007
+    },
+    "serial_output_bytes": {
+      "values": [
+        7765,
+        7762,
+        7762
+      ],
+      "mean": 7763,
+      "stdev": 1.73,
+      "min": 7762,
+      "max": 7765,
+      "variance_percent": 0.04
+    }
+  },
+  "pentium2": {
+    "cpu_type": "pentium2",
+    "samples_count": 3,
+    "samples": [
+      {
+        "sample": 1,
+        "wall_clock_ms": 120005,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:39:55Z"
+      },
+      {
+        "sample": 2,
+        "wall_clock_ms": 120007,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:41:55Z"
+      },
+      {
+        "sample": 3,
+        "wall_clock_ms": 120006,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:43:55Z"
+      }
+    ],
+    "boot_success_rate": 1.0,
+    "wall_clock_ms": {
+      "values": [
+        120005,
+        120007,
+        120006
+      ],
+      "mean": 120006,
+      "stdev": 1.0,
+      "min": 120005,
+      "max": 120007
+    },
+    "serial_output_bytes": {
+      "values": [
+        7762,
+        7762,
+        7762
+      ],
+      "mean": 7762,
+      "stdev": 0.0,
+      "min": 7762,
+      "max": 7762,
+      "variance_percent": 0.0
+    }
+  },
+  "pentium3": {
+    "cpu_type": "pentium3",
+    "samples_count": 3,
+    "samples": [
+      {
+        "sample": 1,
+        "wall_clock_ms": 120007,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:45:55Z"
+      },
+      {
+        "sample": 2,
+        "wall_clock_ms": 120007,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:47:55Z"
+      },
+      {
+        "sample": 3,
+        "wall_clock_ms": 120007,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:49:55Z"
+      }
+    ],
+    "boot_success_rate": 1.0,
+    "wall_clock_ms": {
+      "values": [
+        120007,
+        120007,
+        120007
+      ],
+      "mean": 120007,
+      "stdev": 0.0,
+      "min": 120007,
+      "max": 120007
+    },
+    "serial_output_bytes": {
+      "values": [
+        7762,
+        7762,
+        7762
+      ],
+      "mean": 7762,
+      "stdev": 0.0,
+      "min": 7762,
+      "max": 7762,
+      "variance_percent": 0.0
+    }
+  },
+  "core2duo": {
+    "cpu_type": "core2duo",
+    "samples_count": 3,
+    "samples": [
+      {
+        "sample": 1,
+        "wall_clock_ms": 120006,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:51:55Z"
+      },
+      {
+        "sample": 2,
+        "wall_clock_ms": 120007,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:53:55Z"
+      },
+      {
+        "sample": 3,
+        "wall_clock_ms": 120006,
+        "serial_output_bytes": 7762,
+        "boot_success": 1,
+        "timestamp": "2025-11-02T03:55:55Z"
+      }
+    ],
+    "boot_success_rate": 1.0,
+    "wall_clock_ms": {
+      "values": [
+        120006,
+        120007,
+        120006
+      ],
+      "mean": 120006.33,
+      "stdev": 0.58,
+      "min": 120006,
+      "max": 120007
+    },
+    "serial_output_bytes": {
+      "values": [
+        7762,
+        7762,
+        7762
+      ],
+      "mean": 7762,
+      "stdev": 0.0,
+      "min": 7762,
+      "max": 7762,
+      "variance_percent": 0.0
+    }
+  }
+}

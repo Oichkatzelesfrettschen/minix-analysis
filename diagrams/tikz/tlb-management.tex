@@ -1,0 +1,195 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathmorphing,backgrounds,shadows,fit}
+
+% Define colors
+\definecolor{primaryblue}{RGB}{0,102,204}
+\definecolor{secondarygreen}{RGB}{46,204,113}
+\definecolor{accentorange}{RGB}{255,127,0}
+\definecolor{warningred}{RGB}{231,76,60}
+\definecolor{lightgray}{RGB}{236,240,241}
+\definecolor{darkgray}{RGB}{52,73,94}
+
+\begin{document}
+\begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=2pt, draw=primaryblue, fill=primaryblue!15, minimum width=5cm, minimum height=0.7cm, font=\small, align=center},
+    hw/.style={rectangle, rounded corners=2pt, draw=warningred, fill=warningred!20, minimum width=5cm, minimum height=0.7cm, font=\small, align=center},
+    tlbentry/.style={rectangle, draw=darkgray, fill=yellow!15, minimum width=3cm, minimum height=0.5cm, font=\footnotesize\ttfamily, align=left},
+    operation/.style={rectangle, rounded corners=3pt, draw=secondarygreen, fill=secondarygreen!15, minimum width=5cm, minimum height=0.8cm, font=\small\bfseries, align=center},
+    arrow/.style={->, >=stealth, thick},
+    label/.style={font=\footnotesize}
+]
+
+% Title
+\node[font=\Large\bfseries] at (8, 17) {MINIX TLB Management Strategies};
+\node[font=\normalsize] at (8, 16.5) {Translation Lookaside Buffer: Selective INVLPG vs Full CR3 Flush};
+
+%% What is the TLB?
+\node[font=\bfseries\large, primaryblue] at (8, 15.5) {TLB (Translation Lookaside Buffer)};
+
+\node[rectangle, draw=primaryblue, fill=primaryblue!5, text width=14cm, align=left, font=\footnotesize] at (8, 14.3) {
+\textbf{Purpose:} Cache for virtual→physical address translations to avoid slow page table walks\\
+\textbf{Location:} Inside CPU, separate from L1/L2 cache\\
+\textbf{Size:} Typically 64-512 entries (architecture-dependent)\\
+\textbf{Structure:} Fully associative cache mapping {virtual page \#} → {physical page frame \# + flags}\\
+\textbf{Problem:} When page tables change, TLB entries become stale and MUST be invalidated
+};
+
+% TLB entry example
+\node[font=\bfseries] at (3, 12.8) {TLB Entry Example};
+\node[tlbentry] (tlb1) at (3, 12) {VPN: 0x08048 (virtual)};
+\node[tlbentry] (tlb2) at (3, 11.4) {PFN: 0x12345 (physical)};
+\node[tlbentry] (tlb3) at (3, 10.8) {Flags: R/W, User, Present};
+\node[tlbentry] (tlb4) at (3, 10.2) {Global: 0 (process-specific)};
+
+\node[font=\bfseries] at (13, 12.8) {TLB After Page Unmap};
+\node[tlbentry, fill=warningred!20] (tlb1_bad) at (13, 12) {VPN: 0x08048};
+\node[tlbentry, fill=warningred!20] (tlb2_bad) at (13, 11.4) {PFN: 0x12345 ← STALE!};
+\node[tlbentry, fill=warningred!20] (tlb3_bad) at (13, 10.8) {Flags: R/W... ← INVALID};
+\node[label, warningred, font=\bfseries] at (13, 9.9) {Must invalidate!};
+
+%% TWO STRATEGIES
+\node[font=\Large\bfseries, accentorange] at (8, 9) {Two Invalidation Strategies};
+
+%% LEFT: INVLPG (Selective)
+\node[font=\bfseries\large, secondarygreen] at (4, 8) {INVLPG (Selective Flush)};
+
+\node[operation] (invlpg_op) at (4, 7) {i386\_invlpg(vaddr)};
+
+\node[box] (invlpg1) at (4, 6.1) {Kernel: Unmap single page};
+\node[hw] (invlpg2) at (4, 5.3) {ASM: invlpg (\%eax)};
+\node[label, text width=4.5cm, align=left] at (7.3, 5.3) {
+    klib.S:549\\
+    Invalidate one entry
+};
+
+\node[hw] (invlpg3) at (4, 4.4) {CPU: Search TLB for vaddr};
+\node[hw] (invlpg4) at (4, 3.6) {CPU: Invalidate matching entry};
+\node[hw] (invlpg5) at (4, 2.8) {CPU: Leave other entries cached};
+
+\node[box, fill=secondarygreen!20] (invlpg_result) at (4, 1.9) {Result: 1 TLB entry flushed};
+
+% Cost
+\node[label, secondarygreen, font=\bfseries] at (4, 1.2) {Cost: ~1-3 cycles};
+\node[label] at (4, 0.7) {Fast for single pages};
+
+% Use cases
+\node[rectangle, draw=secondarygreen, fill=secondarygreen!10, text width=6.5cm, align=left, font=\footnotesize] at (4, -0.5) {
+\textbf{Use Cases:}\\
+• Unmapping single page (mprotect)\\
+• Page table entry modification\\
+• Lazy allocation (map on demand)\\
+• COW page replacement\\
+\\
+\textbf{Example:} VM server unmaps one page\\
+→ Kernel calls i386\_invlpg(addr)\\
+→ Only that page's TLB entry cleared
+};
+
+% Arrows
+\draw[arrow] (invlpg_op) -- (invlpg1);
+\draw[arrow] (invlpg1) -- (invlpg2);
+\draw[arrow, warningred] (invlpg2) -- (invlpg3);
+\draw[arrow, warningred] (invlpg3) -- (invlpg4);
+\draw[arrow, warningred] (invlpg4) -- (invlpg5);
+\draw[arrow] (invlpg5) -- (invlpg_result);
+
+%% RIGHT: CR3 Reload (Full Flush)
+\node[font=\bfseries\large, warningred] at (12, 8) {CR3 Reload (Full Flush)};
+
+\node[operation, fill=warningred!20, draw=warningred] (cr3_op) at (12, 7) {mov \%eax, \%cr3};
+
+\node[box] (cr3_1) at (12, 6.1) {Kernel: Context switch};
+\node[hw] (cr3_2) at (12, 5.3) {ASM: mov P\_CR3(\%edx), \%eax};
+\node[hw] (cr3_3) at (12, 4.5) {ASM: mov \%eax, \%cr3};
+\node[label, text width=4.5cm, align=left] at (8.5, 4.5) {
+    klib.S:618-621\\
+    Load new page directory
+};
+
+\node[hw, fill=warningred!30] (cr3_4) at (12, 3.6) {CPU: Flush ALL non-global TLB entries};
+\node[label, text width=4.5cm, align=right] at (15.5, 3.6) {
+    Except entries with\\
+    Global bit set
+};
+\node[hw] (cr3_5) at (12, 2.7) {CPU: Load new page directory base};
+\node[hw] (cr3_6) at (12, 1.9) {CPU: Next translation = miss};
+
+\node[box, fill=warningred!20] (cr3_result) at (12, 1.0) {Result: Entire TLB cleared};
+
+% Cost
+\node[label, warningred, font=\bfseries] at (12, 0.3) {Cost: ~100 cycles + refill penalty};
+\node[label] at (12, -0.2) {Expensive but necessary};
+
+% Use cases
+\node[rectangle, draw=warningred, fill=warningred!10, text width=6.5cm, align=left, font=\footnotesize] at (12, -1.3) {
+\textbf{Use Cases:}\\
+• Context switch (different address space)\\
+• Must flush all old process's mappings\\
+• No way to selectively flush by PID\\
+• Alternative: reload CR3 with same value\\
+\ \ (forces full flush without changing PD)\\
+\\
+\textbf{Example:} Switch Process A → B\\
+→ Load proc\_B.CR3 into CR3 register\\
+→ ALL of Process A's TLB entries cleared\\
+→ Process B starts with cold TLB
+};
+
+% Arrows
+\draw[arrow] (cr3_op) -- (cr3_1);
+\draw[arrow] (cr3_1) -- (cr3_2);
+\draw[arrow] (cr3_2) -- (cr3_3);
+\draw[arrow, warningred, line width=1.5pt] (cr3_3) -- (cr3_4);
+\draw[arrow, warningred] (cr3_4) -- (cr3_5);
+\draw[arrow, warningred] (cr3_5) -- (cr3_6);
+\draw[arrow] (cr3_6) -- (cr3_result);
+
+% Background
+\begin{scope}[on background layer]
+    \fill[lightgray!20] (0, 17.5) rectangle (16, -2.5);
+\end{scope}
+
+%% Performance Comparison
+\node[font=\bfseries\large, accentorange] at (8, -3) {Performance Impact};
+
+\node[rectangle, draw=accentorange, fill=accentorange!10, text width=15cm, align=left, font=\footnotesize] at (8, -4.8) {
+\textbf{TLB Miss Penalty:} If TLB entry not found, CPU must do page table walk:
+
+1. Read CR3 → get page directory base\\
+2. Index with top 10 bits of vaddr → read page directory entry (PDE) — \textit{1 memory access}\\
+3. Index with middle 10 bits → read page table entry (PTE) — \textit{1 memory access}\\
+4. Combine PTE's physical frame with offset → final physical address\\
+\textbf{Total: 2 extra memory accesses per TLB miss} (on x86 2-level paging)\\
+
+\textbf{Post-Context-Switch Penalty:}\\
+• Immediately after context switch, TLB is empty (all entries flushed)\\
+• Every memory access initially misses → triggers page walk\\
+• Typical workload: 64-512 misses before TLB warms up\\
+• Cost: 64 misses × (2 memory accesses) × (50 cycles/access) ≈ 6400 cycles overhead\\
+\textbf{This is why context switching is expensive in microkernels!}
+};
+
+% Optimization note
+\node[rectangle, draw=primaryblue, fill=primaryblue!10, text width=15cm, align=left, font=\footnotesize] at (8, -7) {
+\textbf{Optimization: Global Pages}\\
+Some page table entries have a "Global" bit set (e.g., kernel code/data shared across all processes).\\
+Global pages are NOT flushed on CR3 write, reducing post-switch TLB misses for kernel mappings.\\
+MINIX uses global pages for kernel text/data (if CPU supports PGE - Page Global Enable in CR4).
+};
+
+% File references
+\node[font=\footnotesize, text=darkgray, align=left] at (4, -8.2) {
+\texttt{klib.S:549} i386\_invlpg\\
+\texttt{arch\_do\_vmctl.c:56} VMCTL\_I386\_INVLPG\\
+\texttt{mpx.S:594-595} reload\_cr3 (force flush)
+};
+
+\node[font=\footnotesize, text=darkgray, align=left] at (12, -8.2) {
+\texttt{klib.S:618-621} CR3 conditional switch\\
+\texttt{memory.c} Page table management\\
+\texttt{archconst.h} I386\_VM\_PRESENT, PG\_G
+};
+
+\end{tikzpicture}
+\end{document}

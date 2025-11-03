@@ -1,0 +1,43 @@
+# ==============================================================================
+# LATEXMK CONFIGURATION FOR MINIX 3.4 WHITEPAPER
+# ==============================================================================
+# Reproducible build configuration for pdflatex + bibtex + TikZ externalization
+# Place this file in project root (or ~/.latexmkrc for global config)
+
+# PDF mode: 1 = pdflatex, 4 = lualatex, 5 = xelatex
+$pdf_mode = 1;
+
+# pdflatex command with TikZ externalization (-shell-escape)
+$pdflatex = 'pdflatex -interaction=nonstopmode -file-line-error -shell-escape %O %S';
+
+# Auxiliary directories (keep in root for bibtex compatibility)
+$out_dir = "";
+$aux_dir = "";
+
+# Output file naming
+$jobname = "master";
+
+# Silent mode (reduce log noise)
+$silent = 0;
+
+# Force recompilation on each run (disable incremental)
+$force_mode = 0;
+
+# File generation patterns (auto-cleaned by latexmk -C)
+@generated_exts = qw(
+  aux bbl blg fdb_latexmk fls lof lot toc out run.xml synctex.gz
+  acn acr alg glg glo gls glsdefs tdo tdof nav snm
+  auxlock dpth makefile xref
+);
+
+# Compile until no changes detected (usually 4-5 passes with bibtex)
+$max_repeat = 5;
+
+# Bibtex support (required for biblatex)
+$bibtex = 'bibtex %O %B';
+$bibtex_use = 2;  # 2 = run bibtex if .bib file newer than .bbl
+$bibtex_fudge = 1;  # Fix for latexmk bibtex integration
+
+# ==============================================================================
+# END LATEXMKRC
+# ==============================================================================

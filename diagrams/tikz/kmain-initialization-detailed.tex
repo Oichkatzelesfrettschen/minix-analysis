@@ -1,0 +1,388 @@
+\documentclass[tikz,border=10pt]{standalone}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc,backgrounds,fit,chains,decorations.pathreplacing}
+
+% MINIX TikZ style guide color palette
+\definecolor{primaryblue}{RGB}{41,128,185}
+\definecolor{secondarygreen}{RGB}{39,174,96}
+\definecolor{accentorange}{RGB}{230,126,34}
+\definecolor{warningred}{RGB}{192,57,43}
+\definecolor{lightgray}{RGB}{236,240,241}
+\definecolor{darkgray}{RGB}{52,73,94}
+
+\begin{document}
+\begin{tikzpicture}[
+    % Node styles
+    step/.style={rectangle, draw=accentorange, fill=accentorange!15, thick, minimum width=7cm, minimum height=0.8cm, font=\small, align=left},
+    substep/.style={rectangle, draw=primaryblue, fill=primaryblue!10, thick, minimum width=6.5cm, minimum height=0.7cm, font=\footnotesize, align=left},
+    data/.style={rectangle, draw=secondarygreen, fill=secondarygreen!10, thick, minimum width=4cm, minimum height=0.6cm, font=\footnotesize\ttfamily, align=left},
+    decision/.style={diamond, draw=warningred, fill=warningred!10, thick, minimum width=2cm, minimum height=1.5cm, font=\footnotesize, align=center, aspect=2},
+    label/.style={font=\small\bfseries, align=left},
+    arrow/.style={->, >=stealth, thick},
+    note/.style={font=\footnotesize\itshape, align=left, text=darkgray},
+    codebox/.style={rectangle, draw=darkgray, fill=lightgray!50, thick, font=\tiny\ttfamily, align=left},
+]
+
+% Title
+\node[font=\LARGE\bfseries] at (10, 23) {kmain() Initialization Detailed Flow};
+\node[font=\large] at (10, 22.2) {MINIX Kernel Bootstrap Process (main.c:115-328)};
+
+% Source reference
+\node[font=\footnotesize] at (10, 21.5) {\textbf{Source:} minix/kernel/main.c};
+
+% ============================================================================
+% LEFT COLUMN: Main kmain() flow
+% ============================================================================
+
+% Entry point
+\node[step, fill=warningred!20] (entry) at (5, 20.5) {
+\textbf{void kmain(kinfo\_t *local\_cbi)} \hfill \textit{main.c:115}\\
+Entry from bootloader (EBX = multiboot info)
+};
+
+% BSS sanity check
+\node[step] (bss_check) at (5, 19.5) {
+1. BSS Sanity Check \hfill \textit{main.c:123-125}\\
+assert(bss\_test == 0); bss\_test = 1;
+};
+
+\draw[arrow] (entry) -- (bss_check);
+
+% Copy boot parameters
+\node[step] (copy_params) at (5, 18.5) {
+2. Copy Boot Parameters \hfill \textit{main.c:128-129}\\
+memcpy(\&kinfo, local\_cbi, sizeof(kinfo));
+};
+
+\draw[arrow] (bss_check) -- (copy_params);
+
+% cstart()
+\node[step] (cstart) at (5, 17.5) {
+3. \textbf{cstart()} - Low-level Init \hfill \textit{main.c:147}
+};
+
+\draw[arrow] (copy_params) -- (cstart);
+
+% BKL_LOCK()
+\node[step] (bkl) at (5, 16.5) {
+4. BKL\_LOCK() \hfill \textit{main.c:149}\\
+Acquire Big Kernel Lock (SMP safety)
+};
+
+\draw[arrow] (cstart) -- (bkl);
+
+% proc_init()
+\node[step] (proc_init) at (5, 15.5) {
+5. \textbf{proc\_init()} \hfill \textit{main.c:157}\\
+Clear process table, set up mappings
+};
+
+\draw[arrow] (bkl) -- (proc_init);
+
+% IPCF_POOL_INIT()
+\node[step] (ipcf) at (5, 14.5) {
+6. IPCF\_POOL\_INIT() \hfill \textit{main.c:158}\\
+Initialize IPC filter pool
+};
+
+\draw[arrow] (proc_init) -- (ipcf);
+
+% Boot modules check
+\node[decision] (boot_check) at (5, 13.2) {Module\\count\\match?};
+
+\draw[arrow] (ipcf) -- (boot_check);
+
+\node[step, fill=warningred!20, minimum width=3cm] (panic) at (1, 13.2) {
+\textbf{panic()}\\
+Boot error
+};
+
+\draw[arrow] (boot_check) -- node[above, font=\tiny] {No} (panic);
+
+% Boot image loop
+\node[step] (boot_loop) at (5, 11.8) {
+7. Boot Image Loop \hfill \textit{main.c:165-272}\\
+for (i=0; i < NR\_BOOT\_PROCS; ++i)
+};
+
+\draw[arrow] (boot_check) -- node[right, font=\tiny] {Yes} (boot_loop);
+
+% Set up process
+\node[substep] (setup_proc) at (5, 10.8) {
+• Get process attributes: ip = \&image[i]\\
+• Get process pointer: rp = proc\_addr(ip->proc\_nr)\\
+• Copy name (tasks only), set endpoint
+};
+
+\draw[arrow] (boot_loop) -- (setup_proc);
+
+% Privilege assignment
+\node[decision] (sched_check) at (5, 9.3) {Kernel\\task or\\VM?};
+
+\draw[arrow] (setup_proc) -- (sched_check);
+
+% Set privileges
+\node[substep] (set_priv) at (5, 7.9) {
+\textbf{get\_priv(rp, static\_priv\_id(proc\_nr))}\\
+• Set s\_flags (TSK\_F, VM\_F, RSYS\_F)\\
+• Set s\_trap\_mask (allowed traps)\\
+• fill\_sendto\_mask (IPC targets)\\
+• Set kernel call mask
+};
+
+\draw[arrow] (sched_check) -- node[right, font=\tiny] {Yes} (set_priv);
+
+% No privilege
+\node[substep, fill=warningred!10] (no_priv) at (2, 7.9) {
+RTS\_SET(rp,\\
+RTS\_NO\_PRIV |\\
+RTS\_NO\_QUANTUM)
+};
+
+\draw[arrow] (sched_check) -- node[above, font=\tiny] {No} (no_priv);
+
+% Arch boot
+\node[substep] (arch_boot) at (5, 6.7) {
+\textbf{arch\_boot\_proc(ip, rp)} \hfill \textit{main.c:257}\\
+Architecture-specific process setup
+};
+
+\draw[arrow] (set_priv) -- (arch_boot);
+\draw[arrow] (no_priv) |- (arch_boot);
+
+% Set RTS flags
+\node[substep] (rts_flags) at (5, 5.7) {
+• rp->p\_rts\_flags |= RTS\_VMINHIBIT (if not VM)\\
+• rp->p\_rts\_flags |= RTS\_BOOTINHIBIT\\
+• rp->p\_rts\_flags |= RTS\_PROC\_STOP\\
+• rp->p\_rts\_flags \&= \textasciitilde RTS\_SLOT\_FREE
+};
+
+\draw[arrow] (arch_boot) -- (rts_flags);
+
+% End loop
+\node[step] (end_loop) at (5, 4.5) {
+End loop (all boot processes initialized)
+};
+
+\draw[arrow] (rts_flags) -- (end_loop);
+
+% arch_post_init()
+\node[step] (arch_post) at (5, 3.5) {
+8. \textbf{arch\_post\_init()} \hfill \textit{main.c:283}\\
+Architecture-specific post-initialization
+};
+
+\draw[arrow] (end_loop) -- (arch_post);
+
+% Register IPC names
+\node[step] (ipc_names) at (5, 2.5) {
+9. Register IPC Call Names \hfill \textit{main.c:285-290}\\
+IPCNAME(SEND), IPCNAME(RECEIVE), etc.
+};
+
+\draw[arrow] (arch_post) -- (ipc_names);
+
+% memory_init() and system_init()
+\node[step] (sys_init) at (5, 1.5) {
+10. \textbf{memory\_init() + system\_init()} \hfill \textit{main.c:293-296}\\
+Initialize memory subsystem and system processes
+};
+
+\draw[arrow] (ipc_names) -- (sys_init);
+
+% add_memmap()
+\node[step] (add_mem) at (5, 0.5) {
+11. \textbf{add\_memmap()} \hfill \textit{main.c:301}\\
+Free bootstrap memory to allocator
+};
+
+\draw[arrow] (sys_init) -- (add_mem);
+
+% SMP check
+\node[decision] (smp_check) at (5, -0.8) {CONFIG\\\_SMP?};
+
+\draw[arrow] (add_mem) -- (smp_check);
+
+% SMP init
+\node[substep] (smp_init) at (3, -2.2) {
+\textbf{smp\_init()}\\
+Initialize all CPUs
+};
+
+\draw[arrow] (smp_check) -- node[left, font=\tiny] {Yes} (smp_init);
+
+% bsp_finish_booting()
+\node[step, fill=secondarygreen!20] (bsp_finish) at (5, -3.5) {
+12. \textbf{bsp\_finish\_booting()} \hfill \textit{main.c:316/324}\\
+Final boot steps, switch to Ring 3
+};
+
+\draw[arrow] (smp_check) -- node[right, font=\tiny] {No} (bsp_finish);
+\draw[arrow] (smp_init) |- (bsp_finish);
+
+% NOT_REACHABLE
+\node[step, fill=warningred!20] (not_reach) at (5, -4.5) {
+\textbf{NOT\_REACHABLE;} \hfill \textit{main.c:327}\\
+kmain() never returns
+};
+
+\draw[arrow] (bsp_finish) -- (not_reach);
+
+% ============================================================================
+% RIGHT COLUMN: cstart() detail
+% ============================================================================
+
+\node[label] at (15, 20.5) {\textbf{cstart() Details} (main.c:403-475)};
+
+\node[codebox, minimum width=8cm] (cstart_code) at (15, 18.5) {
+// Low-level initialization\\
+void cstart(void) \{\\
+\ \ /* Segment setup */\\
+\ \ prot\_init(); \ \ \ \ \ \ \ \ \ \ \ \  // GDT, IDT, TSS\\
+\\
+\ \ /* Boot verbosity */\\
+\ \ verboseboot = atoi(env\_get(VERBOSEBOOTVARNAME));\\
+\\
+\ \ /* Clock initialization */\\
+\ \ init\_clock();\\
+\\
+\ \ /* Get user stack/data limits */\\
+\ \ kinfo.user\_sp = USR\_STACKTOP\_COMPACT;\\
+\ \ kinfo.user\_end = USR\_DATATOP\_COMPACT;\\
+\\
+\ \ /* Record system info */\\
+\ \ kinfo.nr\_procs = NR\_PROCS;\\
+\ \ kinfo.nr\_tasks = NR\_TASKS;\\
+\ \ strlcpy(kinfo.release, OS\_RELEASE, ...);\\
+\\
+\ \ /* Check APIC/SMP config */\\
+\ \ config\_no\_apic = atoi(env\_get("no\_apic"));\\
+\ \ config\_no\_smp = atoi(env\_get("no\_smp"));\\
+\\
+\ \ /* Initialize interrupt handling */\\
+\ \ intr\_init(0);\\
+\\
+\ \ /* Architecture-specific init */\\
+\ \ arch\_init();\\
+\}
+};
+
+% ============================================================================
+% RIGHT COLUMN: bsp_finish_booting() detail
+% ============================================================================
+
+\node[label] at (15, 3.5) {\textbf{bsp\_finish\_booting()} (main.c:38-109)};
+
+\node[codebox, minimum width=8cm] (bsp_code) at (15, 0) {
+void bsp\_finish\_booting(void) \{\\
+\ \ /* Identify CPU features */\\
+\ \ cpu\_identify(); \ \ \ \ \ \ \ \ \ \ \ \ \ // CPUID detection\\
+\\
+\ \ /* VM not running yet */\\
+\ \ vm\_running = 0;\\
+\\
+\ \ /* Setup random number generator */\\
+\ \ krandom.random\_sources = RANDOM\_SOURCES;\\
+\\
+\ \ /* Set current process pointer to idle */\\
+\ \ proc\_ptr = \&idle\_proc;\\
+\ \ bill\_ptr = \&idle\_proc;\\
+\\
+\ \ /* Print startup banner */\\
+\ \ announce(); \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ // "MINIX 3.4.0 ..."\\
+\\
+\ \ /* Unblock boot processes */\\
+\ \ for (i=0; i < NR\_BOOT\_PROCS - NR\_TASKS; i++)\\
+\ \ \ \ RTS\_UNSET(proc\_addr(i), RTS\_PROC\_STOP);\\
+\\
+\ \ /* Initialize CPU accounting */\\
+\ \ cycles\_accounting\_init();\\
+\\
+\ \ /* Start timer interrupts */\\
+\ \ boot\_cpu\_init\_timer(system\_hz);\\
+\\
+\ \ /* Initialize FPU */\\
+\ \ fpu\_init();\\
+\\
+\ \ /* Set SMP flags */\\
+\ \ cpu\_set\_flag(bsp\_cpu\_id, CPU\_IS\_READY);\\
+\\
+\ \ /* Kernel can no longer allocate */\\
+\ \ kernel\_may\_alloc = 0;\\
+\\
+\ \ /* \textbf{CRITICAL: Switch to Ring 3} */\\
+\ \ switch\_to\_user(); \ \ \ \ \ \ \ \ \ \ \ // Never returns\\
+\ \ NOT\_REACHABLE;\\
+\}
+};
+
+% ============================================================================
+% Data Structures (Top Right)
+% ============================================================================
+
+\node[label] at (15, 13) {\textbf{Key Data Structures}};
+
+\node[data] (kinfo_struct) at (15, 12.2) {
+kinfo\_t kinfo\\
+• boot params\\
+• memory map\\
+• boot modules
+};
+
+\node[data] (proc_table) at (15, 11.3) {
+proc[] table\\
+• NR\_PROCS entries\\
+• Process metadata
+};
+
+\node[data] (boot_image) at (15, 10.4) {
+boot\_image[]\\
+• Kernel tasks\\
+• System servers\\
+• Drivers
+};
+
+\node[data] (priv_table) at (15, 9.5) {
+priv[] table\\
+• Privilege structs\\
+• IPC permissions
+};
+
+% ============================================================================
+% Process States (Bottom Right)
+% ============================================================================
+
+\node[label] at (15, -2) {\textbf{Process RTS Flags}};
+
+\node[note, text width=7cm] at (15, -3.2) {
+RTS\_SLOT\_FREE - slot unused\\
+RTS\_PROC\_STOP - process stopped\\
+RTS\_NO\_PRIV - no privileges assigned\\
+RTS\_NO\_QUANTUM - no CPU time\\
+RTS\_VMINHIBIT - wait for VM pagetable\\
+RTS\_BOOTINHIBIT - wait for boot completion
+};
+
+% Background zones
+\begin{pgfonlayer}{background}
+    % Main kmain flow
+    \node[fill=accentorange!5, rounded corners, fit=(entry) (not_reach)] {};
+
+    % cstart detail
+    \node[fill=primaryblue!5, rounded corners, fit=(cstart_code)] {};
+
+    % bsp_finish_booting detail
+    \node[fill=secondarygreen!5, rounded corners, fit=(bsp_code)] {};
+
+    % Data structures
+    \node[fill=lightgray, rounded corners, fit=(kinfo_struct) (priv_table)] {};
+\end{pgfonlayer}
+
+% Timeline marker
+\draw[decorate, decoration={brace, amplitude=8pt}]
+    (0.5, 20.5) -- (0.5, -4.5) node[midway, left=10pt, align=center, font=\footnotesize\bfseries, rotate=90] {Boot Time: 50-200 ms};
+
+\end{tikzpicture}
+\end{document}

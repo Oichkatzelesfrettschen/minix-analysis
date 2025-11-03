@@ -1,0 +1,58 @@
+================================================================================
+QEMU TIMING ARCHITECTURE: QUICK REFERENCE CARD
+================================================================================
+
+THE FORMULA (Non-negotiable):
+  QEMU_CLOCK_VIRTUAL = instruction_count << 3
+  1 instruction = 8 nanoseconds
+  125 million instructions = 1 second
+
+THE PARADOX:
+  Q: Why can't we speed up simulation?
+  A: Because cycle count defines virtual time. Impossible to execute N 
+     instructions and claim they only took M < N seconds.
+
+THE THREE CONSTRAINTS (Coupled, cannot decouple):
+  1. Instruction counting MUST be exact
+  2. Timer sync DEPENDS on exact icount
+  3. I/O MUST happen at known icount
+
+WHY 180 SECONDS:
+  60% Translation overhead (JIT)
+  30% Instruction execution
+  8%  Icount management
+  2%  Device model overhead
+  
+  KEY: Icount is only 8% overhead. Translation (60%) is the bottleneck.
+
+WHAT YOU CAN DO:
+  A) Full accuracy (180s)      - exact counts, deterministic
+  B) Sampling (10-20s)         - statistical, 10x faster
+  C) Record/Replay (10s)       - deterministic baseline
+  D) Hybrid (30-50s)           - focus on critical phase
+  E) Instrumentation (30-50s)  - per-region budgets
+  F) KVM (5s)                  - native speed, no icount
+
+RECOMMENDATION:
+  Use Option C (Record once at 180s, replay at 10s for testing)
+
+DO NOT:
+  - Try to decouple icount from timing (impossible)
+  - Expect faster profiling that keeps same cycle counts
+  - Use QEMU without icount for cycle profiling
+  - Mix icount with KVM (forbidden)
+
+KEY INSIGHT:
+  The 180 seconds is correct. This is the cost of instruction-accurate
+  profiling. Accept it, work within it, optimize alternatives.
+
+DOCUMENTATION:
+  QEMU_TIMING_ARCHITECTURE_REPORT.md   (comprehensive)
+  TIMING_ANALYSIS_SUMMARY.txt           (overview)
+  TIMING_ARCHITECTURE_DIAGRAMS.txt      (visual)
+  TIMING_RESEARCH_INDEX.md              (navigation)
+  QUICK_REFERENCE.txt                   (this file)
+
+================================================================================
+END QUICK REFERENCE
+================================================================================

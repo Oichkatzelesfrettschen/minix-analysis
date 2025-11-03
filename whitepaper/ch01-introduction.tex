@@ -1,0 +1,482 @@
+% ===============================================================================
+% CHAPTER 1: INTRODUCTION AND MOTIVATION
+% ===============================================================================
+
+\chapter{Introduction and Motivation}
+
+\begin{quote}
+\textit{In 1977, John Lions created something unprecedented: not just an operating system, but a window into design \textit{thinking}. His line-by-line annotations of UNIX v6 explained why each choice existed, what alternatives were rejected, and what hardware constraints forced each decision. Forty-eight years later, this whitepaper applies Lions' legendary pedagogical approach to MINIX 3.4, transforming boot analysis from isolated facts into design wisdom.}
+\end{quote}
+
+\section{The Lions Pedagogical Tradition and Its Absence}
+
+\subsection{What Made Lions' Work Legendary}
+
+In 1977, John Lions did something no one had done before: he annotated an entire operating system kernel line-by-line, explaining not \textit{what} each code segment did, but \textit{why} it existed. His commentary on UNIX v6 revealed:
+
+\begin{itemize}
+\item \textbf{Design Rationale:} Why each architectural choice was made
+\item \textbf{Rejected Alternatives:} What other designs were considered and rejected
+\item \textbf{Hardware Constraints:} How PDP-11 CPU capabilities forced decisions
+\item \textbf{Trade-offs:} What benefits were gained and what costs were paid
+\item \textbf{Deeper Principles:} How specific decisions embodied broader OS wisdom
+\end{itemize}
+
+This transformed OS study from memorizing code into understanding \textit{design thinking}. Lions' work became the standard reference for OS education, cited by Linus Torvalds and taught in university courses worldwide. Forty-eight years later, it remains in print—unprecedented for a technical book.
+
+\subsection{The Modern Absence of Lions-Style Pedagogy}
+
+Yet paradoxically, Lions' approach has nearly vanished from modern OS education. Today's students encounter:
+
+\begin{description}
+\item[Textbook Abstractions:] Generic algorithms without connection to real systems
+\item[Production Systems:] Linux source code, but millions of lines with no pedagogical guidance
+\item[Isolated Facts:] Boot sequences, syscall tables, page tables—disconnected from design wisdom
+\item[Reverse Engineering:] Deducing \textit{why} from code, without explanatory framework
+\end{description}
+
+The critical gap: few resources explain OS \textit{design thinking} grounded in actual code and real hardware constraints.
+
+\subsection{MINIX's Unique Pedagogical Position}
+
+MINIX 3.4 occupies a rare position:
+
+\begin{itemize}
+\item \textbf{Comprehensible:} Kernel is only 95 KB (vs. Linux 20+ MB)
+\item \textbf{Microkernel:} Architecture exposes design principles clearly
+\item \textbf{Real Hardware:} Boots on actual x86-64 systems, not just simulation
+\item \textbf{Educational Origin:} Tanenbaum designed it explicitly for learning
+\item \textbf{Modern Relevance:} Practical lessons apply to contemporary system design
+\end{itemize}
+
+Unlike Linux (optimized for production) or toy systems (too simplified), MINIX balances pedagogical clarity with realistic complexity. Its microkernel architecture exposes the principles of system design in ways monolithic kernels obscure.
+
+\keyinsight{This whitepaper revives Lions' approach by analyzing MINIX 3.4 not as isolated facts, but as design wisdom. We ask: \textit{Why does the boot sequence have seven phases, not three or fifteen? What hardware constraints force this choice? What architectural principle does this embody?}}
+
+
+\subsection{Why Microkernel Architecture Reveals Design Wisdom}
+
+This whitepaper focuses on microkernel architecture because it exposes design \textit{principles} in ways monolithic systems obscure. Consider these design questions:
+
+\begin{description}
+\item[Fault Isolation:] \textit{Why} isolate drivers in user space? What's the reliability benefit? What's the performance cost?
+\item[Minimal Kernel:] \textit{Why} keep the kernel to 95 KB instead of 100 MB? What drives this choice?
+\item[Message Passing:] \textit{Why} use synchronous message IPC instead of shared memory? What determinism advantage exists?
+\item[Service Independence:] \textit{Why} start services in specific order during boot? What dependencies exist?
+\item[Architectural Boundaries:] \textit{Why} do privilege separation and recovery depend on user-space isolation?
+\end{description}
+
+Each question reveals deeper architectural wisdom: design choices that seem arbitrary actually reflect deep principles about reliability, security, and comprehensibility.
+
+The microkernel philosophy is illustrated in Figure~\ref{fig:microkernel-overview}, which contrasts the minimal kernel responsibility model with the distributed service architecture. But the figure alone teaches facts; this whitepaper teaches \textit{why the architecture is organized this way}.
+
+\keyinsight{The microkernel approach is pedagogically powerful because each design decision creates a visible boundary that forces explicit questioning: Why is the kernel/service split here and not elsewhere?}
+
+\begin{figure}[!htbp]
+\centering
+\begin{tikzpicture}[scale=1.1]
+    % Hardware layer
+    \node[hardware] (hw) at (5, 0.5) {CPU/Memory Hardware};
+
+    % Microkernel (core)
+    \node[kernel] (mkernel) at (5, 2) {Microkernel\\(Process Management, IPC, Scheduling)};
+    \draw[thick, minixdark] (5, 1.5) rectangle (8.5, 2.5);
+
+    % User-space services
+    \node[userspace] (fs) at (1.5, 4) {File System\\Server};
+    \node[userspace] (vm) at (3.5, 4) {Virtual Memory\\Server};
+    \node[userspace] (dev) at (5.5, 4) {Device Driver\\Server};
+    \node[userspace] (net) at (7.5, 4) {Network\\Server};
+
+    % Applications
+    \node[component] (app1) at (1, 6) {Application 1};
+    \node[component] (app2) at (3, 6) {Application 2};
+    \node[component] (app3) at (5, 6) {Application 3};
+    \node[component] (app4) at (7, 6) {Application 4};
+
+    % System boundary
+    \draw[dashed, thick, minixdark] (0.3, 3.3) rectangle (8.7, 4.7);
+    \node[anchor=north, font=\small\bfseries] at (8.7, 4.5) {User Space};
+
+    \draw[dashed, thick, minixdark] (3.8, 1.3) rectangle (6.2, 2.7);
+    \node[anchor=north, font=\small\bfseries] at (6.2, 2.5) {Kernel Space};
+
+    % Connections - IPC arrows
+    \draw[arrow] (fs) -- (mkernel);
+    \draw[arrow] (vm) -- (mkernel);
+    \draw[arrow] (dev) -- (mkernel);
+    \draw[arrow] (net) -- (mkernel);
+
+    % App to service arrows
+    \draw[arrow] (app1) -- (fs);
+    \draw[arrow] (app2) -- (vm);
+    \draw[arrow] (app3) -- (dev);
+    \draw[arrow] (app4) -- (net);
+
+    % Kernel to hardware
+    \draw[arrow] (mkernel) -- (hw);
+
+    % Isolation bubbles (dashed boundaries around each service)
+    \draw[dashed, accentgreen, line width=1pt] (0.7, 3.5) rectangle (2.3, 4.5);
+    \draw[dashed, accentgreen, line width=1pt] (2.7, 3.5) rectangle (4.3, 4.5);
+    \draw[dashed, accentgreen, line width=1pt] (4.7, 3.5) rectangle (6.3, 4.5);
+    \draw[dashed, accentgreen, line width=1pt] (6.7, 3.5) rectangle (8.3, 4.5);
+\end{tikzpicture}
+\caption{MINIX 3.4 Microkernel Architecture Overview. The minimal kernel manages only process scheduling, IPC, and memory protection. All system services (file system, virtual memory, device drivers, network) run as isolated user-space processes. Fault in any service cannot crash the kernel or other services. Each service communicates via message-based IPC.}
+\label{fig:microkernel-overview}
+\end{figure}
+
+\subsection{The Gap: Facts Without Wisdom}
+
+Previous MINIX materials fall into two categories:
+
+\begin{description}
+\item[Technical Books:] Tanenbaum's textbooks explain concepts abstractly, with pseudocode examples
+\item[Source Code:] Direct source reading offers details but requires reverse-engineering intent
+\end{description}
+
+Both approaches leave the same gap: students memorize facts without understanding \textit{why} systems are designed this way. They learn \textit{what} the boot sequence does, but not \textit{why seven phases were chosen over alternatives}. They see syscall tables, but not \textit{why three mechanisms coexist} and \textit{what trade-offs each makes}.
+
+\subsubsection{What This Whitepaper Uniquely Provides}
+
+This whitepaper bridges the gap through three innovations:
+
+\begin{enumerate}
+\item \textbf{Lions-Style Commentary:} Design rationale grounded in real code, real hardware constraints, and architectural principles. Each major decision is analyzed through questions: Why this choice? What alternatives were rejected? What hardware forces this?
+
+\item \textbf{Empirical Grounding:} Measurements from actual boot sequences, error frequencies, and latency comparisons. Facts are documented, not asserted. Readers see actual cycle counts, actual boot timelines, actual failure patterns.
+
+\item \textbf{Tool-Driven Integration:} Automated error detection, MCP integration for system observability, and reproducible measurement frameworks. Learning is connected to modern development practices.
+\end{enumerate}
+
+Result: A comprehensive resource where students learn \textit{how to think} about OS design decisions, not just \textit{what facts to memorize}.
+
+\section{Research Objectives: Design Thinking, Not Just Facts}
+
+We undertook this work with one overarching goal: \textit{teach how to think about OS design decisions}, grounded in MINIX 3.4 and the Lions pedagogical tradition.
+
+\subsection{Primary Objective: Lions-Style Design Explanation}
+
+\textbf{Explain MINIX boot and error handling through design rationale exploration.}
+
+Rather than presenting isolated facts, we guide readers through design \textit{thinking}:
+
+\begin{itemize}
+\item \textbf{Question Phase:} Pose genuine design questions that reflect real uncertainty
+   \begin{itemize}
+   \item \textit{Why} does boot have seven phases, not three or fifteen?
+   \item \textit{Why} do three syscall mechanisms coexist?
+   \item \textit{Why} is error recovery delegated to user-space services?
+   \end{itemize}
+
+\item \textbf{Alternative Exploration:} Examine rejected designs and explain why they're suboptimal
+   \begin{itemize}
+   \item Coarser granularity (simpler, but hides dependencies)
+   \item Finer granularity (atomic failures, but testing explodes)
+   \item Why seven is the information-theoretic sweet spot
+   \end{itemize}
+
+\item \textbf{Hardware Grounding:} Connect choices to x86-64 constraints and capabilities
+   \begin{itemize}
+   \item How CR0.PG transitions shape phase boundaries
+   \item How instruction set evolution affects syscall choice
+   \item How MMU features enable isolation
+   \end{itemize}
+
+\item \textbf{Principle Synthesis:} Reveal how specific decisions embody architectural philosophy
+   \begin{itemize}
+   \item Fault isolation enables resilience
+   \item Minimal kernel enables comprehensibility
+   \item Message passing enables determinism
+   \end{itemize}
+\end{itemize}
+
+\subsection{Supporting Objectives: Empirical Grounding and Integration}
+
+To make design reasoning credible, we provide:
+
+\begin{itemize}
+\item \textbf{Boot Characterization:} Actual boot timelines, cycle counts, and performance baselines
+\item \textbf{Error Analysis:} Real error patterns (15+ types), automated detection, recovery procedures
+\item \textbf{System Integration:} MCP framework for extending analysis with modern tools
+\item \textbf{Tool Support:} Scripts, dashboards, and workflows that make design principles actionable
+\end{itemize}
+
+\section{Contributions: Reviving Lions' Pedagogical Approach}
+
+This whitepaper makes contributions across three dimensions:
+
+\subsection{PRIMARY: Lions-Style Design Commentary}
+
+\textbf{Pilot Studies in Design Rationale Explanation}
+
+Rather than isolated facts, we provide three deep-dive pilots applying Lions' approach:
+
+\begin{description}
+\item[\textbf{Pilot 1: Boot Topology}] 
+Explains why seven-phase boot structure is optimal. Explores coarser granularity (simpler, hides dependencies), finer granularity (atomic, but testing explodes), and why seven is the information-theoretic sweet spot. Connects to microkernel isolation principles. \textit{(1,040 words, ch04)}
+
+\item[\textbf{Pilot 2: Syscall Latency}] 
+Analyzes three coexisting syscall mechanisms (INT 0x80h, SYSENTER, SYSCALL). Explains why each exists, what trade-offs each makes (universality vs. speed), and how CPU instruction set evolution forces this design. Demonstrates design thinking grounded in hardware. \textit{(740 words, ch06)}
+
+\item[\textbf{Pilot 3: Boot Timeline}] 
+Reconciles apparent contradiction: 9.2ms kernel vs. 50-200ms full boot. Explains tight kernel variance (deterministic code) vs. loose service variance (hardware-dependent drivers). Comparative architecture insights about microkernel resilience. \textit{(770 words, ch04)}
+\end{description}
+
+Total Lions-style commentary: 2,550+ words across 3 pilots, integrated into core chapters. Establishes framework for expanding to 5 additional pilots in future phases.
+
+\subsection{SECONDARY: Empirical Grounding and Tools}
+
+\textbf{Measurement Framework and Automated Analysis}
+
+\begin{description}
+\item[Boot Metrics:] Comprehensive timeline characterization with cycle-level precision
+\item[Error Library:] 15 documented failure patterns with automated detection algorithms
+\item[MCP Integration:] Framework for connecting MINIX analysis to external services
+\item[Analysis Tools:] Python scripts for source code analysis and data-driven diagram generation
+\item[Reproducible Builds:] LaTeX infrastructure for deterministic whitepaper compilation
+\end{description}
+
+These tools make design reasoning \textit{credible} by grounding it in actual measurements, not speculation.
+
+\subsection{TERTIARY: Comprehensive Resource Package}
+
+\textbf{Complete Materials for Multiple Audiences}
+
+\begin{description}
+\item[250-page Whitepaper:] Structured for multiple reading paths (students, educators, researchers, engineers)
+\item[50+ Documentation Files:] Setup guides, integration instructions, error reference, appendices
+\item[8 Production Scripts:] Automated boot, error detection, health monitoring, recovery
+\item[Test Suite:] Integration tests validating all components
+\item[Open Source:] Full reproducibility under permissive licenses
+\end{description}
+
+Unlike textbooks (abstract) or source code (details without rationale), this package provides \textit{design wisdom grounded in real systems}.
+
+\section{Document Structure: Design Thinking Through Four Parts}
+
+This whitepaper weaves Lions-style design commentary throughout a four-part structure:
+
+\subsection{Part 1: Foundations (Chapters 1-3)}
+
+Establishes context and methodology:
+
+\begin{itemize}
+\item \cref{ch:introduction} (this chapter): Lions' pedagogy and how this whitepaper applies it
+\item \cref{ch:fundamentals}: MINIX 3.4 architecture explained through design rationale
+\item \cref{ch:methodology}: How we collect measurements and validate design explanations
+\end{itemize}
+
+\textbf{Key Design Question:} What is the microkernel principle, and why does MINIX embody it?
+
+\subsection{Part 2: Core Analysis with Lions Commentary (Chapters 4-6)}
+
+Where design thinking deepens through three pilots:
+
+\begin{itemize}
+\item \cref{ch:bootmetrics}: \textbf{PILOT 1 (Boot Topology)}—Why seven phases? Explores alternatives, hardware constraints, architectural principles. \textit{Design question: Why this granularity?}
+\item \cref{ch:erroranalysis}: Error patterns explained as consequences of microkernel architecture. \textit{Design question: How does isolation enable resilience?}
+\item \cref{ch:architecture}: \textbf{PILOT 2 (Syscall Latency)}—Why three mechanisms? Explores CPU evolution, trade-offs, optimization principles. System design grounded in hardware realities. \textit{Design question: How does instruction set evolution shape OS design?}
+\end{itemize}
+
+\textbf{Learning Outcome:} Readers understand not just \textit{what} MINIX does, but \textit{why it's designed this way}.
+
+\subsection{Part 3: Results and Educational Impact (Chapters 7-8)}
+
+Presents empirical validation and pedagogical applications:
+
+\begin{itemize}
+\item \cref{ch:results}: \textbf{PILOT 3 (Boot Timeline)}—Reconciles 9.2ms kernel vs. 50-200ms full boot through architectural analysis. Demonstrates design wisdom grounded in measurement. \textit{Design insight: Microkernel resilience vs. monolithic speed.}
+\item \cref{ch:education}: How Lions' approach transforms OS education and how readers can extend these pilots to other design decisions
+\end{itemize}
+
+\textbf{Learning Outcome:} Readers see how design thinking applies in practice and can apply Lions' methodology to their own system analysis.
+
+\subsection{Part 4: Implementation and Reference (Chapters 9-11)}
+
+Technical foundation and comprehensive lookup:
+
+\begin{itemize}
+\item \cref{ch:implementation}: Tools and frameworks that make design analysis reproducible and automated
+\item \cref{ch:errorreference}: Complete error catalog supporting the error analysis in Part 2
+\item \cref{ch:appendices}: Extended materials, schemas, and resources for deeper study
+\end{itemize}
+
+\textbf{Purpose:} Enable practitioners to extend Lions-style analysis to their own systems
+
+\section{Reading Guide: Four Pedagogical Pathways}
+
+Different audiences should follow different paths through Lions-style design thinking:
+
+\subsection{PATH A: For Students New to OS Design Thinking}
+
+\textbf{Goal:} Learn \textit{how to think about} OS design decisions through MINIX examples.
+
+\begin{enumerate}
+\item Read Chapter 1 (Introduction)—understand why Lions' approach matters
+\item Read Chapter 2 (Fundamentals)—learn MINIX architecture
+\item \textbf{Read Chapter 4, Sections 1-3}—\textbf{PILOT 1: Boot Topology}
+   \begin{itemize}
+   \item Question: Why seven phases?
+   \item Explore alternatives (3 phases, 15 phases)
+   \item Understand information-theoretic sweet spot
+   \end{itemize}
+\item \textbf{Read Chapter 6, Sections 3-4}—\textbf{PILOT 2: Syscall Mechanisms}
+   \begin{itemize}
+   \item Question: Why three mechanisms coexist?
+   \item Explore hardware evolution (INT, SYSENTER, SYSCALL)
+   \item Understand performance vs. universality trade-offs
+   \end{itemize}
+\item Read Chapter 8 (Education)—see how Lions' approach transforms learning
+\item Explore example materials in Appendices
+\end{enumerate}
+
+\textbf{Estimated time:} 5-7 hours
+\textbf{Learning outcome:} Understand design thinking, not just facts. Can apply Lions' methodology to own analysis.
+
+\subsection{PATH B: For Educators Creating Labs and Assignments}
+
+\textbf{Goal:} Understand Lions pedagogy well enough to replicate it with students.
+
+\begin{enumerate}
+\item Read Chapter 1 (Introduction)—understand pedagogical vision
+\item Skim Chapter 2 (Fundamentals)—architecture review
+\item \textbf{Carefully read Chapter 4, Sections 1-3 (PILOT 1)} and Chapter 6, Sections 3-4 (PILOT 2)—study the Lions-style exposition technique
+\item Read Chapter 3 (Methodology)—understand how measurements ground design explanation
+\item Read Chapter 8 (Education) thoroughly—design labs around pilots
+\item Examine AGENTS.md (pedagogical framework document)—copy Lions' structure for your own topics
+\item Look at tools and dashboards in Appendices
+\end{enumerate}
+
+\textbf{Estimated time:} 8-10 hours
+\textbf{Learning outcome:} Can design and teach Lions-style OS labs. Can extend pilots 1-3 to pilots 4-7.
+
+\subsection{PATH C: For Researchers and System Engineers}
+
+\textbf{Goal:} Implement Lions-style analysis on other systems.
+
+\begin{enumerate}
+\item Read Chapter 1 (Introduction)—understand pedagogical framework
+\item Read Chapter 3 (Methodology)—understand measurement techniques
+\item Study \textbf{all three pilots} (Chapters 4, 6): Boot Topology, Syscall Latency, Boot Timeline
+   \begin{itemize}
+   \item Note the structure: Question → Alternatives → Hardware grounding → Principle synthesis
+   \item Study how measurements support design reasoning
+   \end{itemize}
+\item Review AGENTS.md (complete pedagogical style guide)
+\item Read Chapter 9 (Implementation)—understand tool infrastructure
+\item Reference Chapter 10 (Error Patterns) for error analysis patterns
+\item Examine source code in repository
+\end{enumerate}
+
+\textbf{Estimated time:} 12-16 hours
+\textbf{Learning outcome:} Can replicate Lions-style analysis on Linux, Windows, or other systems.
+
+\subsection{PATH D: For Completeness (Comprehensive Study)}
+
+\textbf{Goal:} Thorough understanding of MINIX, measurement frameworks, and Lions pedagogy.
+
+Read all chapters in order, paying special attention to:
+- How design commentary is woven into technical chapters
+- How measurements ground design reasoning
+- How error analysis demonstrates architectural principles
+
+\textbf{Estimated time:} 20-25 hours
+
+\section{Notation and Conventions}
+
+Throughout this document, we use the following conventions:
+
+\subsection{Typographic Conventions}
+
+\begin{itemize}
+\item \textbf{Bold:} Important concepts, key terms on first definition
+\item \textit{Italic:} Emphasis, book and paper titles
+\item \code{Monospace:} Code, file names, commands, environment variables
+\item \textcolor{accentred}{\textbf{Red text:}} Error codes (e.g., \errcode{003} for CD9660 failure)
+\item \textcolor{accentblue}{\textbf{Blue text:}} Links, cross-references, commands
+\end{itemize}
+
+\subsection{System Components}
+
+\begin{itemize}
+\item \minix: MINIX operating system (all versions)
+\item \linux: Linux operating system (any version)
+\item \qemu: QEMU emulator/virtualizer
+\item \mcp: Model Context Protocol
+\end{itemize}
+
+\subsection{Measurement Units}
+
+\begin{itemize}
+\item Time: milliseconds (ms) for boot measurements, seconds (s) for longer intervals
+\item Memory: kilobytes (KB), megabytes (MB), gigabytes (GB)
+\item Frequency: percentage (\%) for error occurrence, probability for confidence scores
+\end{itemize}
+
+\subsection{Figure and Table References}
+
+\begin{itemize}
+\item Figures referenced as \cref{fig:example} (e.g., ``As shown in \cref{fig:bootsequence}'')
+\item Tables referenced as \cref{tbl:example} (e.g., ``See \cref{tbl:errors}'')
+\item Chapters referenced as \cref{ch:example} (e.g., ``Details in \cref{ch:erroranalysis}'')
+\item Sections referenced as \cref{sec:example} (e.g., ``Explained in \cref{sec:methodology}'')
+\end{itemize}
+
+\section{Feedback and Contributions}
+
+This whitepaper and accompanying materials are open-source and intended for community use. Feedback, corrections, and contributions are welcome:
+
+\begin{itemize}
+\item \textbf{Errors or Clarifications:} Create an issue in the repository
+\item \textbf{New Error Patterns:} Submit pull request with detection code
+\item \textbf{Tool Improvements:} Contribute patches or extensions
+\item \textbf{Educational Materials:} Share your lab assignments and learning resources
+\end{itemize}
+
+Complete contact and contribution information is provided in the Appendices.
+
+\section{Chapter Summary: Lions' Pedagogy Revived}
+
+\begin{tcolorbox}[
+    colback=minixpurple!5,
+    colframe=minixpurple,
+    arc=4pt,
+    boxsep=10pt,
+]
+This chapter has established:
+
+\begin{itemize}
+\item \textbf{Lions' Legacy:} John Lions' 1977 approach—explaining OS \textit{design thinking}, not just code—remains unmatched 48 years later
+\item \textbf{The Gap:} Modern OS education offers facts (textbooks) or implementation details (source code), but rarely design \textit{reasoning}
+\item \textbf{This Whitepaper's Innovation:} Applies Lions' approach to MINIX 3.4 through three pedagogical pilots
+\item \textbf{Three Pilots:} Boot Topology (why seven phases?), Syscall Latency (why three mechanisms?), Boot Timeline (why this performance profile?)
+\item \textbf{Design Thinking Framework:} Question → Alternatives → Hardware grounding → Principle synthesis
+\item \textbf{Multiple Reading Paths:} Students, educators, researchers, and engineers each get focused pathways
+\end{itemize}
+
+Readers should now understand: this is not a traditional technical document, but a pedagogical resource that teaches \textit{how to think} about OS design through MINIX 3.4 as the primary case study.
+\end{tcolorbox}
+
+\section{Next Steps: Foundation for Design Thinking}
+
+The next chapter (\cref{ch:fundamentals}) provides architectural background on MINIX 3.4. This is essential context for the Lions-style design explanations in Chapters 4-6, where we ask:
+
+\begin{itemize}
+\item \textbf{Chapter 2 asks:} What is a microkernel, and how does MINIX embody microkernel principles?
+\item \textbf{Chapter 3 explains:} How do we measure and validate design claims? (methodology)
+\item \textbf{Chapter 4 explores (PILOT 1):} Why does boot have seven phases, not three or fifteen?
+\item \textbf{Chapter 6 explores (PILOT 2):} Why do three syscall mechanisms coexist, and what trade-offs does each make?
+\end{itemize}
+
+\textbf{For students new to MINIX:} Read Chapters 2-3 carefully before jumping to design pilots.
+
+\textbf{For readers already familiar with MINIX:} You can proceed directly to Chapter 3 (Methodology) and then the pilots, skipping foundational material.
+
+\textbf{For educators:} Read both the design pilots and Chapter 8 (Education) to understand how to teach Lions-style OS design to your own students.
+
+% ===============================================================================
+% LABEL FOR CROSS-REFERENCING
+% ===============================================================================
+
+\label{ch:introduction}

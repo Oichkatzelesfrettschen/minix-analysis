@@ -1,0 +1,264 @@
+\chapter{CPU State Transitions: Privilege Levels and Protection}
+
+\section{Overview}
+
+The x86-64 and i386 architectures provide hardware-enforced privilege levels (rings 0-3)
+that enable secure kernel-userspace separation. This chapter analyzes the CPU state
+transitions that occur during boot initialization, system calls, and exception handling.
+
+\textbf{Key concepts}:
+\begin{enumerate}
+\item \textbf{Privilege Levels}: Ring 0 (kernel), Ring 3 (user processes)
+\item \textbf{Protection Mechanisms}: Descriptor tables, segment limits, page permissions
+\item \textbf{Mode Transitions}: Kernel-to-user and user-to-kernel context switches
+\item \textbf{Instruction Effects}: Which instructions are privileged; which are permitted in user mode
+\end{enumerate}
+
+\section{WHAT: CPU Privilege Architecture}
+
+\subsection{x86 Privilege Level Overview}
+
+The x86 architecture defines four privilege levels, corresponding to CPU rings:
+
+\begin{table}[h!]
+\centering
+\caption{x86 Privilege Levels (Rings)}
+\begin{tabular}{llll}
+\toprule
+Ring & Level & Name & Purpose \\
+\midrule
+0 & Highest & Kernel & OS, memory management, interrupt handling \\
+1 & High & Device Drivers (unused in MINIX) & Hypothetical privileged services \\
+2 & Medium & (unused in MINIX) & Hypothetical privileged services \\
+3 & Lowest & User & User-space applications, servers \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+MINIX uses only rings 0 and 3 (kernel and user). Rings 1 and 2 are not utilized.
+
+\subsection{Descriptor Table Protection}
+
+Privilege levels are enforced through:
+
+\begin{itemize}
+\item \textbf{GDT (Global Descriptor Table)}: System-wide descriptors (code, data, TSS segments)
+\item \textbf{LDT (Local Descriptor Table)}: Per-process descriptors (rarely used in MINIX)
+\item \textbf{IDT (Interrupt Descriptor Table)}: Exception and interrupt handlers
+\end{itemize}
+
+Each descriptor includes a \texttt{DPL} (Descriptor Privilege Level) field that specifies
+which privilege level can access that descriptor:
+
+\begin{verbatim}
+Descriptor Format (simplified):
+  Base Address (32-bit linear address)
+  Limit (size in bytes or 4KB pages)
+  Type (code, data, TSS, etc.)
+  DPL (Descriptor Privilege Level: 0-3)
+  Present Bit (1 = valid descriptor)
+  Granularity (1 = 4KB units, 0 = byte units)
+\end{verbatim}
+
+\subsection{Page Table Permissions}
+
+Virtual memory also enforces privilege via page table entries (PTEs):
+
+\begin{verbatim}
+PTE Format (32-bit i386):
+  Bits 31-12: Physical page address
+  Bit 11:     Available (for software use)
+  Bit 10:     Available (for software use)
+  Bit 9:      Available (for software use)
+  Bit 8:      Global (don't invalidate in TLB)
+  Bit 7:      Page Size (0=4KB, 1=4MB)
+  Bit 6:      Dirty (1 = page written)
+  Bit 5:      Accessed (1 = page read/written)
+  Bit 4:      Cache Disable (1 = no caching)
+  Bit 3:      Write-Through (1 = write-through, 0 = write-back)
+  Bit 2:      User/Supervisor (0 = supervisor only, 1 = user accessible)
+  Bit 1:      Read/Write (0 = read-only, 1 = writable)
+  Bit 0:      Present (1 = page in memory)
+\end{verbatim}
+
+Key bits:
+\begin{itemize}
+\item \textbf{Bit 0 (P)}: Present bit. If 0, accessing this page causes a page fault exception.
+\item \textbf{Bit 1 (R/W)}: Read/Write bit. If 0 and a write is attempted, a protection fault occurs.
+\item \textbf{Bit 2 (U/S)}: User/Supervisor bit. If 0 and ring 3 code attempts access, a fault occurs.
+\end{itemize}
+
+\section{WHEN: Transition Points in Boot}
+
+\subsection{Boot-Time Privilege State}
+
+\begin{enumerate}
+\item \textbf{Power-On to BIOS}: CPU starts in real mode (no privilege levels, 16-bit)
+\item \textbf{BIOS to Bootloader}: Real mode continues
+\item \textbf{Bootloader to Kernel Entry}: Bootloader switches to 32-bit protected mode
+  \begin{enumerate}
+    \item GDT loaded (bootloader-provided)
+    \item CR0.PE set (protected mode enabled)
+    \item CPU still at ring 0 (kernel mode)
+  \end{enumerate}
+\item \textbf{multiboot\_init}: Ring 0 (kernel mode, protected mode, paging off)
+\item \textbf{pre\_init()}: Ring 0 (kernel mode, protected mode, paging on)
+\item \textbf{kmain()}: Ring 0 (kernel mode, paging on, GDT reloaded)
+\item \textbf{cstart()}: Ring 0, installs new GDT and IDT
+\item \textbf{First User Process}: Ring 3 (user mode, paging on)
+\end{enumerate}
+
+\section{WHY: Hardware-Enforced Protection}
+
+\subsection{Privilege Escalation Prevention}
+
+User-mode code cannot execute privileged instructions (e.g., \texttt{mov} to CR0, \texttt{lidt}, \texttt{lgdt}).
+Attempting a privileged instruction in ring 3 causes a general protection fault (\#GP exception).
+
+\why{Hardware enforcement is more secure than software checks. A buggy user-space program
+cannot accidentally escalate to kernel mode; the CPU hardware prevents it. This isolates
+kernel from user-space bugs (though not from kernel bugs or hardware exploits).}
+
+\subsection{Memory Protection}
+
+Page table U/S and R/W bits are checked by the MMU before the kernel code even executes.
+
+\why{This hardware enforcement prevents a user process from reading or modifying kernel memory.
+If user code at ring 3 attempts to read a kernel-only page (U/S=0), the CPU generates a
+page fault exception. The kernel can then handle the fault (typically by terminating the process).}
+
+\section{HOW: Privilege Transition Mechanisms}
+
+\subsection{Ring 0 to Ring 3 Transition (entering user mode)}
+
+To enter user mode, the kernel:
+
+\begin{enumerate}
+\item \textbf{Prepare Stack}: User-mode stack address in ESP
+\item \textbf{Load Segment Registers}: Load ring 3 code and data segment selectors
+  \begin{verbatim}
+  Segment selectors encode:
+    Bits 15-3: Descriptor index in GDT/LDT
+    Bit 2:     GDT (0) or LDT (1)
+    Bits 1-0:  Privilege Level (0 for kernel, 3 for user)
+  \end{verbatim}
+\item \textbf{Instruction}: \texttt{iret} (interrupt return) or far \texttt{jmp} with ring change
+  \begin{enumerate}
+    \item \texttt{iret} pops return address, segment selector, and EFLAGS from stack
+    \item CPU detects ring change (segment selector bits 1-0)
+    \item Switches privilege level, updates ESP to user-mode stack
+    \item Clears sensitive EFLAGS bits (IF, TF, etc.)
+  \end{enumerate}
+\item \textbf{Result}: CPU now in ring 3, user-mode code executes
+\end{enumerate}
+
+Example assembly (kernel exiting to user mode):
+
+\begin{lstlisting}[style=asmstyle,caption={x86 Ring 0 to Ring 3 Transition}]
+  /* Prepare user stack in EAX */
+  mov    $user_stack_ptr, %eax
+
+  /* Prepare return address (entry point) in EBX */
+  mov    $user_code_entry, %ebx
+
+  /* Push return address, segment selector, EFLAGS */
+  push   $(GDT_USER_DATA | 3)  ; Ring 3, user data segment
+  push   %eax                   ; User stack pointer
+  pushf                         ; Current EFLAGS
+  push   $(GDT_USER_CODE | 3)  ; Ring 3, user code segment
+  push   %ebx                   ; User code entry point
+
+  /* Transition to ring 3 */
+  iret
+  /* CPU now at ring 3, executing user code */
+\end{lstlisting}
+
+\subsection{Ring 3 to Ring 0 Transition (syscall entry)}
+
+To enter kernel mode from user mode, the user process uses an exception or fast syscall.
+
+\subsubsection{Via Software Interrupt (INT 0x80)}
+
+\begin{enumerate}
+\item \textbf{User Code}: \texttt{int 0x80} instruction
+\item \textbf{CPU Action}:
+  \begin{enumerate}
+    \item Look up IDT entry 0x80
+    \item Check DPL of IDT entry; if DPL < CPL (current privilege level), allow
+    \item Save current ESP, CS:EIP, and EFLAGS on ring 0 stack
+    \item Load ring 0 segment selectors and IDT descriptor address
+    \item Jump to handler address specified in IDT entry
+  \end{enumerate}
+\item \textbf{Handler}: Kernel syscall dispatcher (see Chapter 5)
+\item \textbf{Return}: \texttt{iret} restores ring 3 context and returns to user code
+\end{enumerate}
+
+\how{
+\begin{enumerate}
+\item \textbf{Instruction}: User ring 3 executes \texttt{int 0x80}
+\item \textbf{CPU State Before}:
+  \begin{verbatim}
+  CS: Ring 3 code segment selector
+  EIP: Address of int 0x80 instruction
+  ESP: User-mode stack pointer
+  EFLAGS: Current flags
+  \end{verbatim}
+\item \textbf{CPU Microcode Action} (before kernel code):
+  \begin{enumerate}
+    \item Fetch IDT[0x80] entry
+    \item Check IDT entry DPL (must be 3 for user access)
+    \item If check fails: #GP (general protection) exception
+    \item Save old CS:EIP:EFLAGS on kernel stack (via TSS[kernel_esp])
+    \item Load new CS from IDT entry (kernel code segment)
+    \item Load EIP from IDT entry (handler address)
+    \item Clear sensitive flags (IF, TF, etc.)
+  \end{enumerate}
+\item \textbf{CPU State After Microcode}:
+  \begin{verbatim}
+  CS: Ring 0 code segment selector
+  EIP: Syscall handler address
+  ESP: Kernel stack (from TSS)
+  SS: Kernel data segment
+  EFLAGS: IF=0, TF=0, others preserved
+  \end{verbatim}
+\item \textbf{Timing}: 10-30 CPU cycles (microcode exception handling)
+\end{enumerate}
+}
+
+\subsubsection{Via Fast Syscall (SYSENTER/SYSCALL)}
+
+Modern x86 provides faster syscall mechanisms (see Chapters 6-7).
+
+\section{CPU State Summary Table}
+
+\begin{table}[h!]
+\centering
+\caption{CPU State at Key Boot and Execution Points}
+\begin{tabular}{lrrrr}
+\toprule
+Point & CS Ring & CR0.PE & CR0.PG & CR3 \\
+\midrule
+Power-on & N/A & 0 & 0 & 0 \\
+Bootloader & 0 & 1 & 0 & 0 \\
+multiboot\_init & 0 & 1 & 0 & 0 \\
+pre\_init (after paging) & 0 & 1 & 1 & valid \\
+kmain() & 0 & 1 & 1 & valid \\
+cstart() & 0 & 1 & 1 & valid \\
+User process entry & 3 & 1 & 1 & user PDT \\
+During syscall & 0 & 1 & 1 & user PDT \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Summary: CPU State Transitions}
+
+\begin{enumerate}
+\item \textbf{Real Mode to Protected Mode}: Bootloader-to-kernel transition
+\item \textbf{Paging Off to Paging On}: pre\_init() virtual memory activation
+\item \textbf{Ring 0 to Ring 3}: Kernel exiting to user process
+\item \textbf{Ring 3 to Ring 0}: User syscall entry (INT, SYSENTER, or SYSCALL)
+\item \textbf{Hardware Enforcement}: CPU gates all transitions via descriptor tables and page tables
+\end{enumerate}
+
+These transitions are hardware-enforced, making them secure even if the kernel has bugs.
+The next chapters detail the specific instruction sequences for syscall entry (Chapters 5-7).

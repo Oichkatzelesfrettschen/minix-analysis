@@ -1,0 +1,125 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Motivation}{2}{subsection.1.1}\protected@file@percent }
+\citation{tanenbaum2006can}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Scope and Methodology}{3}{subsection.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Analytical Approach}{3}{subsection.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4}Key Contributions}{3}{subsection.1.4}\protected@file@percent }
+\citation{gorman2004understanding}
+\citation{mckusick2004design}
+\citation{russinovich2012windows}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Background and Related Work}{4}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}MINIX-3 Architecture}{4}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Boot Process Overview}{4}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Related Work}{4}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}The \texttt  {kmain()} Function: Line-by-Line Analysis}{4}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Function Signature and Entry}{4}{subsection.3.1}\protected@file@percent }
+\newlabel{lst:kmain_entry}{{1}{4}{Function signature and entry point}{lstlisting.1}{}}
+\newlabel{lst:kmain_entry@cref}{{[listing][1][]1}{[1][4][]4}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Function signature and entry point}{4}{lstlisting.1}\protected@file@percent }
+\newlabel{line:proc_ptr}{{5}{4}{Function signature and entry point}{lstnumber.1.5}{}}
+\newlabel{line:proc_ptr@cref}{{[listing][1][]1}{[1][4][]4}{}{}{}}
+\newlabel{line:bss_test}{{7}{4}{Function signature and entry point}{lstnumber.1.7}{}}
+\newlabel{line:bss_test@cref}{{[listing][1][]1}{[1][4][]4}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}BSS Sanity Check (Lines 120--122)}{5}{subsection.3.2}\protected@file@percent }
+\newlabel{lst:bss_check}{{2}{5}{BSS sanity check}{lstlisting.2}{}}
+\newlabel{lst:bss_check@cref}{{[listing][2][]2}{[1][5][]5}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}BSS sanity check}{5}{lstlisting.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Boot Parameters Copy (Lines 124--129)}{5}{subsection.3.3}\protected@file@percent }
+\newlabel{lst:boot_params}{{3}{5}{Copy boot parameters}{lstlisting.3}{}}
+\newlabel{lst:boot_params@cref}{{[listing][3][]3}{[1][5][]5}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3}Copy boot parameters}{5}{lstlisting.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Board Identification (Lines 131--133)}{5}{subsection.3.4}\protected@file@percent }
+\newlabel{lst:board_id}{{4}{5}{Board identification}{lstlisting.4}{}}
+\newlabel{lst:board_id@cref}{{[listing][4][]4}{[1][5][]5}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}Board identification}{5}{lstlisting.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Architecture-Specific Serial Init (Lines 134--137)}{7}{subsection.3.5}\protected@file@percent }
+\newlabel{lst:arm_serial}{{5}{7}{ARM serial initialization}{lstlisting.5}{}}
+\newlabel{lst:arm_serial@cref}{{[listing][5][]5}{[1][7][]7}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5}ARM serial initialization}{7}{lstlisting.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Debug Output and Kernel Allocation (Lines 138--143)}{7}{subsection.3.6}\protected@file@percent }
+\newlabel{lst:early_debug}{{6}{7}{Early debug and allocation flag}{lstlisting.6}{}}
+\newlabel{lst:early_debug@cref}{{[listing][6][]6}{[1][7][]7}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6}Early debug and allocation flag}{7}{lstlisting.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Five Phases of Kernel Initialization}{8}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Complete Function Catalog}{9}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Functions Called Directly by \texttt  {kmain()}}{9}{subsection.5.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Complete enumeration of functions invoked by \texttt  {kmain()}, with line numbers, signatures, locations, and purposes.}}{9}{table.1}\protected@file@percent }
+\newlabel{tab:all_functions}{{1}{9}{Complete enumeration of functions invoked by \texttt {kmain()}, with line numbers, signatures, locations, and purposes}{table.1}{}}
+\newlabel{tab:all_functions@cref}{{[table][1][]1}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Functions Called by \texttt  {bsp\_finish\_booting()}}{10}{subsection.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Functions invoked during final boot phase (\texttt  {bsp\_finish\_booting()}).}}{10}{table.2}\protected@file@percent }
+\newlabel{tab:bsp_functions}{{2}{10}{Functions invoked during final boot phase (\texttt {bsp\_finish\_booting()})}{table.2}{}}
+\newlabel{tab:bsp_functions@cref}{{[table][2][]2}{[1][9][]10}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Complete Line-by-Line Annotation of \texttt  {kmain()}}{11}{section.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Line-by-line annotation of \texttt  {kmain()} (excerpt: lines 115--200).}}{11}{table.3}\protected@file@percent }
+\newlabel{tab:kmain_lines}{{3}{11}{Line-by-line annotation of \texttt {kmain()} (excerpt: lines 115--200)}{table.3}{}}
+\newlabel{tab:kmain_lines@cref}{{[table][3][]3}{[1][11][]11}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Data Flow Analysis}{12}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Global Variables Modified}{12}{subsection.7.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Global variables modified during \texttt  {kmain()} execution.}}{12}{table.4}\protected@file@percent }
+\newlabel{tab:globals}{{4}{12}{Global variables modified during \texttt {kmain()} execution}{table.4}{}}
+\newlabel{tab:globals@cref}{{[table][4][]4}{[1][12][]12}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Memory Operations}{12}{subsection.7.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Memory operations performed in \texttt  {kmain()}.}}{12}{table.5}\protected@file@percent }
+\newlabel{tab:memory_ops}{{5}{12}{Memory operations performed in \texttt {kmain()}}{table.5}{}}
+\newlabel{tab:memory_ops@cref}{{[table][5][]5}{[1][12][]12}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Control Flow Analysis}{13}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Conditional Branches}{13}{subsection.8.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces All conditional branches in \texttt  {kmain()}.}}{13}{table.6}\protected@file@percent }
+\newlabel{tab:branches}{{6}{13}{All conditional branches in \texttt {kmain()}}{table.6}{}}
+\newlabel{tab:branches@cref}{{[table][6][]6}{[1][13][]13}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Loop Structures}{13}{subsection.8.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Loop structures in \texttt  {kmain()}.}}{13}{table.7}\protected@file@percent }
+\newlabel{tab:loops}{{7}{13}{Loop structures in \texttt {kmain()}}{table.7}{}}
+\newlabel{tab:loops@cref}{{[table][7][]7}{[1][13][]13}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9}Graph-Theoretic Analysis}{14}{section.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}Call Graph Topology}{14}{subsection.9.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Call graph (simplified) showing hub-and-spoke topology. Full graph has 34 spokes from \texttt  {kmain()}.}}{14}{figure.2}\protected@file@percent }
+\newlabel{fig:call_graph_simple}{{2}{14}{Call graph (simplified) showing hub-and-spoke topology. Full graph has 34 spokes from \texttt {kmain()}}{figure.2}{}}
+\newlabel{fig:call_graph_simple@cref}{{[figure][2][]2}{[1][14][]14}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2}Graph Metrics}{14}{subsection.9.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Graph-theoretic metrics for MINIX-3 boot sequence call graph.}}{14}{table.8}\protected@file@percent }
+\newlabel{tab:graph_metrics}{{8}{14}{Graph-theoretic metrics for MINIX-3 boot sequence call graph}{table.8}{}}
+\newlabel{tab:graph_metrics@cref}{{[table][8][]8}{[1][14][]14}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10}Performance Analysis}{15}{section.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1}Critical Path Timing}{15}{subsection.10.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Critical path timing estimate. Total boot time: 85--100ms (modern hardware).}}{15}{figure.3}\protected@file@percent }
+\newlabel{fig:timing}{{3}{15}{Critical path timing estimate. Total boot time: 85--100ms (modern hardware)}{figure.3}{}}
+\newlabel{fig:timing@cref}{{[figure][3][]3}{[1][15][]15}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2}Time Budget Breakdown}{15}{subsection.10.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Time budget for each boot phase (estimated).}}{15}{table.9}\protected@file@percent }
+\newlabel{tab:time_budget}{{9}{15}{Time budget for each boot phase (estimated)}{table.9}{}}
+\newlabel{tab:time_budget@cref}{{[table][9][]9}{[1][15][]15}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {11}The ``Infinite Loop'' Resolution}{16}{section.11}\protected@file@percent }
+\newlabel{sec:no_return}{{11}{16}{The ``Infinite Loop'' Resolution}{section.11}{}}
+\newlabel{sec:no_return@cref}{{[section][11][]11}{[1][16][]16}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1}Common Misconception}{16}{subsection.11.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2}Proof via Source Code}{16}{subsection.11.2}\protected@file@percent }
+\newlabel{lst:no_loop}{{7}{16}{Final lines of \texttt {kmain()} (lines 315--328)}{lstlisting.7}{}}
+\newlabel{lst:no_loop@cref}{{[listing][7][]7}{[1][16][]16}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7}Final lines of \texttt  {kmain()} (lines 315--328)}{16}{lstlisting.7}\protected@file@percent }
+\newlabel{lst:switch_user}{{8}{16}{Final lines of \texttt {bsp\_finish\_booting()} (lines 105--109)}{lstlisting.8}{}}
+\newlabel{lst:switch_user@cref}{{[listing][8][]8}{[1][16][]16}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {8}Final lines of \texttt  {bsp\_finish\_booting()} (lines 105--109)}{16}{lstlisting.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3}Control Flow Proof}{16}{subsection.11.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4}State Transition Diagram}{17}{subsection.11.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces State transition showing irreversible transition to userspace. The ``loop'' is in the scheduler, not in \texttt  {kmain()}.}}{17}{figure.4}\protected@file@percent }
+\newlabel{fig:state_transition}{{4}{17}{State transition showing irreversible transition to userspace. The ``loop'' is in the scheduler, not in \texttt {kmain()}}{figure.4}{}}
+\newlabel{fig:state_transition@cref}{{[figure][4][]4}{[1][17][]17}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.5}Conclusion}{17}{subsection.11.5}\protected@file@percent }
+\bibcite{tanenbaum2006can}{1}
+\@writefile{toc}{\contentsline {section}{\numberline {12}Conclusions}{18}{section.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.1}Summary of Findings}{18}{subsection.12.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.2}Implications}{18}{subsection.12.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.3}Future Work}{18}{subsection.12.3}\protected@file@percent }
+\bibcite{gorman2004understanding}{2}
+\bibcite{mckusick2004design}{3}
+\bibcite{russinovich2012windows}{4}
+\@writefile{toc}{\contentsline {section}{\numberline {13}References}{19}{section.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}Complete Function Signatures}{19}{appendix.A}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}Source Code Listings}{19}{appendix.B}\protected@file@percent }
+\gdef \@abspage@last{19}

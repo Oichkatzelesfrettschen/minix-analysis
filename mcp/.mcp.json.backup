@@ -1,0 +1,113 @@
+{
+  "mcp_servers": {
+    "docker": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "docker-mcp@latest"],
+      "env": {
+        "DOCKER_HOST": "unix:///var/run/docker.sock",
+        "DEBUG": "false"
+      },
+      "description": "Docker container management - start/stop MINIX instances, fetch logs, monitor status",
+      "tools": [
+        "docker_list_containers",
+        "docker_get_container_logs",
+        "docker_get_container_stats",
+        "docker_start_container",
+        "docker_stop_container",
+        "docker_restart_container",
+        "docker_inspect_container",
+        "docker_list_images",
+        "docker_pull_image",
+        "docker_execute_command"
+      ]
+    },
+    "docker-hub": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "docker-hub-mcp@latest"],
+      "env": {
+        "DOCKER_HUB_USERNAME": "${DOCKER_HUB_USERNAME}",
+        "DOCKER_HUB_TOKEN": "${DOCKER_HUB_TOKEN}",
+        "DEBUG": "false"
+      },
+      "description": "Docker Hub repository search and management - find MINIX images, manage versions",
+      "tools": [
+        "hub_search_repositories",
+        "hub_get_repository_details",
+        "hub_list_repository_tags",
+        "hub_get_image_manifest",
+        "hub_get_dockerfile",
+        "hub_search_images",
+        "hub_get_image_stats"
+      ]
+    },
+    "github": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@github/cli-mcp-server@latest"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+        "GITHUB_REPOSITORY": "oaich/minix-analysis",
+        "DEBUG": "false"
+      },
+      "description": "GitHub repository management - create issues for errors found, manage PRs, track diagnostics",
+      "tools": [
+        "github_list_issues",
+        "github_create_issue",
+        "github_get_issue",
+        "github_update_issue",
+        "github_list_pull_requests",
+        "github_create_pull_request",
+        "github_get_pull_request",
+        "github_list_repository_contents",
+        "github_get_repository_info",
+        "github_search_code"
+      ]
+    },
+    "sqlite": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["-m", "mcp_sqlite"],
+      "env": {
+        "DATABASE_PATH": "/home/eirikr/Playground/minix-analysis/measurements/minix-analysis.db",
+        "DEBUG": "false"
+      },
+      "description": "SQLite database queries - analyze boot profiling data, measurement correlations",
+      "tools": [
+        "sqlite_query",
+        "sqlite_list_tables",
+        "sqlite_get_table_schema",
+        "sqlite_create_record",
+        "sqlite_read_records",
+        "sqlite_update_records"
+      ]
+    }
+  },
+  "settings": {
+    "context_window_budget_mb": 200,
+    "context_reservation_pct": 20,
+    "max_servers_enabled": 4,
+    "server_startup_timeout_sec": 30,
+    "request_timeout_sec": 300
+  },
+  "minix_analysis_config": {
+    "project_name": "minix-analysis",
+    "project_root": "/home/eirikr/Playground/minix-analysis",
+    "measurements_dir": "/home/eirikr/Playground/minix-analysis/measurements",
+    "docker_compose_file": "docker-compose.enhanced.yml",
+    "boot_profiler_port": 5010,
+    "syscall_tracer_port": 5011,
+    "memory_monitor_port": 5012,
+    "minix_i386_container": "minix-rc6-i386",
+    "minix_arm_container": "minix-rc6-arm"
+  },
+  "quick_commands": {
+    "start_minix_i386": "docker-compose -f docker-compose.enhanced.yml up -d minix-i386 mcp-boot-profiler mcp-syscall-tracer mcp-memory-monitor",
+    "stop_minix_i386": "docker-compose -f docker-compose.enhanced.yml down",
+    "tail_boot_log": "tail -f measurements/i386/boot.log",
+    "diagnose_errors": "python3 tools/triage-minix-errors.py measurements/i386/boot.log",
+    "validate_boot_params": "bash scripts/minix-boot-diagnostics.sh",
+    "generate_error_registry": "python3 tools/triage-minix-errors.py --generate-registry MINIX-Error-Registry.md"
+  }
+}

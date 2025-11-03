@@ -1,0 +1,81 @@
+# Maintainer: Oaich <your-email@example.com>
+pkgname=minix-profiling-tools
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Profiling toolchain for MINIX OS analysis (perf, flamegraph, wrappers)"
+arch=('x86_64')
+url="https://github.com/oaich/minix-analysis"
+license=('MIT')
+depends=(
+  'perf'                # Linux perf tool
+  'python'              # Python 3
+  'qemu-system-x86'     # QEMU emulator
+)
+makedepends=(
+  'git'
+)
+optdepends=(
+  'valgrind: Deep profiling with cachegrind/callgrind'
+  'kcachegrind: Visualize callgrind data'
+  'python-py-spy: Low-overhead Python profiler'
+  'python-scalene: CPU + memory profiler'
+  'hotspot: GUI for perf data (AppImage)'
+  'imagemagick: Convert PDF diagrams to PNG'
+)
+source=(
+  "flamegraph::git+https://github.com/brendangregg/FlameGraph.git"
+  "qprofiler::git+https://github.com/torokernel/qprofiler.git"
+)
+sha256sums=('SKIP' 'SKIP')
+
+package() {
+  # Install flamegraph scripts
+  install -dm755 "$pkgdir/usr/share/flamegraph"
+  install -Dm755 "$srcdir/flamegraph"/*.pl "$pkgdir/usr/share/flamegraph/"
+
+  # Create symlinks in /usr/bin for common commands
+  install -dm755 "$pkgdir/usr/bin"
+  ln -s /usr/share/flamegraph/flamegraph.pl "$pkgdir/usr/bin/flamegraph.pl"
+  ln -s /usr/share/flamegraph/stackcollapse-perf.pl "$pkgdir/usr/bin/stackcollapse-perf.pl"
+
+  # Install QProfiler
+  install -dm755 "$pkgdir/usr/share/qprofiler"
+  cp -r "$srcdir/qprofiler"/* "$pkgdir/usr/share/qprofiler/"
+
+  # Install documentation
+  install -dm755 "$pkgdir/usr/share/doc/$pkgname"
+  cat > "$pkgdir/usr/share/doc/$pkgname/README.md" <<'EOF'
+# MINIX Profiling Tools
+
+This package provides profiling tools for MINIX OS analysis:
+
+- **FlameGraph**: Brendan Gregg's flamegraph scripts (installed to /usr/share/flamegraph/)
+- **QProfiler**: QEMU guest profiling tool (installed to /usr/share/qprofiler/)
+
+## Usage
+
+### Generate flamegraph from perf data:
+```bash
+perf record -g -F 99 qemu-system-i386 -cdrom minix.iso
+perf script | stackcollapse-perf.pl | flamegraph.pl > boot.svg
+```
+
+### Use QProfiler with QEMU:
+```bash
+# Start QEMU with QMP interface
+qemu-system-i386 -qmp tcp:localhost:4444,server,nowait -cdrom minix.iso
+
+# In another terminal
+cd /usr/share/qprofiler
+python3 qprofiler.py --qmp localhost:4444 --duration 30
+```
+
+## Additional Tools
+
+Install optional dependencies:
+- `pip install --user py-spy scalene`
+- `yay -S hotspot` (if available) or download AppImage from GitHub
+
+See the full profiling guide in the minix-analysis repository.
+EOF
+}

@@ -1,0 +1,142 @@
+\chapter{CPU Initialization: cstart()}
+
+\section{Overview}
+
+The \texttt{cstart()} function (main.c:403) performs architecture-specific CPU initialization
+before any C code can safely execute. This includes loading descriptor tables and enabling CPU features.
+
+\section{WHAT: cstart() Initialization}
+
+\begin{enumerate}
+\item \textbf{GDT Loading}: Load Global Descriptor Table with kernel and user segments
+\item \textbf{IDT Loading}: Load Interrupt Descriptor Table with exception and interrupt handlers
+\item \textbf{TSS Setup}: Load Task State Segment for ring 0 stack and IO permissions
+\item \textbf{FPU Detection}: Check for floating-point unit availability
+\item \textbf{Feature Detection}: Enable SSE, AVX if CPU supports
+\item \textbf{APIC Setup}: Initialize Local APIC for interrupts (if multi-processor)
+\end{enumerate}
+
+\section{Descriptor Tables}
+
+\subsection{GDT (Global Descriptor Table)}
+
+The GDT defines all system-wide segment descriptors:
+
+\begin{table}[h!]
+\centering
+\caption{GDT Entry Layout (8 bytes)}
+\begin{tabular}{ll}
+\toprule
+Field & Purpose \\
+\midrule
+Base Address & Segment linear address (32-bit) \\
+Limit & Segment size (in bytes or 4KB pages) \\
+Type & Code, data, TSS, LDT, etc. \\
+DPL & Descriptor Privilege Level (0-3) \\
+Present & Valid descriptor \\
+Granularity & Byte or 4KB unit granularity \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Typical MINIX GDT entries:
+\begin{verbatim}
+GDT[0]: Null descriptor (required)
+GDT[1]: Kernel code segment (DPL=0, base=0, limit=4GB)
+GDT[2]: Kernel data segment (DPL=0, base=0, limit=4GB)
+GDT[3]: User code segment (DPL=3, base=0, limit=3GB)
+GDT[4]: User data segment (DPL=3, base=0, limit=3GB)
+GDT[5]: TSS (Task State Segment, DPL=0)
+GDT[6]: Available for additional uses
+\end{verbatim}
+
+\subsection{IDT (Interrupt Descriptor Table)}
+
+The IDT maps exception and interrupt vectors to handlers:
+
+\begin{table}[h!]
+\centering
+\caption{IDT Entry (8 bytes)}
+\begin{tabular}{ll}
+\toprule
+Field & Purpose \\
+\midrule
+Handler Offset & Address of exception/interrupt handler \\
+Segment Selector & GDT index for handler code segment \\
+Type & Interrupt gate, trap gate, task gate \\
+DPL & Descriptor Privilege Level (for user access) \\
+Present & Valid descriptor \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Example IDT entries:
+\begin{verbatim}
+IDT[0]:  #DE (Divide Error)
+IDT[6]:  #UD (Invalid Opcode)
+IDT[14]: #PF (Page Fault)
+IDT[32]: Timer interrupt
+IDT[128]: SYSCALL INT 0x80 (DPL=3 for user access)
+IDT[255]: Available
+\end{verbatim}
+
+\section{TSS (Task State Segment)}
+
+The TSS is used to store privilege-level-0 stack information for exception/interrupt handling:
+
+\begin{table}[h!]
+\centering
+\caption{TSS Fields (104 bytes on i386)}
+\begin{tabular}{ll}
+\toprule
+Field & Purpose \\
+\midrule
+SS0, ESP0 & Ring 0 stack pointer (for ring 3 $\rightarrow$ ring 0 transition) \\
+SS1, ESP1 & Ring 1 stack pointer (unused) \\
+SS2, ESP2 & Ring 2 stack pointer (unused) \\
+CR3 & Page directory for task (unused in MINIX) \\
+IO Bitmap & Bitmap of IO port permissions \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+MINIX sets:
+\begin{verbatim}
+TSS.SS0 = Kernel data segment selector
+TSS.ESP0 = Kernel interrupt stack pointer
+\end{verbatim}
+
+\section{Timing}
+
+cstart() execution: 10-20 milliseconds
+
+\begin{table}[h!]
+\centering
+\caption{cstart() Phase Timing}
+\begin{tabular}{lr}
+\toprule
+Phase & Duration \\
+\midrule
+GDT setup & 2-3 ms \\
+IDT setup & 3-5 ms \\
+TSS setup & 1-2 ms \\
+FPU init & 2-3 ms \\
+Feature detection & 2-3 ms \\
+APIC init (if applicable) & 2-4 ms \\
+\bottomrule
+\toprule
+Total & 10-20 ms \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Summary}
+
+cstart() provides the CPU infrastructure for safe kernel execution:
+\begin{enumerate}
+\item GDT for segment management and privilege enforcement
+\item IDT for exception and interrupt handling
+\item TSS for privilege level switching
+\item FPU and feature detection
+\item APIC setup for multi-processor systems
+\end{enumerate}

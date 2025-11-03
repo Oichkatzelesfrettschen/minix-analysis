@@ -1,0 +1,6 @@
+# Minix Kernel Boot Sequence Deep Dive
+
+**Entry Point:** `cstart()`
+
+**Analysis Date:** 2025-10-30 18:49:19
+

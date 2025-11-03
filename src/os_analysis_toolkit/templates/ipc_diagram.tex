@@ -1,0 +1,38 @@
+\documentclass[tikz,border=5pt]{standalone}
+\usepackage{tikz}
+\usepackage{times}
+\usetikzlibrary{shapes,arrows,positioning}
+
+% Define colors
+\definecolor{sendercolor}{RGB}{52,152,219}
+\definecolor{receivercolor}{RGB}{46,204,113}
+\definecolor{kernelcolor}{RGB}{230,126,34}
+
+\begin{document}
+\begin{tikzpicture}[
+    proc/.style={rectangle, minimum width=2cm, minimum height=1cm, draw=black},
+    arrow/.style={->, thick},
+    label/.style={font=\small}
+]
+
+% Title and Processes
+\node[font=\large\bfseries] at (5,-0.5) {MINIX IPC Message Flow};
+
+{{processes}}
+
+% Message flow
+{{message_flow}}
+
+% Return path
+{{return_path}}
+
+% State annotations
+{{state_annotations}}
+
+% Timeline
+\node[font=\tiny\bfseries] at (5,-2) {IPC Timing};
+\draw[thick] (0.5,-2.5) -- (9.5,-2.5);
+{{timeline_labels}}
+
+\end{tikzpicture}
+\end{document}
