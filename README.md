@@ -32,6 +32,9 @@ cd Playground
 
 # Ensure dependencies are up to date
 npm install
+
+# Or use make for full setup
+make dev-setup
 ```
 
 ### 2. Run Tests with Docker
@@ -60,7 +63,14 @@ npm test
 
 # Update reference images
 npm run test:update
+
+# Or use make commands
+make test
+make tags
+make lint
 ```
+
+For all available commands, run `make help`.
 
 ## Project Structure
 
@@ -82,10 +92,12 @@ Playground/
 ├── logs/                 # Application logs
 ├── scripts/              # Build and automation scripts
 │   ├── gemini-docker.sh  # Docker wrapper for Gemini
-│   └── generate-tags.sh  # Ctags generation script
+│   ├── generate-tags.sh  # Ctags generation script
+│   └── hooks/            # Git hook examples
 ├── .gitignore            # Git exclusions
 ├── .nvmrc                # Node version specification
 ├── Dockerfile.gemini     # Docker configuration
+├── Makefile              # Build automation
 ├── package.json          # Node.js dependencies
 └── README.md             # This file
 ```
