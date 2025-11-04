@@ -63,3 +63,7 @@ Thumbs.db
 *.tmp
 *.temp
 .#*
+
+# Local configuration and logs
+.claude/settings.local.json
+logs/
