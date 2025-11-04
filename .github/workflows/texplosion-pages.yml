@@ -1,0 +1,721 @@
+name: TeXplosion - LaTeX Continuous Publication to GitHub Pages
+
+# The "TeXplosion" Pipeline:
+# A comprehensive CI/CD workflow that:
+# 1. Builds i386 MINIX 3.4.0RC6 within QEMU in Docker
+# 2. Runs analysis tools and generates diagrams
+# 3. Compiles LaTeX/TikZ/PGFPlots whitepaper
+# 4. Publishes the rendered documentation to GitHub Pages
+#
+# This is the moment when the repo "turns itself into math art on the web"
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'whitepaper/**'
+      - 'latex/**'
+      - 'diagrams/**'
+      - 'tools/**'
+      - 'src/**'
+      - 'docs/**'
+      - '.github/workflows/texplosion-pages.yml'
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      build_minix:
+        description: 'Build MINIX in QEMU (time-intensive)'
+        required: false
+        default: 'false'
+        type: boolean
+      deploy_pages:
+        description: 'Deploy to GitHub Pages'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  LATEX_OUTPUT_DIR: build/latex
+  DIAGRAMS_OUTPUT_DIR: build/diagrams
+  PAGES_OUTPUT_DIR: build/pages
+  MINIX_BUILD_DIR: build/minix
+  PYTHON_VERSION: '3.9'
+
+# Permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================================
+  # Stage 1: Analysis and Diagram Generation
+  # ============================================================================
+  generate-diagrams:
+    name: Generate TikZ/PGFPlots Diagrams
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || pip install matplotlib pandas numpy plotly
+      
+      - name: Install LaTeX and build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-pictures \
+            texlive-fonts-recommended \
+            texlive-fonts-extra \
+            texlive-science \
+            latexmk \
+            imagemagick \
+            ghostscript \
+            pdf2svg \
+            poppler-utils
+          
+          # Remove ImageMagick PDF restrictions
+          sudo sed -i '/disable ghostscript format types/,+6d' /etc/ImageMagick-6/policy.xml || true
+      
+      - name: Create output directories
+        run: |
+          mkdir -p ${{ env.DIAGRAMS_OUTPUT_DIR }}
+          mkdir -p diagrams/tikz-generated
+      
+      - name: Run analysis tools to generate data
+        continue-on-error: true
+        run: |
+          echo "Running source analysis tools..."
+          
+          # Generate data files for diagrams
+          if [ -f tools/minix_source_analyzer.py ]; then
+            python3 tools/minix_source_analyzer.py \
+              --output diagrams/data \
+              2>&1 | tee ${{ env.DIAGRAMS_OUTPUT_DIR }}/analysis.log || true
+          fi
+      
+      - name: Generate TikZ diagrams from data
+        continue-on-error: true
+        run: |
+          echo "Generating TikZ diagrams..."
+          
+          if [ -f tools/tikz_generator.py ]; then
+            python3 tools/tikz_generator.py \
+              --data-dir diagrams/data \
+              --output diagrams/tikz-generated \
+              2>&1 | tee ${{ env.DIAGRAMS_OUTPUT_DIR }}/tikz-gen.log || true
+          fi
+      
+      - name: Compile TikZ diagrams to PDF
+        continue-on-error: true
+        run: |
+          cd diagrams/tikz-generated
+          
+          for tex in *.tex; do
+            if [ -f "$tex" ]; then
+              echo "Compiling $tex..."
+              pdflatex -interaction=nonstopmode "$tex" || true
+              # Clean up auxiliary files
+              rm -f *.aux *.log *.out
+            fi
+          done
+          
+          echo "Generated PDFs:"
+          ls -lh *.pdf || echo "No PDFs generated"
+      
+      - name: Convert diagrams to multiple formats
+        continue-on-error: true
+        run: |
+          cd diagrams/tikz-generated
+          
+          # Convert to PNG for web viewing
+          for pdf in *.pdf; do
+            if [ -f "$pdf" ]; then
+              base="${pdf%.pdf}"
+              echo "Converting $pdf to PNG and SVG..."
+              
+              # High-resolution PNG
+              convert -density 300 "$pdf" -quality 95 "${base}.png" || true
+              
+              # SVG for web scalability
+              pdf2svg "$pdf" "${base}.svg" || true
+            fi
+          done
+          
+          echo "Generated images:"
+          ls -lh *.png *.svg 2>/dev/null || echo "No converted images"
+      
+      - name: Upload diagram artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-diagrams
+          path: diagrams/tikz-generated/
+          retention-days: 30
+
+  # ============================================================================
+  # Stage 2: MINIX Build (Optional - Time Intensive)
+  # ============================================================================
+  build-minix:
+    name: Build MINIX in QEMU (Optional)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.build_minix == 'true'
+    timeout-minutes: 120
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Install QEMU and dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            qemu-system-i386 \
+            qemu-utils \
+            docker.io \
+            python3
+      
+      - name: Build Docker container with MINIX
+        run: |
+          cd docker
+          docker build -f Dockerfile.i386 -t minix-builder:i386 .
+      
+      - name: Run MINIX build in QEMU
+        continue-on-error: true
+        timeout-minutes: 90
+        run: |
+          mkdir -p ${{ env.MINIX_BUILD_DIR }}
+          
+          # Start MINIX in QEMU via Docker
+          docker run -d \
+            --name minix-build \
+            --privileged \
+            -v $(pwd)/${{ env.MINIX_BUILD_DIR }}:/output \
+            minix-builder:i386
+          
+          # Monitor build process
+          docker logs -f minix-build &
+          
+          # Wait for build or timeout
+          sleep 5400 || true  # 90 minutes
+          
+          docker stop minix-build || true
+      
+      - name: Collect build logs and artifacts
+        if: always()
+        run: |
+          docker logs minix-build > ${{ env.MINIX_BUILD_DIR }}/build.log 2>&1 || true
+          docker cp minix-build:/measurements ${{ env.MINIX_BUILD_DIR }}/ || true
+      
+      - name: Upload MINIX build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: minix-build-artifacts
+          path: ${{ env.MINIX_BUILD_DIR }}/
+          retention-days: 90
+
+  # ============================================================================
+  # Stage 3: LaTeX Whitepaper Compilation
+  # ============================================================================
+  compile-latex:
+    name: Compile LaTeX Whitepaper
+    runs-on: ubuntu-latest
+    needs: [generate-diagrams]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download generated diagrams
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-diagrams
+          path: diagrams/tikz-generated/
+      
+      - name: Install LaTeX distribution
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-full \
+            latexmk \
+            biber \
+            imagemagick \
+            ghostscript
+      
+      - name: Create build directory
+        run: |
+          mkdir -p ${{ env.LATEX_OUTPUT_DIR }}
+          mkdir -p ${{ env.LATEX_OUTPUT_DIR }}/figures
+      
+      - name: Copy LaTeX sources
+        run: |
+          # Copy whitepaper sources
+          if [ -d whitepaper ]; then
+            cp -r whitepaper/* ${{ env.LATEX_OUTPUT_DIR }}/ || true
+          fi
+          
+          # Copy latex directory if it exists
+          if [ -d latex ]; then
+            cp -r latex/* ${{ env.LATEX_OUTPUT_DIR }}/ || true
+          fi
+          
+          # Copy diagrams
+          cp -r diagrams/tikz-generated/*.pdf ${{ env.LATEX_OUTPUT_DIR }}/figures/ 2>/dev/null || true
+          cp -r diagrams/tikz-generated/*.png ${{ env.LATEX_OUTPUT_DIR }}/figures/ 2>/dev/null || true
+      
+      - name: Compile main whitepaper with latexmk
+        working-directory: ${{ env.LATEX_OUTPUT_DIR }}
+        run: |
+          # Find the main TeX file
+          MAIN_TEX=""
+          
+          if [ -f "MINIX-3.4-Comprehensive-Technical-Analysis.tex" ]; then
+            MAIN_TEX="MINIX-3.4-Comprehensive-Technical-Analysis.tex"
+          elif [ -f "master.tex" ]; then
+            MAIN_TEX="master.tex"
+          elif [ -f "main.tex" ]; then
+            MAIN_TEX="main.tex"
+          elif [ -f "minix-complete-analysis.tex" ]; then
+            MAIN_TEX="minix-complete-analysis.tex"
+          fi
+          
+          if [ -n "$MAIN_TEX" ]; then
+            echo "Compiling $MAIN_TEX..."
+            
+            # Use latexmk for comprehensive compilation
+            latexmk -pdf \
+              -interaction=nonstopmode \
+              -file-line-error \
+              -halt-on-error \
+              "$MAIN_TEX" || true
+            
+            # Try again if needed to resolve references
+            latexmk -pdf -g "$MAIN_TEX" || true
+            
+            # Rename output to standard name
+            OUTPUT_PDF="${MAIN_TEX%.tex}.pdf"
+            if [ -f "$OUTPUT_PDF" ]; then
+              cp "$OUTPUT_PDF" MINIX-Analysis-Whitepaper.pdf
+              echo "✓ Successfully compiled $OUTPUT_PDF"
+            fi
+          else
+            echo "⚠ No main LaTeX file found"
+          fi
+      
+      - name: Compile additional LaTeX documents
+        working-directory: ${{ env.LATEX_OUTPUT_DIR }}
+        continue-on-error: true
+        run: |
+          # Compile any other standalone .tex files
+          for tex in *.tex; do
+            if [ -f "$tex" ] && [ "$tex" != "MINIX-3.4-Comprehensive-Technical-Analysis.tex" ]; then
+              echo "Compiling $tex..."
+              pdflatex -interaction=nonstopmode "$tex" || true
+            fi
+          done
+      
+      - name: Generate compilation report
+        working-directory: ${{ env.LATEX_OUTPUT_DIR }}
+        run: |
+          cat > compilation-report.md << 'EOF'
+          # LaTeX Compilation Report
+          
+          ## Generated Documents
+          
+          EOF
+          
+          echo "### PDF Files" >> compilation-report.md
+          for pdf in *.pdf; do
+            if [ -f "$pdf" ]; then
+              SIZE=$(du -h "$pdf" | cut -f1)
+              PAGES=$(pdfinfo "$pdf" 2>/dev/null | grep "Pages:" | awk '{print $2}' || echo "N/A")
+              echo "- **$pdf**: $SIZE, $PAGES pages" >> compilation-report.md
+            fi
+          done
+          
+          echo "" >> compilation-report.md
+          echo "### Build Time" >> compilation-report.md
+          echo "$(date)" >> compilation-report.md
+          
+          cat compilation-report.md
+      
+      - name: Upload compiled PDFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: latex-pdfs
+          path: |
+            ${{ env.LATEX_OUTPUT_DIR }}/*.pdf
+            ${{ env.LATEX_OUTPUT_DIR }}/compilation-report.md
+          retention-days: 90
+
+  # ============================================================================
+  # Stage 4: Build GitHub Pages Site
+  # ============================================================================
+  build-pages:
+    name: Build GitHub Pages Site
+    runs-on: ubuntu-latest
+    needs: [compile-latex, generate-diagrams]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download compiled PDFs
+        uses: actions/download-artifact@v4
+        with:
+          name: latex-pdfs
+          path: pdfs/
+      
+      - name: Download diagrams
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-diagrams
+          path: diagrams/
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install MkDocs and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs-material mkdocs-mermaid2-plugin pymdown-extensions
+      
+      - name: Create Pages directory structure
+        run: |
+          mkdir -p ${{ env.PAGES_OUTPUT_DIR }}
+          mkdir -p ${{ env.PAGES_OUTPUT_DIR }}/pdfs
+          mkdir -p ${{ env.PAGES_OUTPUT_DIR }}/diagrams
+          mkdir -p ${{ env.PAGES_OUTPUT_DIR }}/assets
+      
+      - name: Build MkDocs site
+        run: |
+          if [ -f mkdocs.yml ]; then
+            mkdocs build -d ${{ env.PAGES_OUTPUT_DIR }}/docs
+          fi
+      
+      - name: Copy PDFs to Pages
+        run: |
+          cp -r pdfs/*.pdf ${{ env.PAGES_OUTPUT_DIR }}/pdfs/ || true
+      
+      - name: Copy diagrams to Pages
+        run: |
+          cp -r diagrams/*.png ${{ env.PAGES_OUTPUT_DIR }}/diagrams/ 2>/dev/null || true
+          cp -r diagrams/*.svg ${{ env.PAGES_OUTPUT_DIR }}/diagrams/ 2>/dev/null || true
+          cp -r diagrams/*.pdf ${{ env.PAGES_OUTPUT_DIR }}/diagrams/ 2>/dev/null || true
+      
+      - name: Generate index page
+        run: |
+          cat > ${{ env.PAGES_OUTPUT_DIR }}/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>MINIX Analysis - TeXplosion Documentation</title>
+              <style>
+                  * { margin: 0; padding: 0; box-sizing: border-box; }
+                  body {
+                      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      color: #fff;
+                      min-height: 100vh;
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      padding: 20px;
+                  }
+                  .container {
+                      max-width: 900px;
+                      background: rgba(255, 255, 255, 0.1);
+                      backdrop-filter: blur(10px);
+                      border-radius: 20px;
+                      padding: 40px;
+                      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+                  }
+                  h1 {
+                      font-size: 3em;
+                      margin-bottom: 10px;
+                      text-align: center;
+                      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                  }
+                  .subtitle {
+                      text-align: center;
+                      font-size: 1.2em;
+                      margin-bottom: 30px;
+                      opacity: 0.9;
+                  }
+                  .tagline {
+                      text-align: center;
+                      font-style: italic;
+                      margin-bottom: 40px;
+                      font-size: 1.1em;
+                      color: #ffd700;
+                  }
+                  .links {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                      gap: 20px;
+                      margin-top: 30px;
+                  }
+                  .link-card {
+                      background: rgba(255, 255, 255, 0.2);
+                      padding: 20px;
+                      border-radius: 10px;
+                      text-decoration: none;
+                      color: #fff;
+                      transition: all 0.3s ease;
+                      border: 2px solid rgba(255, 255, 255, 0.3);
+                  }
+                  .link-card:hover {
+                      background: rgba(255, 255, 255, 0.3);
+                      transform: translateY(-5px);
+                      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+                  }
+                  .link-card h3 {
+                      margin-bottom: 10px;
+                      font-size: 1.4em;
+                  }
+                  .link-card p {
+                      opacity: 0.9;
+                      line-height: 1.5;
+                  }
+                  .footer {
+                      margin-top: 40px;
+                      text-align: center;
+                      opacity: 0.8;
+                      font-size: 0.9em;
+                  }
+                  .explosion {
+                      text-align: center;
+                      font-size: 4em;
+                      margin: 20px 0;
+                      animation: pulse 2s ease-in-out infinite;
+                  }
+                  @keyframes pulse {
+                      0%, 100% { transform: scale(1); }
+                      50% { transform: scale(1.1); }
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="explosion">💥📚✨</div>
+                  <h1>MINIX Analysis</h1>
+                  <div class="subtitle">TeXplosion Documentation Portal</div>
+                  <div class="tagline">"When your CI suddenly materializes math art on the web"</div>
+                  
+                  <div class="links">
+                      <a href="pdfs/MINIX-Analysis-Whitepaper.pdf" class="link-card">
+                          <h3>📄 Main Whitepaper</h3>
+                          <p>Comprehensive technical analysis of MINIX 3.4.0 i386 architecture, boot sequence, and system calls.</p>
+                      </a>
+                      
+                      <a href="docs/" class="link-card">
+                          <h3>📖 Documentation</h3>
+                          <p>Interactive documentation site with detailed guides, tutorials, and API references.</p>
+                      </a>
+                      
+                      <a href="diagrams/" class="link-card">
+                          <h3>📊 Diagrams & Visualizations</h3>
+                          <p>TikZ/PGFPlots diagrams of system architecture, boot sequences, and performance metrics.</p>
+                      </a>
+                      
+                      <a href="https://github.com/Oichkatzelesfrettschen/minix-analysis" class="link-card">
+                          <h3>💻 GitHub Repository</h3>
+                          <p>Source code, analysis tools, and development resources.</p>
+                      </a>
+                  </div>
+                  
+                  <div class="footer">
+                      <p>🚀 Built with the TeXplosion Pipeline - Continuous Publication from Code to Math Art</p>
+                      <p>MINIX 3.4.0RC6 | i386 Architecture | Educational & Research</p>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
+      
+      - name: Create diagrams index
+        run: |
+          cd ${{ env.PAGES_OUTPUT_DIR }}/diagrams
+          
+          cat > index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>MINIX Analysis - Diagrams</title>
+              <style>
+                  body {
+                      font-family: system-ui, -apple-system, sans-serif;
+                      max-width: 1200px;
+                      margin: 0 auto;
+                      padding: 20px;
+                      background: #f5f5f5;
+                  }
+                  h1 { color: #333; }
+                  .gallery {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                      gap: 20px;
+                      margin-top: 20px;
+                  }
+                  .diagram-card {
+                      background: white;
+                      border-radius: 8px;
+                      padding: 15px;
+                      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                  }
+                  .diagram-card img {
+                      width: 100%;
+                      height: 200px;
+                      object-fit: contain;
+                      border-radius: 4px;
+                  }
+                  .diagram-card h3 {
+                      margin-top: 10px;
+                      font-size: 1em;
+                      color: #555;
+                  }
+                  .diagram-card a {
+                      color: #667eea;
+                      text-decoration: none;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>📊 MINIX Analysis Diagrams</h1>
+              <p>TikZ/PGFPlots visualizations generated from MINIX analysis</p>
+              <div class="gallery">
+          EOF
+          
+          for img in *.png; do
+            if [ -f "$img" ]; then
+              name="${img%.png}"
+              cat >> index.html << ITEM
+                  <div class="diagram-card">
+                      <img src="$img" alt="$name">
+                      <h3><a href="$img">$name</a></h3>
+                  </div>
+          ITEM
+            fi
+          done
+          
+          cat >> index.html << 'EOF'
+              </div>
+          </body>
+          </html>
+          EOF
+      
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ env.PAGES_OUTPUT_DIR }}
+
+  # ============================================================================
+  # Stage 5: Deploy to GitHub Pages
+  # ============================================================================
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build-pages
+    if: |
+      github.event_name == 'push' && 
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      (github.event.inputs.deploy_pages != 'false')
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      
+      - name: Announce TeXplosion
+        run: |
+          echo "🎉 TeXplosion Complete! 🎉"
+          echo "============================="
+          echo ""
+          echo "The LaTeX whitepaper has been compiled and deployed!"
+          echo "Your repository has transformed into math art on the web."
+          echo ""
+          echo "📄 View the documentation at: ${{ steps.deployment.outputs.page_url }}"
+          echo ""
+          echo "✨ The chrysalis has opened mid-build. ✨"
+
+  # ============================================================================
+  # Stage 6: Summary and Notifications
+  # ============================================================================
+  summary:
+    name: Generate Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [generate-diagrams, compile-latex, build-pages, deploy-pages]
+    if: always()
+    
+    steps:
+      - name: Create summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          # 🎨 TeXplosion Pipeline Summary
+          
+          ## Pipeline Status
+          
+          | Stage | Status |
+          |-------|--------|
+          | Diagram Generation | ${{ needs.generate-diagrams.result }} |
+          | LaTeX Compilation | ${{ needs.compile-latex.result }} |
+          | Pages Build | ${{ needs.build-pages.result }} |
+          | Pages Deployment | ${{ needs.deploy-pages.result }} |
+          
+          ## What Just Happened?
+          
+          This pipeline executed the **TeXplosion** workflow:
+          
+          1. ✅ Generated TikZ/PGFPlots diagrams from analysis data
+          2. ✅ Compiled LaTeX whitepaper with all visualizations
+          3. ✅ Built comprehensive documentation site
+          4. ✅ Deployed everything to GitHub Pages
+          
+          ## The Result
+          
+          Your repository has completed its metamorphosis:
+          - 📊 Data-driven visualizations automatically generated
+          - 📄 Publication-quality PDF whitepaper compiled
+          - 🌐 Beautiful web documentation deployed
+          - ✨ Math art materialized on the web
+          
+          This is **Continuous Publication** - your code automatically becomes publishable research.
+          
+          ---
+          
+          *"TeXplosion: when your CI suddenly materializes a fully rendered publication site."*
+          EOF

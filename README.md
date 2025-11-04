@@ -2,6 +2,20 @@
 
 This repository provides a comprehensive, unified environment for the analysis, testing, and documentation of the MINIX 3.4 operating system. It integrates source code, analysis tools, boot analyzers, and pedagogical materials into a single, modular framework.
 
+## 💥 The TeXplosion Pipeline
+
+**New!** This repository features a revolutionary **CI/CD Continuous Publication Pipeline** that automatically:
+
+- 🔬 **Analyzes** MINIX 3.4.0 source code and generates metrics
+- 📊 **Creates** TikZ/PGFPlots diagrams from analysis data
+- 📄 **Compiles** a publication-quality LaTeX whitepaper (300+ pages)
+- 🌐 **Publishes** everything to GitHub Pages with a beautiful landing page
+- 🚀 **Updates** on every push - your repo becomes a living publication
+
+**[📚 Quick Start Guide](docs/TEXPLOSION-QUICKSTART.md)** | **[📖 Full Documentation](docs/TEXPLOSION-PIPELINE.md)**
+
+> *"When your CI suddenly materializes math art on the web."* ✨
+
 ## Overview
 
 This project is a synthesis of several related efforts, providing a powerful and cohesive toolkit for OS developers, researchers, and students. It includes:
@@ -11,7 +25,7 @@ This project is a synthesis of several related efforts, providing a powerful and
 - **Boot Sequence Analysis:** Specialized tools for tracing, visualizing, and understanding the MINIX boot process.
 - **Automated Testing**: A QEMU-based framework for automated boot testing, error detection, and performance profiling.
 - **MCP Integration**: Integration with the Model Context Protocol (MCP) for interaction with AI agents.
-- **CI/CD Pipeline**: A GitHub Actions workflow for continuous, automated testing.
+- **TeXplosion CI/CD**: Continuous publication pipeline that auto-generates and deploys documentation.
 - **Pedagogical Documentation:** A framework for creating deep, explanatory documentation in the style of the Lions' Commentary.
 
 ## Architecture
