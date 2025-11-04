@@ -12,20 +12,113 @@ This is a comprehensive MINIX 3.4 operating system analysis repository that comb
 - Performance benchmarking frameworks
 - LaTeX whitepaper materials for academic publication
 - **MCP integration for automated Docker/GitHub workflow**
+- **TeXplosion CI/CD pipeline for continuous publication to GitHub Pages**
+
+## Current Repository Status (2025-11-04)
+
+**Health Score:** 82/100 (Good)
+- Structure: 95/100 ✅
+- Documentation: 85/100 ✅
+- Testing: Infrastructure complete, coverage in progress
+- Build System: 90/100 ✅
+- Quality Automation: 15+ pre-commit hooks ✅
 
 ## Critical Paths and Dependencies
 
 ```
-MINIX Source: /home/eirikr/Playground/minix/minix/
-Analysis Root: /home/eirikr/Playground/minix-analysis/
+MINIX Source: minix-source/
+Analysis Root: /home/runner/work/minix-analysis/minix-analysis/
 Python Tools: tools/minix_source_analyzer.py, tools/tikz_generator.py
 Diagnostics: tools/triage-minix-errors.py
 Launch Scripts: scripts/minix-qemu-launcher.sh, scripts/minix-boot-diagnostics.sh
 Data Flow: Source → JSON (diagrams/data/) → TikZ → PDF/PNG
-Error Registry: MINIX-Error-Registry.md (15+ documented errors with solutions)
+Error Registry: docs/MINIX-Error-Registry.md (15+ documented errors with solutions)
+Whitepaper: whitepaper/MINIX-3.4-Comprehensive-Technical-Analysis.tex
 ```
 
-## MCP Quick Start (NEW)
+## Directory Structure
+
+```
+minix-analysis/
+├── .github/workflows/        # CI/CD pipelines
+│   ├── texplosion-pages.yml  # TeXplosion continuous publication
+│   └── ci.yml                # Standard CI checks
+├── whitepaper/               # LaTeX whitepaper (300+ pages)
+├── diagrams/                 # TikZ diagrams and visualizations
+├── tools/                    # Analysis tools
+├── scripts/                  # Automation scripts
+├── tests/                    # Test suite (pytest)
+├── docs/                     # Documentation
+│   ├── testing/              # Testing framework guides
+│   ├── quality/              # Quality assurance docs
+│   └── [other docs]
+├── mcp/                      # MCP server implementations
+├── archive/                  # Historical materials
+└── requirements.txt          # Python dependencies
+```
+
+## TeXplosion Pipeline (NEW - 2025-11-04)
+
+**What it is:** A 5-stage GitHub Actions pipeline that automatically compiles LaTeX whitepapers, generates diagrams, and deploys to GitHub Pages.
+
+**Stages:**
+1. Generate Diagrams (3-5 min) - TikZ/PGFPlots from analysis data
+2. Build MINIX (60-90 min, optional) - QEMU/Docker compilation
+3. Compile LaTeX (5-10 min) - 300+ page whitepaper
+4. Build Pages (2-3 min) - MkDocs + landing page
+5. Deploy (1-2 min) - GitHub Pages publication
+
+**Documentation:**
+- `docs/TEXPLOSION-PIPELINE.md` - Complete architecture
+- `docs/TEXPLOSION-QUICKSTART.md` - Quick start guide
+- `docs/TEXPLOSION-FAQ.md` - 50+ Q&A
+- `docs/TEXPLOSION-EXAMPLE.md` - Full walkthrough
+
+**Trigger:** Automatic on push to `main` when files in `whitepaper/`, `diagrams/`, `tools/`, or `docs/` change
+
+## Quality Automation (NEW - 2025-11-04)
+
+**Pre-commit Hooks:** 15+ automated checks
+- Python: Black, Flake8, isort, MyPy, Bandit, pydocstyle
+- Shell: shellcheck
+- YAML: yamllint, syntax validation
+- Markdown: markdownlint
+- Security: Bandit, detect-secrets
+
+**Setup:**
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+**Build Validation:**
+```bash
+python3 scripts/validate-build.py --quick  # Quick check
+python3 scripts/validate-build.py          # Full validation
+```
+
+## Testing Framework (NEW - 2025-11-04)
+
+**Configuration:** `pytest.ini`
+
+**Test Categories:**
+- `unit` - Unit tests (fast)
+- `integration` - Integration tests
+- `benchmark` - Performance tests
+- `property` - Property-based tests
+- `slow` - Tests >10 seconds
+
+**Run tests:**
+```bash
+pytest                    # All tests
+pytest -m unit           # Unit tests only
+pytest --cov=src         # With coverage
+pytest -m "not slow"     # Skip slow tests
+```
+
+**Documentation:** `docs/testing/README.md`
+
+## MCP Quick Start
 
 **Enable Claude Code automation with MCP servers**:
 
@@ -48,6 +141,230 @@ docker-compose -f docker-compose.enhanced.yml up -d
 - GitHub: Create issues for errors, track diagnostics
 - SQLite: Query boot measurements database
 - Custom Boot Profiler: Multi-CPU testing and analysis
+
+## Key Workflows
+
+### 1. TeXplosion Workflow (Continuous Publication)
+
+```bash
+# Edit whitepaper or docs
+vim whitepaper/ch01-introduction.tex
+
+# Commit and push
+git add whitepaper/ch01-introduction.tex
+git commit -m "Update introduction"
+git push origin main
+
+# Pipeline automatically:
+# - Generates diagrams
+# - Compiles PDF
+# - Builds documentation site
+# - Deploys to GitHub Pages
+# Result available at: username.github.io/minix-analysis/
+```
+
+### 2. Analysis Workflow
+
+```bash
+# Run source analysis
+python3 tools/minix_source_analyzer.py --source minix-source/
+
+# Generate TikZ diagrams
+python3 tools/tikz_generator.py --data diagrams/data/ --output diagrams/tikz-generated/
+
+# Diagrams automatically included in next TeXplosion build
+```
+
+### 3. Testing Workflow
+
+```bash
+# Run pre-commit checks
+pre-commit run --all-files
+
+# Run tests
+pytest -v
+
+# Run with coverage
+pytest --cov=src --cov-report=html
+open htmlcov/index.html
+```
+
+### 4. ArXiv Submission Workflow (NEW)
+
+```bash
+# Create ArXiv package
+./scripts/create-arxiv-package.sh --whitepaper
+
+# Review package
+cd arxiv-submissions/<package-name>/
+
+# Test compilation
+pdflatex main.tex
+
+# Submit ZIP to ArXiv
+```
+
+## Development Guidelines
+
+### Quality Standards
+
+1. **Warnings as Errors:** Treat all warnings as errors
+2. **Testing Required:** All new code must have tests
+3. **Documentation Required:** Update docs with code changes
+4. **Pre-commit Checks:** Must pass before committing
+5. **Build Validation:** Run `validate-build.py` before pushing
+
+### Code Style
+
+- **Python:** Black formatting (88 char line length)
+- **Shell:** shellcheck compliant
+- **LaTeX:** Follow whitepaper style conventions
+- **Markdown:** markdownlint compliant
+
+### Testing Requirements
+
+- **Coverage Target:** 80%
+- **Test Categories:** Use appropriate markers
+- **Mock External Deps:** Use mocks for external services
+- **Fast Tests:** Unit tests < 1 second
+
+### Documentation Requirements
+
+- **Every module:** Has README.md
+- **Every function:** Has docstring
+- **Every script:** Has usage comments
+- **Every workflow:** Has documentation
+
+## Common Tasks
+
+### Add New Analysis Tool
+
+1. Create tool in `tools/<name>.py`
+2. Add tests in `tests/test_<name>.py`
+3. Update `REQUIREMENTS.md` if new dependencies
+4. Document in `docs/analysis/<name>.md`
+5. Run pre-commit and tests
+6. Update this file with new workflow
+
+### Add New LaTeX Chapter
+
+1. Create `whitepaper/chXX-<topic>.tex`
+2. Add `\include{chXX-<topic>}` to main document
+3. Test compilation locally
+4. Push to trigger TeXplosion pipeline
+5. Review deployed PDF on GitHub Pages
+
+### Add New Test
+
+1. Create test file `tests/test_<feature>.py`
+2. Use appropriate markers (`@pytest.mark.unit`, etc.)
+3. Follow naming conventions (`test_<function>_<scenario>`)
+4. Run: `pytest tests/test_<feature>.py`
+5. Check coverage: `pytest --cov=src`
+
+### Fix Build Issues
+
+1. Run validation: `python3 scripts/validate-build.py`
+2. Check pre-commit: `pre-commit run --all-files`
+3. Run tests: `pytest -v`
+4. Check workflow logs in GitHub Actions
+5. Review error messages and fix
+6. Validate fix: `validate-build.py` again
+
+## Important Files
+
+### Configuration
+- `pytest.ini` - Test configuration
+- `.pre-commit-config.yaml` - Pre-commit hooks
+- `.bandit` - Security scanning config
+- `requirements.txt` - Python dependencies
+
+### Documentation
+- `README.md` - Project overview
+- `REQUIREMENTS.md` - Unified dependency documentation
+- `COMPREHENSIVE-REPOSITORY-AUDIT.md` - Repository health analysis
+- `docs/INDEX.md` - Documentation index
+
+### Scripts
+- `scripts/validate-build.py` - Build validation
+- `scripts/validate-texplosion-setup.py` - TeXplosion validation
+- `scripts/create-arxiv-package.sh` - ArXiv packaging
+- `scripts/minix-qemu-launcher.sh` - MINIX launcher
+
+### Workflows
+- `.github/workflows/texplosion-pages.yml` - TeXplosion pipeline
+- `.github/workflows/ci.yml` - Standard CI
+
+## Troubleshooting
+
+### TeXplosion Build Fails
+
+1. Check workflow run in GitHub Actions
+2. Download artifacts for logs
+3. Validate LaTeX locally: `cd whitepaper && pdflatex main.tex`
+4. Check diagram generation: `python3 tools/tikz_generator.py`
+5. Review FAQ: `docs/TEXPLOSION-FAQ.md`
+
+### Pre-commit Hooks Fail
+
+1. Run manually: `pre-commit run --all-files`
+2. Fix reported issues
+3. For formatting: `black src/ tests/`
+4. For imports: `isort src/ tests/`
+5. For linting: Review and fix Flake8 errors
+
+### Tests Fail
+
+1. Run specific test: `pytest tests/test_<name>.py -v`
+2. Check test logs for error messages
+3. Run with debugging: `pytest -s -v`
+4. Check fixtures in `tests/conftest.py`
+5. Review test documentation: `docs/testing/README.md`
+
+### Build Validation Fails
+
+1. Run: `python3 scripts/validate-build.py`
+2. Install missing dependencies
+3. Fix configuration issues
+4. Re-run validation
+5. Check detailed output for specific failures
+
+## Resources
+
+### Documentation
+- Full docs: `docs/INDEX.md`
+- Testing guide: `docs/testing/README.md`
+- Quality guide: `docs/quality/PRE-COMMIT.md`
+- TeXplosion guide: `docs/TEXPLOSION-PIPELINE.md`
+
+### External Links
+- Repository: https://github.com/Oichkatzelesfrettschen/minix-analysis
+- MINIX Project: https://minix3.org/
+- GitHub Pages: (after first TeXplosion deployment)
+
+## Agent Coordination
+
+### Parallel Work
+- Multiple agents can work on different modules simultaneously
+- Use branches for major features
+- Coordinate via GitHub issues and PRs
+- Update documentation as you work
+
+### Best Practices for Agents
+1. Read this file completely before starting
+2. Check `COMPREHENSIVE-REPOSITORY-AUDIT.md` for current state
+3. Run `validate-build.py` before committing
+4. Update relevant documentation
+5. Add tests for new code
+6. Follow systematic approach: Build → Test → Document → Validate
+
+---
+
+**Last Updated:** 2025-11-04
+**Maintained By:** Project Team
+**Status:** Production Ready
+
+**AD ASTRA PER MATHEMATICA ET SCIENTIAM** ✨
 - Custom Syscall Tracer: System call frequency analysis
 - Custom Memory Monitor: Memory usage tracking
 
