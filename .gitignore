@@ -89,3 +89,11 @@ build/minix/
 # Local configuration and logs
 .claude/settings.local.json
 logs/
+
+# Hypothesis test database
+.hypothesis/
+
+# Test artifacts
+coverage.xml
+.coverage
+test_results.json
