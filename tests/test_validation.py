@@ -7,6 +7,7 @@ Tests the validation functionality for the TeXplosion pipeline setup.
 import pytest
 import sys
 import subprocess
+import importlib.util
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
@@ -14,18 +15,25 @@ from unittest.mock import Mock, patch, MagicMock
 sys.path.insert(0, str(Path(__file__).parent.parent / 'scripts'))
 
 try:
-    from validate_texplosion_setup import (
-        Colors,
-        check_command,
-        check_file_exists,
-        check_directory_exists,
-        validate_python_packages,
-        validate_workflow_yaml
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "validate_texplosion_setup",
+        Path(__file__).parent.parent / 'scripts' / 'validate-texplosion-setup.py'
     )
+    validate_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(validate_module)
+    
+    Colors = validate_module.Colors
+    check_command = validate_module.check_command
+    check_file_exists = validate_module.check_file_exists
+    check_directory_exists = validate_module.check_directory_exists
+    validate_python_packages = validate_module.validate_python_packages
+    validate_workflow_yaml = validate_module.validate_workflow_yaml
+    
     SCRIPT_AVAILABLE = True
-except ImportError:
+except (ImportError, AttributeError, FileNotFoundError) as e:
     SCRIPT_AVAILABLE = False
-    pytestmark = pytest.mark.skip("validate-texplosion-setup script not importable")
+    pytestmark = pytest.mark.skip(f"validate-texplosion-setup script not available: {e}")
 
 
 @pytest.mark.unit

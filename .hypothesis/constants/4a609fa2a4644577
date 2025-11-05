@@ -1,0 +1,4 @@
+# file: /home/runner/work/minix-analysis/minix-analysis/shared/mcp/server/server.py
+# hypothesis_version: 6.146.0
+
+[1220, 1305, 1772, 'AMD fast syscall', 'INT', 'Intel fast syscall', 'MinixAnalysisServer', 'SYSCALL', 'SYSENTER', 'all', 'boot_phases', 'boot_sequence', 'central_hub', 'components', 'critical_path', 'cycles', 'description', 'diagram_notes', 'graph_type', 'id', 'infinite_loop', 'infinite_loop_myth', 'ipc_mechanism', 'ipc_system', 'kernel_structure', 'line_count', 'memory_layout', 'message_passing', 'metrics', 'microkernel', 'name', 'notes', 'phases', 'process_table', 'statistics', 'summary', 'syscall_count', 'syscall_mechanisms', 'system_calls', 'top_syscalls', 'topology', 'total_functions', 'total_lines']

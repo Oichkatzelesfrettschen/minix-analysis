@@ -1,0 +1,4 @@
+# file: /home/runner/work/minix-analysis/minix-analysis/src/os_analysis_toolkit/generators/base.py
+# hypothesis_version: 6.146.0
+
+['boot', 'boot.json', 'boot.tex', 'diagrams', 'ipc', 'ipc.json', 'ipc.tex', 'kernel', 'kernel.json', 'kernel.tex', 'memory', 'memory.json', 'memory.tex', 'process', 'process.json', 'process.tex', 'r', 'w']
