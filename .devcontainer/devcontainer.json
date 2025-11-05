@@ -1,0 +1,81 @@
+{
+  "name": "MINIX Analysis - NetBSD i386 Build Environment",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "netbsd-builder",
+  "workspaceFolder": "/workspace",
+  
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash",
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  
+  "extensions": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "james-yu.latex-workshop",
+    "eamodio.gitlens",
+    "editorconfig.editorconfig"
+  ],
+  
+  "forwardPorts": [
+    5900,
+    2222,
+    8080
+  ],
+  
+  "portsAttributes": {
+    "5900": {
+      "label": "VNC - NetBSD VM",
+      "onAutoForward": "notify"
+    },
+    "2222": {
+      "label": "SSH - NetBSD VM",
+      "onAutoForward": "silent"
+    },
+    "8080": {
+      "label": "Analysis Dashboard",
+      "onAutoForward": "openPreview"
+    }
+  },
+  
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  
+  "remoteUser": "developer",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "username": "developer",
+      "userUid": "1000",
+      "userGid": "1000"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest",
+      "ppa": false
+    }
+  },
+  
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    "source=netbsd-vm-images,target=/vm/images,type=volume",
+    "source=netbsd-builds,target=/builds,type=volume",
+    "source=minix-artifacts,target=/artifacts,type=volume"
+  ],
+  
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "files.associations": {
+          "*.tex": "latex",
+          "*.bib": "bibtex"
+        }
+      }
+    }
+  }
+}

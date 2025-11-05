@@ -21,6 +21,7 @@ This repository provides a comprehensive, unified environment for the analysis, 
 This project is a synthesis of several related efforts, providing a powerful and cohesive toolkit for OS developers, researchers, and students. It includes:
 
 - **Complete MINIX Source:** The full MINIX 3.4 source code is included for direct analysis.
+- **NetBSD i386 Build Environment:** Native build environment using NetBSD 10.1 in QEMU for authentic cross-compilation.
 - **Source Code Analysis**: Tools to parse, analyze, and extract data from the MINIX kernel and userland.
 - **Boot Sequence Analysis:** Specialized tools for tracing, visualizing, and understanding the MINIX boot process.
 - **Automated Testing**: A QEMU-based framework for automated boot testing, error detection, and performance profiling.
@@ -82,19 +83,45 @@ minix-analysis/
 
 ## Quick Start
 
-### 1. Verify Environment
+### Option 1: NetBSD Build Environment (Recommended for MINIX Development)
+
+**Use the native NetBSD i386 environment for authentic MINIX 3.4 builds:**
+
+```bash
+# Open in VS Code DevContainer
+code .devcontainer
+
+# Or manually with Docker
+cd .devcontainer
+docker-compose up -d
+docker exec -it minix-netbsd-builder bash
+
+# Inside container: Create and start NetBSD VM
+/opt/netbsd-scripts/create-vm.sh 20G
+/opt/netbsd-scripts/start-netbsd.sh
+
+# Connect via VNC to localhost:5900 or SSH to port 2222
+```
+
+**📚 Full Guide:** [NetBSD DevContainer Documentation](docs/netbsd/NETBSD-DEVCONTAINER-GUIDE.md)
+
+### Option 2: Analysis and Testing Environment
+
+**Use the analysis tools and automated testing:**
+
+#### 1. Verify Environment
 ```bash
 bash tests/test-minix-mcp.sh
 ```
 
-### 2. Configure MCP Servers
+#### 2. Configure MCP Servers
 ```bash
 # This step is required for AI agent integration
 export GITHUB_TOKEN='ghp_YourToken'  # Optional, for GitHub integration
 bash scripts/mcp-docker-setup.sh --auto
 ```
 
-### 3. Start MCP Services
+#### 3. Start MCP Services
 ```bash
 # Note: The docker-compose.enhanced.yml is now in archive/misc
 # You may need to restore it or use the primary docker-compose.yml
