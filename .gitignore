@@ -64,6 +64,36 @@ Thumbs.db
 *.temp
 .#*
 
+# LaTeX build files
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bcf
+*.run.xml
+*.nav
+*.snm
+*.vrb
+
+# TeXplosion pipeline artifacts
+build/latex/
+build/diagrams/
+build/pages/
+build/minix/
+
 # Local configuration and logs
 .claude/settings.local.json
 logs/
+
+# Hypothesis test database
+.hypothesis/
+
+# Test artifacts
+coverage.xml
+.coverage
+test_results.json

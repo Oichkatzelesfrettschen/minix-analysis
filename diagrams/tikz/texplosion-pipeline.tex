@@ -1,0 +1,195 @@
+% TeXplosion Pipeline Flow Diagram
+% A visual representation of the CI/CD pipeline that transforms
+% source code into published documentation
+
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usetikzlibrary{shapes,arrows,positioning,shadows,decorations.pathmorphing}
+
+\begin{document}
+
+\definecolor{stage1}{RGB}{102,126,234}  % Blue
+\definecolor{stage2}{RGB}{118,75,162}   % Purple
+\definecolor{stage3}{RGB}{237,100,166}  % Pink
+\definecolor{stage4}{RGB}{255,152,0}    % Orange
+\definecolor{stage5}{RGB}{76,175,80}    % Green
+\definecolor{explosion}{RGB}{255,215,0} % Gold
+
+\tikzset{
+    stage/.style={
+        rectangle,
+        rounded corners,
+        minimum width=3cm,
+        minimum height=1.2cm,
+        text centered,
+        draw=black,
+        fill=#1,
+        text=white,
+        font=\bfseries,
+        drop shadow
+    },
+    trigger/.style={
+        ellipse,
+        minimum width=2.5cm,
+        minimum height=1cm,
+        text centered,
+        draw=black,
+        fill=gray!30,
+        font=\small
+    },
+    output/.style={
+        rectangle,
+        minimum width=2.5cm,
+        minimum height=0.8cm,
+        text centered,
+        draw=black,
+        fill=white,
+        font=\small,
+        dashed
+    },
+    arrow/.style={
+        thick,
+        ->,
+        >=stealth
+    },
+    explosion/.style={
+        star,
+        star points=8,
+        minimum size=2cm,
+        fill=explosion,
+        draw=orange,
+        line width=2pt,
+        drop shadow
+    }
+}
+
+\begin{tikzpicture}[node distance=2cm]
+
+% Trigger
+\node[trigger] (trigger) {\faGithub\ Git Push\\to \texttt{main}};
+
+% Stage 1: Analysis & Diagrams
+\node[stage=stage1, below=of trigger] (stage1) {
+    \faChartBar\ Stage 1\\
+    Generate Diagrams
+};
+
+\node[output, left=1.5cm of stage1, align=center] (out1a) {
+    TikZ\\diagrams
+};
+\node[output, right=1.5cm of stage1, align=center] (out1b) {
+    PDF/PNG/\\SVG
+};
+
+% Stage 2: MINIX Build (Optional)
+\node[stage=stage2, below=1.5cm of stage1, xshift=-3cm] (stage2) {
+    \faServer\ Stage 2\\
+    Build MINIX
+};
+
+\node[output, below=0.5cm of stage2, align=center] (out2) {
+    Boot\\metrics
+};
+
+% Stage 3: LaTeX Compilation
+\node[stage=stage3, below=1.5cm of stage1, xshift=3cm] (stage3) {
+    \faFileAlt\ Stage 3\\
+    Compile LaTeX
+};
+
+\node[output, below=0.5cm of stage3, align=center] (out3) {
+    Whitepaper\\PDF
+};
+
+% Stage 4: Build Pages
+\node[stage=stage4, below=3.5cm of stage1] (stage4) {
+    \faGlobe\ Stage 4\\
+    Build Pages
+};
+
+\node[output, left=1.5cm of stage4, align=center] (out4a) {
+    MkDocs\\site
+};
+\node[output, right=1.5cm of stage4, align=center] (out4b) {
+    Landing\\page
+};
+
+% Stage 5: Deploy
+\node[stage=stage5, below=of stage4] (stage5) {
+    \faRocket\ Stage 5\\
+    Deploy to Pages
+};
+
+% The Explosion!
+\node[explosion, below=of stage5, yshift=-0.5cm] (texplosion) {};
+\node[below=0.1cm of texplosion, font=\Large\bfseries, color=explosion] {
+    TEXPLOSION!
+};
+
+\node[below=1cm of texplosion, align=center, font=\small] (result) {
+    \faCheckCircle[regular]\ Live Documentation\\
+    \faFilePdf\ Whitepaper • \faImages\ Diagrams • \faBook\ Docs
+};
+
+% Arrows - Main flow
+\draw[arrow] (trigger) -- (stage1);
+\draw[arrow] (stage1) -- (stage2);
+\draw[arrow] (stage1) -- (stage3);
+\draw[arrow] (stage2) -- (stage4);
+\draw[arrow] (stage3) -- (stage4);
+\draw[arrow] (stage4) -- (stage5);
+\draw[arrow] (stage5) -- (texplosion);
+
+% Arrows - Outputs
+\draw[arrow, dashed] (stage1) -- (out1a);
+\draw[arrow, dashed] (stage1) -- (out1b);
+\draw[arrow, dashed] (stage2) -- (out2);
+\draw[arrow, dashed] (stage3) -- (out3);
+\draw[arrow, dashed] (stage4) -- (out4a);
+\draw[arrow, dashed] (stage4) -- (out4b);
+
+% Annotations
+\node[above right=0.3cm and 0.3cm of stage1, font=\small\itshape, text=black] {
+    3-5 min
+};
+
+\node[left=0.5cm of stage2, font=\small\itshape, text=black, align=right] {
+    60-90 min\\
+    (optional)
+};
+
+\node[right=0.5cm of stage3, font=\small\itshape, text=black, align=left] {
+    5-10 min
+};
+
+\node[above right=0.3cm and 0.3cm of stage4, font=\small\itshape, text=black] {
+    2-3 min
+};
+
+\node[above right=0.3cm and 0.3cm of stage5, font=\small\itshape, text=black] {
+    1-2 min
+};
+
+% Total time box
+\node[draw, rounded corners, fill=white, drop shadow, 
+      above left=0.5cm and -1cm of trigger, 
+      align=center, font=\small] {
+    \textbf{Total Time:}\\
+    15 min (without MINIX)\\
+    90 min (with MINIX)
+};
+
+% Legend
+\node[draw, rounded corners, fill=white, drop shadow,
+      below right=0.5cm and -2cm of result,
+      align=left, font=\scriptsize] {
+    \textbf{Key:}\\
+    \tikz\node[stage=stage1, minimum width=1.5cm, minimum height=0.5cm] {};\ Processing Stage\\
+    \tikz\node[output, minimum width=1.5cm, minimum height=0.5cm] {};\ Artifact\\
+    \tikz\draw[arrow, dashed] (0,0) -- (0.5,0);\ Produces
+};
+
+\end{tikzpicture}
+
+\end{document}

@@ -1,0 +1,4 @@
+# file: /home/runner/work/minix-analysis/minix-analysis/tools/tikz_generator.py
+# hypothesis_version: 6.146.0
+
+[3.14159, 8.0, 180, 360, '--data-dir', '--output', 'HEAP', 'KERNEL', 'N/A', 'PM', 'RTS_', 'STACK', 'SYSTEM', 'TEXT', 'VFS', 'VM', '\\_', '\\hline', '_', '_PROC_NR', '__main__', 'blue!20', 'boot-sequence-data', 'boot_sequence.json', 'boot_stages', 'description', 'diagrams/data', 'driver_count', 'endpoints', 'file', 'gray!20', 'green!20', 'ipc-architecture', 'ipc_functions', 'ipc_system.json', 'kernel_files', 'kernel_lines', 'line_count', 'max_processes', 'memory-regions', 'memory_layout.json', 'memory_regions', 'minix/kernel/system/', 'name', 'process-states', 'process_fields', 'process_states', 'process_table.json', 'r', 'red!20', 'scheduling_queues', 'server_count', 'state', 'statistics.json', 'syscall-table', 'system_calls', 'w', '};\n']

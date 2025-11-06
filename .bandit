@@ -1,0 +1,25 @@
+# Bandit security configuration
+# https://bandit.readthedocs.io/
+
+[bandit]
+# Exclude directories
+exclude_dirs:
+  - /tests/
+  - /venv/
+  - /build/
+  - /dist/
+  - /.eggs/
+  - /archive/
+
+# Skip specific tests
+skips:
+  - B101  # assert_used - we use asserts in tests
+  - B601  # paramiko_calls - false positives
+  - B603  # subprocess_without_shell_equals_true
+  - B607  # start_process_with_partial_path
+
+# Test severity levels
+severity: medium
+
+# Confidence levels
+confidence: medium

@@ -1,0 +1,4 @@
+# file: /home/runner/work/minix-analysis/minix-analysis/src/os_analysis_toolkit/analyzers/base.py
+# hypothesis_version: 6.146.0
+
+[3600, '1.0.0', 'analysis_timestamp', 'analyzer_version', 'ipc_system', 'kernel_structure', 'memory_layout', 'metadata', 'metadata.json', 'os_type', 'process_management', 'r', 'source_root', 'w']

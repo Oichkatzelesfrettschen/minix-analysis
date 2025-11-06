@@ -1,0 +1,4 @@
+# file: /home/runner/work/minix-analysis/minix-analysis/src/os_analysis_toolkit/analyzers/kernel.py
+# hypothesis_version: 6.146.0
+
+[256, 4096, '/sbin/init', 'architecture', 'bios', 'blocked', 'boot_sequence', 'bootloader', 'bss', 'components', 'context_switch', 'data', 'deadlock_prevention', 'drivers', 'hardware_assisted', 'heap', 'init', 'init_process', 'interrupt_handling', 'ipc_mechanism', 'ipc_system', 'kernel', 'kernel_structure', 'layered', 'max_processes', 'mechanism', 'memory_layout', 'memory_model', 'memory_protection', 'message_passing', 'microkernel', 'minix', 'minix_boot', 'multi-level-priority', 'multiboot', 'notify', 'page_size', 'priority_based', 'process_management', 'process_states', 'ready', 'receive', 'running', 'scheduler', 'scheduling_algorithm', 'segmented', 'segments', 'send', 'sendreceive', 'servers', 'stack', 'stages', 'synchronous', 'text', 'timeout', 'types', 'vectored', 'virtual_memory', 'zombie']
